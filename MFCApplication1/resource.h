@@ -7,11 +7,9 @@
 #define IDS_ABOUTBOX                    101
 #define IDD_MFCAPPLICATION1_DIALOG      102
 #define IDR_MAINFRAME                   128
-#define IDD_DIALOG1                     130
 #define IDR_MENU1                       132
 #define IDC_LIST2                       1002
 #define IDC_BUTTON1                     1003
-#define IDC_LIST1                       1004
 #define IDC_CUSTOM2                     1009
 #define IDC_BUTTON2                     1010
 #define IDC_BUTTON3                     1011

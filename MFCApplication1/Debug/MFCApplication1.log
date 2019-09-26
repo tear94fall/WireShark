@@ -1,11 +1,4 @@
-﻿  pch.cpp
-  MFCApplication1.cpp
-  MFCApplication1Dlg.cpp
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\test.cpp(2,10): warning C4067:  전처리기 지시문 다음에 예기치 않은 토큰이 있습니다. 줄 바꿈 문자가 필요합니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\test.cpp(25,1): warning C4806:  '==': 안전하지 않은 연산입니다. 'bool' 형식의 값('int' 형식으로 확장)이 주어진 상수와 같을 수 없습니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\test.cpp(99,12): warning C4477:  'printf' : 서식 문자열 '%s'에 'char *' 형식의 인수가 필요하지만 variadic 인수 1의 형식이 'std::string'입니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(164,30): warning C4244:  '=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-  new_dialog.cpp
-  코드를 생성하고 있습니다...
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(480,17): warning C4018:  '<': signed 또는 unsigned가 일치하지 않습니다.
+﻿  MFCApplication1Dlg.cpp
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(157,30): warning C4244:  '=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(454,17): warning C4018:  '<': signed 또는 unsigned가 일치하지 않습니다.
   MFCApplication1.vcxproj -> C:\Users\limjoonsub\source\repos\MFCApplication1\Debug\MFCApplication1.exe

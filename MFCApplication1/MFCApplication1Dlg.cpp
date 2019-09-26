@@ -9,18 +9,11 @@
 #include "afxdialogex.h"
 #include "Resource.h"
 
-#include "new_dialog.h"
-
 #include <thread>
 #include <sstream>
-
 #include <pcap.h>
 #include <afxconv.h>
 
-
-
-
-#include "test.cpp"
 
 
 #ifdef _DEBUG
@@ -136,6 +129,9 @@ BOOL CMFCApplication1Dlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
+
+
+
 	CButton* pButton = (CButton*)GetDlgItem(IDC_BUTTON2);
 	pButton->EnableWindow(FALSE);
 
@@ -143,9 +139,6 @@ BOOL CMFCApplication1Dlg::OnInitDialog()
 	pButton3->EnableWindow(FALSE);
 
 	SetWindowText(_T("Wire Dolphin"));
-	packet_sniff::config::PacketSniff* pktSniff = (packet_sniff::config::PacketSniff*)malloc(sizeof(packet_sniff::config::PacketSniff));
-	int error = pktSniff->find_all_network_interface();
-	int network_interface_count = 0;
 
 	CRect rt;
 	m_ListCtrl.GetWindowRect(&rt);
@@ -165,30 +158,11 @@ BOOL CMFCApplication1Dlg::OnInitDialog()
 		m_ListCtrl.InsertColumn(i, &add_column);
 	}
 
-	int column_count = m_ListCtrl.GetItemCount();
-
-
 	// 패킷의 갯수 카운트
 	ChangeStaticText(packet_cnt, tcp_pkt_cnt, udp_pkt_cnt, arp_pkt_cnt, icmp_pkt_cnt);
-	
-	
-	/* 네트워크 다바이스명을 출력한다. */
-	for (pktSniff->target_network_interface = pktSniff->all_network_interfaces; pktSniff->target_network_interface; pktSniff->target_network_interface = pktSniff->target_network_interface->next){
-		printf("%d. %s", ++network_interface_count, pktSniff->target_network_interface->name);
-		if (pktSniff->target_network_interface->description)
-			printf(" (%s)\n", pktSniff->target_network_interface->description);
-		else
-			printf(" (No description available)\n");
 
-		//m_ListCtrl.InsertItem(column_count,/* (CString)pktSniff->target_network_interface->description + " " + */(CString)pktSniff->target_network_interface->name);
-	}
 
-	/* 에러 처리 */
-	if (network_interface_count == 0)
-	{
-		printf("\nNo interfaces found! Make sure WinPcap is installed.\n");
-		return -1;
-	}
+
 
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
