@@ -59,6 +59,18 @@ typedef struct icmp_header {
 	u_short seq;
 }icmp_header;
 
+typedef struct arp_header {
+	u_short htype;    /* Hardware Type           */
+	u_short ptype;    /* Protocol Type           */
+	u_char hlen;        /* Hardware Address Length */
+	u_char plen;        /* Protocol Address Length */
+	u_short oper;     /* Operation Code          */
+	u_char sha[6];      /* Sender hardware address */
+	u_char spa[4];      /* Sender IP address       */
+	u_char tha[6];      /* Target hardware address */
+	u_char tpa[4];      /* Target IP address       */
+}arp_header;
+
 // CMFCApplication1Dlg 대화 상자
 class CMFCApplication1Dlg : public CDialogEx
 {
@@ -98,6 +110,17 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
+
+	BOOL m_bAscending;
+
+	struct SORTPARAM
+	{
+		int iSrotColumn;
+		bool bSortDirect;
+		CListCtrl* pList;
+	};
+
+
 	CListCtrl m_ListCtrl;
 	afx_msg void OnBnClickedButton1();
 	CListBox m_HexEditorList;
@@ -109,4 +132,10 @@ public:
 	void ClearPacketCnt();
 	CString GetIPAddr(ip_address ip_addr);
 	afx_msg void OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnNMDblclkList2(NMHDR* pNMHDR, LRESULT* pResult);
+	CTreeCtrl PacketDataCtrl;
+	afx_msg void OnHdnItemclick(NMHDR* pNMHDR, LRESULT* Result);
+	static int CALLBACK SortFuncStr(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
+	static int CALLBACK SortFuncNum(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
+	CListCtrl PacketDumpList;
 };
