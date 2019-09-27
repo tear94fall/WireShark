@@ -8,6 +8,7 @@
 #include "MFCApplication1Dlg.h"
 #include "afxdialogex.h"
 #include "Resource.h"
+#include "NetworkInterfaceDlg.h"
 
 #include <thread>
 #include <sstream>
@@ -107,6 +108,15 @@ END_MESSAGE_MAP()
 
 BOOL CMFCApplication1Dlg::OnInitDialog()
 {
+	netInterfaceDlg.DoModal();
+	bool cancelButtonClickedChecker = netInterfaceDlg.CancelButtonClickedFunction();
+
+	if (cancelButtonClickedChecker) {
+		::PostQuitMessage(WM_QUIT);
+		netInterfaceDlg.EndDialog(IDOK);
+		//DestroyWindow();
+	}
+
 	CDialogEx::OnInitDialog();
 
 	// 시스템 메뉴에 "정보..." 메뉴 항목을 추가합니다.
@@ -136,6 +146,10 @@ BOOL CMFCApplication1Dlg::OnInitDialog()
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
 
+
+
+
+
 	CButton* pButton = (CButton*)GetDlgItem(IDC_BUTTON2);
 	pButton->EnableWindow(FALSE);
 
@@ -152,7 +166,7 @@ BOOL CMFCApplication1Dlg::OnInitDialog()
 
 	add_column.mask = LVCF_TEXT | LVCF_WIDTH;
 
-	LPWSTR column_name[9] = { L"No",L"Time", L"Source", L"Destination", L"Protocol", L"Length", L"Info" ,L"Dump Data"};
+	LPWSTR column_name[9] = { L"No",L"Time", L"Source", L"Destination", L"Protocol", L"Length", L"Info" ,L"Dump Data" };
 	int count = 0;
 	double column_width[9] = { 0.1,0.1,0.15,0.15,0.075,0.075,0.349,0.3 };
 
@@ -168,18 +182,18 @@ BOOL CMFCApplication1Dlg::OnInitDialog()
 
 	add_column.mask = LVCF_TEXT | LVCF_WIDTH;
 	LPWSTR packet_dump_header[4] = { L"Seq",L"Hex 1",L"HEX 2", L"ASCII" };
-	double pakcet_dump_header_width[4] = {0.1,0.2,0.2,0.3 };
+	double pakcet_dump_header_width[4] = { 0.1,0.2,0.2,0.3 };
 
 	for (int i = 0; i < 4; i++) {
 		add_column.pszText = packet_dump_header[i];
 		add_column.cx = rt.Width() * pakcet_dump_header_width[i];
 		PacketDumpList.InsertColumn(i, &add_column);
 	}
-
-
-
 	// 패킷의 갯수 카운트
 	ChangeStaticText(packet_cnt, tcp_pkt_cnt, udp_pkt_cnt, arp_pkt_cnt, icmp_pkt_cnt);
+
+
+
 
 
 
@@ -260,6 +274,9 @@ void CMFCApplication1Dlg::OnBnClickedButton1()
 
 		m_pThread->m_bAutoDelete = FALSE;
 		m_ThreadWorkType = RUNNING;
+
+
+
 	}
 	else {
 		if (m_ThreadWorkType == RUNNING || m_ThreadWorkType == PAUSE) {
@@ -271,6 +288,7 @@ void CMFCApplication1Dlg::OnBnClickedButton1()
 
 
 UINT CMFCApplication1Dlg::ThreadFunctionFirstTest(LPVOID _mothod) {
+	CMFCApplication1Dlg* pDlg = (CMFCApplication1Dlg*)AfxGetApp()->m_pMainWnd;
 	pcap_if_t* alldevs;
 	pcap_if_t* d;
 	int inum;
@@ -306,7 +324,10 @@ UINT CMFCApplication1Dlg::ThreadFunctionFirstTest(LPVOID _mothod) {
 
 	printf("Enter the interface number (1-%d):", i);
 	//scanf("%d", &inum);
-	inum = 7;
+	inum = pDlg->netInterfaceDlg.m_nSelectedIndex + 1;
+	pDlg->m_strSelectedNetworkInterface = pDlg->netInterfaceDlg.m_strSelectedValue;
+
+	pDlg->SetDlgItemText(IDC_STATIC_NET,L"Interface"+pDlg->m_strSelectedNetworkInterface);
 
 	if (inum < 1 || inum > i) {
 		printf("\nInterface number out of range.\n");

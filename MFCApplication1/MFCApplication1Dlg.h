@@ -3,7 +3,7 @@
 //
 
 #pragma once
-
+#include "NetworkInterfaceDlg.h"
 
 typedef struct ip_address {
 	u_char byte1;
@@ -110,6 +110,8 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
+	NetworkInterfaceDlg netInterfaceDlg;
+	CString m_strSelectedNetworkInterface;
 
 	BOOL m_bAscending;
 

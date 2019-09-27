@@ -9,6 +9,7 @@
 #define IDR_MAINFRAME                   128
 #define IDR_MENU1                       132
 #define IDI_ICON1                       135
+#define IDD_DIALOG1                     136
 #define IDC_LIST2                       1002
 #define IDC_BUTTON1                     1003
 #define IDC_CUSTOM2                     1009
@@ -18,6 +19,7 @@
 #define IDC_BUTTON4                     1013
 #define IDC_TREE1                       1014
 #define IDC_LIST1                       1015
+#define IDC_STATIC_NET                  1017
 #define ID_ASDF_ASDFASD                 32771
 #define ID_1_1                          32772
 #define ID_1_2                          32773
@@ -30,9 +32,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        136
+#define _APS_NEXT_RESOURCE_VALUE        138
 #define _APS_NEXT_COMMAND_VALUE         32778
-#define _APS_NEXT_CONTROL_VALUE         1016
+#define _APS_NEXT_CONTROL_VALUE         1018
 #define _APS_NEXT_SYMED_VALUE           105
 #endif
 #endif
