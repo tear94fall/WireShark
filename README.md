@@ -1,4 +1,4 @@
-# PacketSniffer
+# Wire Dolphin (Packet Sniffer)
 
 #### proto-type image
 

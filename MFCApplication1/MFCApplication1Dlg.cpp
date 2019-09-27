@@ -23,20 +23,7 @@
 #define new DEBUG_NEW
 #endif
 
-
-HTREEITEM  hRoot;
-HTREEITEM  hChild;
-
-int packet_cnt = 0;
-int tcp_pkt_cnt = 0;
-int udp_pkt_cnt = 0;
-int arp_pkt_cnt = 0;
-int icmp_pkt_cnt = 0;
-
-
 // 응용 프로그램 정보에 사용되는 CAboutDlg 대화 상자입니다.
-
-
 void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_char* pkt_data);
 std::string GetCurrentTimeStr(void);
 
@@ -85,10 +72,10 @@ void CMFCApplication1Dlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST2, m_ListCtrl);
-	//  DDX_Control(pDX, IDC_BUTTON3, puase_button);
 	DDX_Control(pDX, IDC_BUTTON3, pause_button);
 	DDX_Control(pDX, IDC_TREE1, PacketDataCtrl);
 	DDX_Control(pDX, IDC_LIST1, PacketDumpList);
+	DDX_Control(pDX, IDC_EDIT1, m_FilterEditCtrl);
 }
 
 BEGIN_MESSAGE_MAP(CMFCApplication1Dlg, CDialogEx)
@@ -101,6 +88,7 @@ BEGIN_MESSAGE_MAP(CMFCApplication1Dlg, CDialogEx)
 	ON_NOTIFY(NM_CUSTOMDRAW, IDC_LIST2, OnCustomdrawList)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST2, &CMFCApplication1Dlg::OnNMDblclkList2)
 	ON_NOTIFY(HDN_ITEMCLICK, 0, &CMFCApplication1Dlg::OnHdnItemclick)
+//	ON_NOTIFY(NM_CUSTOMDRAW, IDC_LIST1, &CMFCApplication1Dlg::OnNMCustomdrawList1)
 END_MESSAGE_MAP()
 
 
@@ -156,7 +144,9 @@ BOOL CMFCApplication1Dlg::OnInitDialog()
 	CButton* pButton3 = (CButton*)GetDlgItem(IDC_BUTTON3);
 	pButton3->EnableWindow(FALSE);
 
-	SetWindowText(_T("Packet Sniffer"));
+	SetWindowText(_T("Wire Dolphin "));
+
+	m_FilterEditCtrl.SetWindowTextW(L"Enter filters...");
 
 	CRect rt;
 	m_ListCtrl.GetWindowRect(&rt);
@@ -168,7 +158,7 @@ BOOL CMFCApplication1Dlg::OnInitDialog()
 
 	LPWSTR column_name[9] = { L"No",L"Time", L"Source", L"Destination", L"Protocol", L"Length", L"Info" ,L"Dump Data" };
 	int count = 0;
-	double column_width[9] = { 0.1,0.1,0.15,0.15,0.075,0.075,0.349,0 };
+	double column_width[9] = { 0.1, 0.17, 0.15, 0.15, 0.075, 0.075, 0.28, 0 };
 
 	for (int i = 0; i < 8; i++) {
 		add_column.pszText = column_name[i];
@@ -182,7 +172,7 @@ BOOL CMFCApplication1Dlg::OnInitDialog()
 
 	add_column.mask = LVCF_TEXT | LVCF_WIDTH;
 	LPWSTR packet_dump_header[4] = { L"Seq",L"Hex 1",L"HEX 2", L"ASCII" };
-	double pakcet_dump_header_width[4] = { 0.1,0.2,0.2,0.3 };
+	double pakcet_dump_header_width[4] = { 0.1,0.27,0.27,0.3 };
 
 	for (int i = 0; i < 4; i++) {
 		add_column.pszText = packet_dump_header[i];
@@ -191,10 +181,6 @@ BOOL CMFCApplication1Dlg::OnInitDialog()
 	}
 	// 패킷의 갯수 카운트
 	ChangeStaticText(packet_cnt, tcp_pkt_cnt, udp_pkt_cnt, arp_pkt_cnt, icmp_pkt_cnt);
-
-
-
-
 
 
 
@@ -327,7 +313,7 @@ UINT CMFCApplication1Dlg::ThreadFunctionFirstTest(LPVOID _mothod) {
 	inum = pDlg->netInterfaceDlg.m_nSelectedIndex + 1;
 	pDlg->m_strSelectedNetworkInterface = pDlg->netInterfaceDlg.m_strSelectedValue;
 
-	pDlg->SetDlgItemText(IDC_STATIC_NET,L"Interface"+pDlg->m_strSelectedNetworkInterface);
+	pDlg->SetDlgItemText(IDC_STATIC_NET,L"Interface: "+pDlg->m_strSelectedNetworkInterface);
 
 	if (inum < 1 || inum > i) {
 		printf("\nInterface number out of range.\n");
@@ -374,16 +360,7 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 	icmp_header* icmp_hdr;
 	arp_header* arp_hdr = NULL;
 	u_int ip_len;
-
 	ether_header* ethhdr;
-
-	time_t local_tv_sec;
-	struct tm ltime;
-	char timestr[16];
-
-	local_tv_sec = header->ts.tv_sec;
-	localtime_s(&ltime, &local_tv_sec);
-	strftime(timestr, sizeof timestr, "%H:%M:%S", &ltime);
 
 	ethhdr = (ether_header*)pkt_data;
 
@@ -406,6 +383,7 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 			column_count_str.Format(_T("%d"), column_count + 1);
 			pDlg->m_ListCtrl.InsertItem(column_count, column_count_str);
 
+
 			pDlg->m_ListCtrl.SetItem(column_count, 1, LVIF_TEXT, CString(GetCurrentTimeStr().c_str()), NULL, NULL, NULL, NULL);
 			pDlg->m_ListCtrl.SetItem(column_count, 2, LVIF_TEXT, source_ip, NULL, NULL, NULL, NULL);
 			pDlg->m_ListCtrl.SetItem(column_count, 3, LVIF_TEXT, destionation_ip, NULL, NULL, NULL, NULL);
@@ -416,10 +394,10 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 				(CString)(std::to_string(ntohs(th->dport)).c_str())
 				, NULL, NULL, NULL, NULL);
 
-			++tcp_pkt_cnt;
-			++packet_cnt;
+			++pDlg->tcp_pkt_cnt;
+			++pDlg->packet_cnt;
 
-			pDlg->ChangeStaticText(packet_cnt, tcp_pkt_cnt, udp_pkt_cnt, arp_pkt_cnt, icmp_pkt_cnt);
+			pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
 		}
 		else if (ih->proto == 4) {
 			printf("IP\n");
@@ -448,9 +426,9 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 				(CString)(std::to_string(ntohs(uh->dport)).c_str())
 				, NULL, NULL, NULL, NULL);
 
-			++udp_pkt_cnt;
-			++packet_cnt;
-			pDlg->ChangeStaticText(packet_cnt, tcp_pkt_cnt, udp_pkt_cnt, arp_pkt_cnt, icmp_pkt_cnt);
+			++pDlg->udp_pkt_cnt;
+			++pDlg->packet_cnt;
+			pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
 		}
 		else if (ih->proto == IPPROTO_ICMP) {
 			// ICMP
@@ -475,9 +453,9 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 				, NULL, NULL, NULL, NULL);
 
 
-			++icmp_pkt_cnt;
-			++packet_cnt;
-			pDlg->ChangeStaticText(packet_cnt, tcp_pkt_cnt, udp_pkt_cnt, arp_pkt_cnt, icmp_pkt_cnt);
+			++pDlg->icmp_pkt_cnt;
+			++pDlg->packet_cnt;
+			pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
 		}
 		else {
 			printf("Unknown Protocol\n");
@@ -485,7 +463,7 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 
 		}
 
-		pDlg->ChangeStaticText(packet_cnt, tcp_pkt_cnt, udp_pkt_cnt, arp_pkt_cnt, icmp_pkt_cnt);
+		pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
 
 		int nCount = pDlg->m_ListCtrl.GetItemCount();
 		pDlg->m_ListCtrl.EnsureVisible(nCount - 1, FALSE);
@@ -536,6 +514,7 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 	sprintf(target_hw_addr, "%02x", arp_hdr->tha[5]);
 	target_hw_adr += target_hw_addr;
 
+
 	pDlg->m_ListCtrl.SetItem(column_count, 1, LVIF_TEXT, CString(GetCurrentTimeStr().c_str()), NULL, NULL, NULL, NULL);
 	pDlg->m_ListCtrl.SetItem(column_count, 2, LVIF_TEXT, source_ip, NULL, NULL, NULL, NULL);
 	pDlg->m_ListCtrl.SetItem(column_count, 3, LVIF_TEXT, destionation_ip, NULL, NULL, NULL, NULL);
@@ -546,9 +525,9 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 		, NULL, NULL, NULL, NULL);
 
 
-	++arp_pkt_cnt;
-	++packet_cnt;
-	pDlg->ChangeStaticText(packet_cnt, tcp_pkt_cnt, udp_pkt_cnt, arp_pkt_cnt, icmp_pkt_cnt);
+	++pDlg->arp_pkt_cnt;
+	++pDlg->packet_cnt;
+	pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
 	}
 
 
@@ -568,6 +547,8 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 	CString packet_dump_data(result.c_str());
 	int column_count = pDlg->m_ListCtrl.GetItemCount()-1;
 	pDlg->m_ListCtrl.SetItem(column_count, 7, LVIF_TEXT, packet_dump_data, NULL, NULL, NULL, NULL);
+
+
 }
 
 void CMFCApplication1Dlg::OnBnClickedButton2()
@@ -650,7 +631,7 @@ std::string GetCurrentTimeStr(void) {
 
 	time(&tm_time);
 	st_time = localtime(&tm_time);
-	strftime(buff, 1024, "%Y년%m월%d일-%H시%M분%S초 %p", st_time);
+	strftime(buff, 1024, "%Y-%m-%d %p %H:%M:%S", st_time);
 
 	std::string temp_buf = buff;
 
@@ -707,165 +688,240 @@ void CMFCApplication1Dlg::OnNMDblclkList2(NMHDR* pNMHDR, LRESULT* pResult)
 
 	pNMItemActivate->iItem;
 	if (pNMItemActivate->iItem != -1) {
+		CString FrameNumber = m_ListCtrl.GetItemText(pNMItemActivate->iItem, 0);
 		CString Time = m_ListCtrl.GetItemText(pNMItemActivate->iItem, 1);
 		CString Source = m_ListCtrl.GetItemText(pNMItemActivate->iItem, 2);
 		CString Destination = m_ListCtrl.GetItemText(pNMItemActivate->iItem, 3);
 		CString Protocol = m_ListCtrl.GetItemText(pNMItemActivate->iItem, 4);
 		CString Length = m_ListCtrl.GetItemText(pNMItemActivate->iItem, 5);
 		CString Info = m_ListCtrl.GetItemText(pNMItemActivate->iItem, 6);
-
-		CString tempStrProtocol;
-		CString tempStrDestination;
-		CString tempStrSource;
+		CString Packet_Dump_Data = m_ListCtrl.GetItemText(pNMItemActivate->iItem, 7);
 
 
-
-		std::vector<std::pair<CString, CString>> Packet_structed_data;
-		std::vector<std::pair<CString, CString>>::iterator Packet_structed_data_iter;
-
-
-		if (Protocol == L"TCP") {
-			Packet_structed_data.push_back(std::make_pair(L"Transmission Control Protocol: ", Protocol));
-		}
-		else if (Protocol == L"UDP") {
-			Packet_structed_data.push_back(std::make_pair(L"User Datagram  Protocol: ", Protocol));
-		}
-		Packet_structed_data.push_back(std::make_pair(L"Source: ", Source));
-		Packet_structed_data.push_back(std::make_pair(L"Destination: ", Destination));
-		Packet_structed_data.push_back(std::make_pair(L"Length: ", Length));
 
 		PacketDataCtrl.DeleteAllItems();
-
 		PacketDataCtrl.Invalidate();
 
-		Packet_structed_data_iter = Packet_structed_data.begin();
+		if (Protocol == L"TCP") {
+			/*
+			Frame 123: 60 bytes on wire (480bits), 60 bytes captured (480 bits) on interface 0
+			Ethernet II, Src: FF:FF:FF:FF:FF:FF, Dst: 00:00:00:00:00:00
+			Internet Protocol Version 4, Src: 192.168.0.1, Dst: 127.0.0.1
+			Transmission Control Protocol, Src Port: 9999, Dst Port: 666, Seq: 64, Ack: 1, Len: 0
+			*/
+			CString PacketDataLine1;
+			CString PacketDataLine2;
+			CString PacketDataLine3;
+			CString PacketDataLine4;
 
-		hRoot = PacketDataCtrl.InsertItem(Packet_structed_data_iter->first+
-			Packet_structed_data_iter->second
-			, 1/* nImage */, 1/* nSelectedImage */);
-		Packet_structed_data_iter++;
-		for (; Packet_structed_data_iter != Packet_structed_data.end(); Packet_structed_data_iter++) {
-			hChild = PacketDataCtrl.InsertItem(Packet_structed_data_iter->first +
-				Packet_structed_data_iter->second
-				, 1/* nImage */, 1/* nSelectedImage */, hRoot, TVI_LAST);
+			PacketDataLine1 = L"Frame " + FrameNumber + L": "
+				+ Length + L"bytes on wire (" + CString(std::to_string(_ttoi(Length)*8).c_str()) + L" bits), "
+				+ Length + L"bytes captured (" + CString(std::to_string(_ttoi(Length) * 8).c_str()) + L" bits) on interface 0";
+
+			CString PakcetDataLine1by1 = L"Interface id: 0 (" + netInterfaceDlg.InterfaceName + L")";
+			CString PakcetDataLine1by1by1 = L"Interface name: " + netInterfaceDlg.InterfaceName;
+			CString PakcetDataLine1by1by2 = L"Interface desciption: " + netInterfaceDlg.InterfaceDescription;
+
+			CString PakcetDataLine1by2 = L"Encapsulation type: Ethernet (1)";
+			CString PakcetDataLine1by3 = L"Arrival Time: " + Time;
+			CString PakcetDataLine1by4 = L"Frame Number: " + FrameNumber;
+			CString PakcetDataLine1by5 = L"Frame Length: " + Length + L" bytes ("+ CString(std::to_string(_ttoi(Length) * 8).c_str()) + L" bits)";
+			CString PakcetDataLine1by6 = L"Capture Length: " + Length + L" bytes (" + CString(std::to_string(_ttoi(Length) * 8).c_str()) + L" bits)";
+
+
+			CString Destination_addr = Packet_Dump_Data.Mid(0, 2) + L":"
+				+ Packet_Dump_Data.Mid(2, 2) + L":"
+				+ Packet_Dump_Data.Mid(4, 2) + L":"
+				+ Packet_Dump_Data.Mid(6, 2) + L":"
+				+ Packet_Dump_Data.Mid(8, 2) + L":"
+				+ Packet_Dump_Data.Mid(10, 2);
+
+			CString Source_addr = Packet_Dump_Data.Mid(12, 2) + L":"
+				+ Packet_Dump_Data.Mid(14, 2) + L":"
+				+ Packet_Dump_Data.Mid(16, 2) + L":"
+				+ Packet_Dump_Data.Mid(18, 2) + L":"
+				+ Packet_Dump_Data.Mid(20, 2) + L":"
+				+ Packet_Dump_Data.Mid(22, 2);
+
+			PacketDataLine2 = L"Ethernet ⅠⅠ, Src: " + Source_addr + L", Dst: " + Destination_addr;
+			CString PakcetDataLine2by1 = L"Destination: " + Destination_addr;
+			CString PakcetDataLine2by2 = L"Source: " + Source_addr;
+			CString PakcetDataLine2by3 = L"Type: IPv4 (0x" + Packet_Dump_Data.Mid(24, 2) + L")";
+			CString PakcetDataLine2by4 = L"Padding: " + Packet_Dump_Data.Mid(108, 12);
+
+			CString ipVersion = Packet_Dump_Data.Mid(28, 1);
+			CString headerLength = Packet_Dump_Data.Mid(29, 1);
+			PacketDataLine3 = L"Internet Protocol Version "+ ipVersion +L", Src: " + Source + L", Dst: " + Destination;
+			CString PacketDataLine3by1 = L".... .... = Version: " + ipVersion;
+
+			// 이부분 빅 엔디안에서 리틀 엔디안 으로 변경해야함
+			CString PacketDataLine3by2 = L".... .... = Header Length: " + CString(std::to_string(ntohs(_ttoi(headerLength))).c_str()) + L" bytes " + headerLength;
+
+			PacketDataLine4;
+
+
+			// Line 1
+			HTREEITEM  PacketDataRoot1 = PacketDataCtrl.InsertItem(PacketDataLine1);
+			HTREEITEM  PacketDataRoot1Child1 = PacketDataCtrl.InsertItem(PakcetDataLine1by1, PacketDataRoot1);
+			HTREEITEM  PacketDataRoot1Child1Child1 = PacketDataCtrl.InsertItem(PakcetDataLine1by1by1, PacketDataRoot1Child1);
+			HTREEITEM  PacketDataRoot1Child1Child2 = PacketDataCtrl.InsertItem(PakcetDataLine1by1by2, PacketDataRoot1Child1);
+
+			HTREEITEM  PacketDataRoot1Child2 = PacketDataCtrl.InsertItem(PakcetDataLine1by2, PacketDataRoot1);
+			HTREEITEM  PacketDataRoot1Child3 = PacketDataCtrl.InsertItem(PakcetDataLine1by3, PacketDataRoot1);
+			HTREEITEM  PacketDataRoot1Child4 = PacketDataCtrl.InsertItem(PakcetDataLine1by4, PacketDataRoot1);
+			HTREEITEM  PacketDataRoot1Child5 = PacketDataCtrl.InsertItem(PakcetDataLine1by5, PacketDataRoot1);
+			HTREEITEM  PacketDataRoot1Child6 = PacketDataCtrl.InsertItem(PakcetDataLine1by6, PacketDataRoot1);
+
+
+			// Line 2
+			HTREEITEM  PacketDataRoot2 = PacketDataCtrl.InsertItem(PacketDataLine2);
+			HTREEITEM  PacketDataRoot2Child1 = PacketDataCtrl.InsertItem(PakcetDataLine2by1, PacketDataRoot2);
+			HTREEITEM  PacketDataRoot2Child2 = PacketDataCtrl.InsertItem(PakcetDataLine2by2, PacketDataRoot2);
+			HTREEITEM  PacketDataRoot2Child3 = PacketDataCtrl.InsertItem(PakcetDataLine2by3, PacketDataRoot2);
+			if (Length == L"60") {
+				HTREEITEM  PacketDataRoot2Child4 = PacketDataCtrl.InsertItem(PakcetDataLine2by4, PacketDataRoot2);
+			}
+
+
+
+			// Line 3
+			HTREEITEM  PacketDataRoot3 = PacketDataCtrl.InsertItem(PacketDataLine3);
+			HTREEITEM  PacketDataRoot3Child1 = PacketDataCtrl.InsertItem(PacketDataLine3by1, PacketDataRoot3);
+			HTREEITEM  PacketDataRoot3Child2 = PacketDataCtrl.InsertItem(PacketDataLine3by2, PacketDataRoot3);
+
+			HTREEITEM  PacketDataRoot4 = PacketDataCtrl.InsertItem(PacketDataLine4);
+			HTREEITEM  PacketDataRoot4Child1 = PacketDataCtrl.InsertItem(PacketDataLine4, PacketDataRoot4);
+
+
+
+			PacketDataCtrl.Expand(PacketDataRoot1, TVE_EXPAND);
+			PacketDataCtrl.Expand(PacketDataRoot2, TVE_EXPAND);
+			PacketDataCtrl.Expand(PacketDataRoot3, TVE_EXPAND);
+			PacketDataCtrl.Expand(PacketDataRoot4, TVE_EXPAND);
+
+		}else if (Protocol == L"UDP") {
+
 		}
+		else if (Protocol == L"ARP") {
+
+		}
+		else if (Protocol == L"ICMP") {
+
+		}
+
+
 
 		PacketDataCtrl.Invalidate();
 		PacketDataCtrl.UpdateWindow();
-
-		PacketDataCtrl.Expand(hRoot, TVE_EXPAND);
 	}
+
+
 	PacketDumpList.DeleteAllItems();
-
-
 	CString Packet_dump_data = m_ListCtrl.GetItemText(pNMItemActivate->iItem, 7);
 
-	for (int i = 0; i < Packet_dump_data.GetLength()+1; i += 32) {
-		int column_count = PacketDumpList.GetItemCount();
-		CString column_count_str;
-		column_count_str.Format(_T("%d"), column_count + 1);
+	if (Packet_dump_data != L"") {
+		for (int i = 0; i < Packet_dump_data.GetLength() + 1; i += 32) {
+			int column_count = PacketDumpList.GetItemCount();
+			CString column_count_str;
+			column_count_str.Format(_T("%d"), column_count + 1);
 
-		std::stringstream stream;
-		stream << std::setw(6) << std::setfill('0') << std::hex << (i/2);
+			std::stringstream stream;
+			stream << std::setw(6) << std::setfill('0') << std::hex << (i / 2);
 
-		std::string seq_number_str = stream.str();
-		LPCSTR lpcstrSeqNum = (LPCSTR)seq_number_str.c_str();
-		USES_CONVERSION;
-		CString CstrSeqNum = A2CT(lpcstrSeqNum);
-		CstrSeqNum.MakeUpper();
-		PacketDumpList.InsertItem(column_count, CstrSeqNum);
+			std::string seq_number_str = stream.str();
+			LPCSTR lpcstrSeqNum = (LPCSTR)seq_number_str.c_str();
+			USES_CONVERSION;
+			CString CstrSeqNum = A2CT(lpcstrSeqNum);
+			CstrSeqNum.MakeUpper();
+			PacketDumpList.InsertItem(column_count, CstrSeqNum);
 
-		CString allHex = Packet_dump_data.Mid(i, 32);
-		CString AsciiAllHex = allHex;
-		allHex = allHex.MakeUpper();
+			CString allHex = Packet_dump_data.Mid(i, 32);
+			CString AsciiAllHex = allHex;
+			allHex = allHex.MakeUpper();
 
-		CString hex1, hex2;
-		
-		for (int i = 0; i < 16; i += 2) {
-			hex1 += allHex.Mid(i, 2) + L" ";
+			CString hex1, hex2;
+
+			for (int i = 0; i < 16; i += 2) {
+				hex1 += allHex.Mid(i, 2) + L"  ";
+			}
+
+			for (int i = 16; i < 32; i += 2) {
+				hex2 += allHex.Mid(i, 2) + L"  ";
+			}
+
+			PacketDumpList.SetItem(column_count, 1, LVIF_TEXT, hex1, NULL, NULL, NULL, NULL);
+			PacketDumpList.SetItem(column_count, 2, LVIF_TEXT, hex2, NULL, NULL, NULL, NULL);
+
+			CString convAscii;
+			CString PacketAscii1;
+			CString PacketAscii2;
+
+			for (int i = 0; i < AsciiAllHex.GetLength(); i += 2) {
+				PacketAscii1 = AsciiAllHex.Mid(i, 1);
+				PacketAscii2 = AsciiAllHex.Mid(i + 1, 1);
+
+				if (PacketAscii1 == L"a") {
+					PacketAscii1 = L"10";
+				}
+				if (PacketAscii1 == L"b") {
+					PacketAscii1 = L"11";
+				}
+				if (PacketAscii1 == L"c") {
+					PacketAscii1 = L"12";
+				}
+				if (PacketAscii1 == L"d") {
+					PacketAscii1 = L"13";
+				}
+				if (PacketAscii1 == L"e") {
+					PacketAscii1 = L"14";
+				}
+				if (PacketAscii1 == L"f") {
+					PacketAscii1 = L"15";
+				}
+
+				if (PacketAscii2 == L"a") {
+					PacketAscii2 = L"10";
+				}
+				if (PacketAscii2 == L"b") {
+					PacketAscii2 = L"11";
+				}
+				if (PacketAscii2 == L"c") {
+					PacketAscii2 = L"12";
+				}
+				if (PacketAscii2 == L"d") {
+					PacketAscii2 = L"13";
+				}
+				if (PacketAscii2 == L"e") {
+					PacketAscii2 = L"14";
+				}
+				if (PacketAscii2 == L"f") {
+					PacketAscii2 = L"15";
+				}
+
+				int ten = _ttoi(PacketAscii1) * 16;
+				int one = _ttoi(PacketAscii2);
+
+				int sum = ten + one;
+				ten = 0;
+				one = 0;
+
+				if (sum < 32 || sum>126) {
+					sum = 46;
+				}
+
+				char ascii[4];
+				ascii[0] = (char)sum;
+				if (sum == 46) {
+					sprintf(ascii, "%2c", ascii[0]);
+				}
+				else {
+					sprintf(ascii, "%c", ascii[0]);
+				}
+				convAscii += ascii;
+			}
+
+			PacketDumpList.SetItem(column_count, 3, LVIF_TEXT, convAscii, NULL, NULL, NULL, NULL);
 		}
-
-		for (int i = 16; i < 32; i += 2) {
-			hex2 += allHex.Mid(i, 2) + L" ";
-		}
-/*
-		
-		hex1 = allHex.Mid(0, 16);
-		hex1 = allHex.Mid(0, 2) + L" " + allHex.Mid(2, 2) + L" " + allHex.Mid(4, 2) + L" " + allHex.Mid(6, 2) + L" " + allHex.Mid(8, 2) + L" " + allHex.Mid(10, 2) + L" " + allHex.Mid(12, 2) + L" " + allHex.Mid(14, 2);*/
-
-		//hex2 = allHex.Mid(16, 16);
-		PacketDumpList.SetItem(column_count, 1, LVIF_TEXT, hex1, NULL, NULL, NULL, NULL);
-		PacketDumpList.SetItem(column_count, 2, LVIF_TEXT, hex2, NULL, NULL, NULL, NULL);
-
-		CString convAscii;
-		CString PacketAscii1;
-		CString PacketAscii2;
-
-		for (int i = 0; i < AsciiAllHex.GetLength(); i+=2) {
-			PacketAscii1 = AsciiAllHex.Mid(i, 1);
-			PacketAscii2 = AsciiAllHex.Mid(i+1, 1);
-
-			if (PacketAscii1 == L"a") {
-				PacketAscii1 = L"10";
-			}
-			if (PacketAscii1 == L"b") {
-				PacketAscii1 = L"11";
-			}
-			if (PacketAscii1 == L"c") {
-				PacketAscii1 = L"12";
-			}
-			if (PacketAscii1 == L"d") {
-				PacketAscii1 = L"13";
-			}
-			if (PacketAscii1 == L"e") {
-				PacketAscii1 = L"14";
-			}
-			if (PacketAscii1 == L"f") {
-				PacketAscii1 = L"15";
-			}
-
-			if (PacketAscii2 == L"a") {
-				PacketAscii2 = L"10";
-			}
-			if (PacketAscii2 == L"b") {
-				PacketAscii2 = L"11";
-			}
-			if (PacketAscii2 == L"c") {
-				PacketAscii2 = L"12";
-			}
-			if (PacketAscii2 == L"d") {
-				PacketAscii2 = L"13";
-			}
-			if (PacketAscii2 == L"e") {
-				PacketAscii2 = L"14";
-			}
-			if (PacketAscii2 == L"f") {
-				PacketAscii2 = L"15";
-			}
-
-			int ten = _ttoi(PacketAscii1)*16;
-			int one = _ttoi(PacketAscii2);
-
-			int sum = ten + one;
-			ten = 0;
-			one = 0;
-
-			if (sum < 32 || sum>126) {
-				sum = 46;
-			}
-
-			char ascii[4];
-			ascii[0] = (char)sum;
-			if (sum == 46) {
-				sprintf(ascii, "%2c", ascii[0]);
-			}
-			else {
-				sprintf(ascii, "%c", ascii[0]);
-			}
-			convAscii += ascii;
-		}
-
-		PacketDumpList.SetItem(column_count, 3, LVIF_TEXT, convAscii, NULL, NULL, NULL, NULL);
 	}
 }
 
@@ -944,4 +1000,18 @@ int CALLBACK CMFCApplication1Dlg::SortFuncNum(LPARAM lParam1, LPARAM lParam2, LP
 	int numItem2 = _ttoi(pList->GetItemText(irow2, iSortColumn));
 
 	return !bSortDirect ? numItem1 < numItem2 : numItem1 > numItem2;
+}
+
+BOOL CMFCApplication1Dlg::PreTranslateMessage(MSG* pMsg)
+{
+	// TODO: 여기에 특수화된 코드를 추가 및/또는 기본 클래스를 호출합니다.
+
+	if (pMsg->message == WM_KEYDOWN)
+	{
+		if (pMsg->wParam == VK_ESCAPE)
+			return TRUE;
+		else if (pMsg->wParam == VK_RETURN)
+			return TRUE;
+	}
+	return CDialogEx::PreTranslateMessage(pMsg);
 }

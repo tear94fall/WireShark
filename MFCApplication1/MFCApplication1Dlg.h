@@ -110,6 +110,13 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
+	int packet_cnt = 0;
+	int tcp_pkt_cnt = 0;
+	int udp_pkt_cnt = 0;
+	int arp_pkt_cnt = 0;
+	int icmp_pkt_cnt = 0;
+
+
 	NetworkInterfaceDlg netInterfaceDlg;
 	CString m_strSelectedNetworkInterface;
 
@@ -128,7 +135,6 @@ public:
 	CListBox m_HexEditorList;
 	afx_msg void OnBnClickedButton2();
 	afx_msg void OnBnClickedButton3();
-//	CButton puase_button;
 	CButton pause_button;
 	void CMFCApplication1Dlg::ChangeStaticText(int all_pkt_cnt, int tcp_pkt_cnt, int udp_pkt_cnt, int arp_pkt_cnt, int icmp_pkt_cnt);
 	void ClearPacketCnt();
@@ -140,4 +146,6 @@ public:
 	static int CALLBACK SortFuncStr(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 	static int CALLBACK SortFuncNum(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 	CListCtrl PacketDumpList;
+	CEdit m_FilterEditCtrl;
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };

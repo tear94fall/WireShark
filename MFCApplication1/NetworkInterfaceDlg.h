@@ -22,9 +22,23 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 public:
+
+	struct SORTPARAM
+	{
+		int iSrotColumn;
+		bool bSortDirect;
+		CListCtrl* pList;
+	};
+
+
+	BOOL m_bAscending;
+
 	bool CancelButtonClicked = false;
-	int m_nSelectedIndex;
-	CString m_strSelectedValue;
+	int m_nSelectedIndex = -123;
+	CString m_strSelectedValue = L"";
+
+	CString InterfaceName;
+	CString InterfaceDescription;
 
 
 	CListCtrl NetWorkListCtrl;
@@ -35,4 +49,8 @@ public:
 	
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnNMClickList1(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnHdnItemclickList1(NMHDR* pNMHDR, LRESULT* pResult);
+	static int CALLBACK SortFuncStr(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
+	static int CALLBACK SortFuncNum(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };
