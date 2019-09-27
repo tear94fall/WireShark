@@ -168,7 +168,7 @@ BOOL CMFCApplication1Dlg::OnInitDialog()
 
 	LPWSTR column_name[9] = { L"No",L"Time", L"Source", L"Destination", L"Protocol", L"Length", L"Info" ,L"Dump Data" };
 	int count = 0;
-	double column_width[9] = { 0.1,0.1,0.15,0.15,0.075,0.075,0.349,0.3 };
+	double column_width[9] = { 0.1,0.1,0.15,0.15,0.075,0.075,0.349,0 };
 
 	for (int i = 0; i < 8; i++) {
 		add_column.pszText = column_name[i];
