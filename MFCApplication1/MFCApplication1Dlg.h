@@ -148,4 +148,9 @@ public:
 	CListCtrl PacketDumpList;
 	CEdit m_FilterEditCtrl;
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	CString HexToDec(CString _number);
+	CString HexToBinary(CString _number);
+	CString GetTCPFlagToBin(CString _Flag);
+	CString GetTCPFlagToStr(CString _Flag);
+	CString GetTCPFlagToLongStr(CString _Flag);
 };
