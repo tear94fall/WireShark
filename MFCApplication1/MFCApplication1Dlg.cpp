@@ -134,9 +134,8 @@ BOOL CMFCApplication1Dlg::OnInitDialog()
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
 
-
-
-
+	m_strSelectedNetworkInterface = netInterfaceDlg.InterfaceDescription;
+	SetDlgItemText(IDC_STATIC_NET, L"Interface: " + m_strSelectedNetworkInterface);
 
 	CButton* pButton = (CButton*)GetDlgItem(IDC_BUTTON2);
 	pButton->EnableWindow(FALSE);
@@ -311,9 +310,6 @@ UINT CMFCApplication1Dlg::ThreadFunctionFirstTest(LPVOID _mothod) {
 	printf("Enter the interface number (1-%d):", i);
 	//scanf("%d", &inum);
 	inum = pDlg->netInterfaceDlg.m_nSelectedIndex + 1;
-	pDlg->m_strSelectedNetworkInterface = pDlg->netInterfaceDlg.InterfaceDescription;
-
-	pDlg->SetDlgItemText(IDC_STATIC_NET,L"Interface: "+pDlg->m_strSelectedNetworkInterface);
 
 	if (inum < 1 || inum > i) {
 		printf("\nInterface number out of range.\n");
