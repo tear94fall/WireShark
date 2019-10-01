@@ -74,28 +74,15 @@ typedef struct arp_header {
 // CMFCApplication1Dlg 대화 상자
 class CMFCApplication1Dlg : public CDialogEx
 {
-// 생성입니다.
+	// 생성입니다.
 public:
 	CMFCApplication1Dlg(CWnd* pParent = nullptr);	// 표준 생성자입니다.
-
-	enum ThreadWorking {
-		STOP = 0,
-		RUNNING = 1,
-		PAUSE = 2
-	};
-
-	bool m_bThreadStart = false;
-	CWinThread* m_pThread = NULL;
-	ThreadWorking m_ThreadWorkType = STOP;
-
-	static UINT ThreadFunctionFirstTest(LPVOID _mothod);
-
-// 대화 상자 데이터입니다.
+	// 대화 상자 데이터입니다.
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_MFCAPPLICATION1_DIALOG };
 #endif
 
-	protected:
+protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 지원입니다.
 
 
@@ -110,25 +97,34 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
+	enum ThreadWorking {
+		STOP = 0,
+		RUNNING = 1,
+		PAUSE = 2
+	};
+
+	bool m_bThreadStart = false;
+	CWinThread* m_pThread = NULL;
+	ThreadWorking m_ThreadWorkType = STOP;
+
+	static UINT ThreadFunctionFirstTest(LPVOID _mothod);
+
+
 	int packet_cnt = 0;
 	int tcp_pkt_cnt = 0;
 	int udp_pkt_cnt = 0;
 	int arp_pkt_cnt = 0;
 	int icmp_pkt_cnt = 0;
 
-
 	NetworkInterfaceDlg netInterfaceDlg;
 	CString m_strSelectedNetworkInterface;
+	BOOL m_bAscending = false;
 
-	BOOL m_bAscending;
-
-	struct SORTPARAM
-	{
+	struct SORTPARAM{
 		int iSrotColumn;
 		bool bSortDirect;
 		CListCtrl* pList;
 	};
-
 
 	CListCtrl m_ListCtrl;
 	afx_msg void OnBnClickedButton1();
@@ -153,4 +149,10 @@ public:
 	CString GetTCPFlagToBin(CString _Flag);
 	CString GetTCPFlagToStr(CString _Flag);
 	CString GetTCPFlagToLongStr(CString _Flag);
+	void SetData(CString FrameNumber, CString Time, CString Source, CString Destination, CString Protocol, CString Length, CString Info, CString Packet_Dump_Data);
+	CString GetFlagSetNotSet(CString _Flag);
+	CString Calculate4HexNumber(CString num1, CString num2, CString num3, CString num4);
+	CString Calculate2HexNumber(CString num1, CString num2);
+	CString MakeIPAddressV6(CString Aclass, CString Bclass, CString Cclass, CString Dclass, CString Eclass, CString Fclass);
+	CString ChangeHexToAscii(CString HexData);
 };

@@ -68,9 +68,6 @@
     <Image Include="res\MFCApplication1.ico">
       <Filter>리소스 파일</Filter>
     </Image>
-    <Image Include="..\..\..\..\Desktop\78_85257.ico">
-      <Filter>리소스 파일</Filter>
-    </Image>
     <Image Include="res\dolphin.ico">
       <Filter>리소스 파일</Filter>
     </Image>

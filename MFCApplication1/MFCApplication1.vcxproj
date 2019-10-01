@@ -223,7 +223,6 @@
     <None Include="test.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\..\..\..\Desktop\78_85257.ico" />
     <Image Include="res\dolphin.ico" />
     <Image Include="res\MFCApplication1.ico" />
   </ItemGroup>
