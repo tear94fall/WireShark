@@ -976,6 +976,7 @@ void CMFCApplication1Dlg::SetData(CString FrameNumber, CString Time, CString Sou
 	HTREEITEM  PacketDataRoot2 = NULL;
 	HTREEITEM  PacketDataRoot3 = NULL;
 	HTREEITEM  PacketDataRoot4 = NULL;
+	HTREEITEM  PacketDataRoot5 = NULL;
 
 	PacketDataCtrl.DeleteAllItems();
 	PacketDataCtrl.Invalidate();
@@ -1190,14 +1191,20 @@ void CMFCApplication1Dlg::SetData(CString FrameNumber, CString Time, CString Sou
 		CString PacketDataLine4by3 = L"Length: " + Length;
 		CString PacketDataLine4by4 = L"Checksum: 0x" + Packet_Dump_Data.Mid(80, 4);
 
-		HTREEITEM  PacketDataRoot4 = PacketDataCtrl.InsertItem(PacketDataLine4);
+		PacketDataRoot4 = PacketDataCtrl.InsertItem(PacketDataLine4);
 		HTREEITEM  PacketDataRoot4Child1 = PacketDataCtrl.InsertItem(PacketDataLine4by1, PacketDataRoot4);
 		HTREEITEM  PacketDataRoot4Child2 = PacketDataCtrl.InsertItem(PacketDataLine4by2, PacketDataRoot4);
 		HTREEITEM  PacketDataRoot4Child4 = PacketDataCtrl.InsertItem(PacketDataLine4by3, PacketDataRoot4);
 		HTREEITEM  PacketDataRoot4Child5 = PacketDataCtrl.InsertItem(PacketDataLine4by4, PacketDataRoot4);
 
+		CString UDPData = Packet_Dump_Data.Mid(84, _ttoi(Length));
+		CString UDPDataLength = CString(std::to_string(UDPData.GetLength()).c_str());
 
+		CString PacketDataLine5 = L"Data (" + UDPDataLength + " bytes )";
+		CString PacketDataLine5by1 = L"Data :" + UDPData.Mid(0, 40) + L"...";
 
+		PacketDataRoot5 = PacketDataCtrl.InsertItem(PacketDataLine5);
+		HTREEITEM PacketDataRoot5Child1 = PacketDataCtrl.InsertItem(PacketDataLine5by1, PacketDataRoot5);
 
 	}else if (Protocol == L"ARP") {
 		PacketDataLine4 = L"Address Resolution Protocol";
@@ -1263,7 +1270,7 @@ void CMFCApplication1Dlg::SetData(CString FrameNumber, CString Time, CString Sou
 		CString PacketDataLine4by5 = L"Identifier (LE): " + ICMPIdentifierLEDec + L" (0x" + ICMPIdentifierLEHex + L")";
 		CString PacketDataLine4by6 = L"Sequence number (BE): " + ICMPSquenceNumberBEDec + L" (0x" + ICMPSquenceNumberBEHex + L")";
 		CString PacketDataLine4by7 = L"Sequence number (LE): " + ICMPSquenceNumberLEDec + L" (0x" + ICMPSquenceNumberLEHex + L")";
-		CString PacketDataLine4by8 = L"Data (" + ICMPDataLength + ")";
+		CString PacketDataLine4by8 = L"Data (" + ICMPDataLength + " bytes )";
 		CString PacketDataLine4by8by1 = L"Data :" + ICMPData;
 
 		PacketDataRoot4 = PacketDataCtrl.InsertItem(PacketDataLine4);
@@ -1282,6 +1289,7 @@ void CMFCApplication1Dlg::SetData(CString FrameNumber, CString Time, CString Sou
 	PacketDataCtrl.Expand(PacketDataRoot2, TVE_EXPAND);
 	PacketDataCtrl.Expand(PacketDataRoot3, TVE_EXPAND);
 	PacketDataCtrl.Expand(PacketDataRoot4, TVE_EXPAND);
+	PacketDataCtrl.Expand(PacketDataRoot5, TVE_EXPAND);
 
 	PacketDataCtrl.Invalidate();
 	PacketDataCtrl.UpdateWindow();

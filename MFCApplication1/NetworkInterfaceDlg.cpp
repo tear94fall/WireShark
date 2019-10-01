@@ -168,72 +168,7 @@ void NetworkInterfaceDlg::OnHdnItemclickList1(NMHDR* pNMHDR, LRESULT* pResult)
 	for (int i = 0; i < (NetWorkListCtrl.GetItemCount()); i++) {
 		NetWorkListCtrl.SetItemData(i, i);
 	}
-/*
-	if (m_bAscending) {
-		m_bAscending = false;
-	}
-	else {
-		m_bAscending = true;
-	}
-
-	SORTPARAM sortparams;
-	sortparams.pList = &NetWorkListCtrl;
-	sortparams.iSrotColumn = nColumn;
-	sortparams.bSortDirect = m_bAscending;
-
-	if (nColumn == 0 || nColumn == 5) {
-		NetWorkListCtrl.SortItems(&SortFuncNum, (LPARAM)& sortparams);
-	}
-	else {
-		NetWorkListCtrl.SortItems(&SortFuncStr, (LPARAM)& sortparams);
-	}*/
 	*pResult = 0;
-}
-
-
-
-int CALLBACK NetworkInterfaceDlg::SortFuncStr(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
-{
-	CListCtrl* pList = ((SORTPARAM*)lParamSort)->pList;
-	int iSortColumn = ((SORTPARAM*)lParamSort)->iSrotColumn;
-	bool bSortDirect = ((SORTPARAM*)lParamSort)->bSortDirect;
-
-
-	LVFINDINFO info1, info2;
-	info1.flags = LVFI_PARAM;
-	info1.lParam = lParam1;
-	info2.flags = LVFI_PARAM;
-	info2.lParam = lParam2;
-
-	int irow1 = pList->FindItem(&info1, -1);
-	int irow2 = pList->FindItem(&info2, -1);
-
-	CString strItem1 = pList->GetItemText(irow1, iSortColumn);
-	CString strItem2 = pList->GetItemText(irow2, iSortColumn);
-
-	return bSortDirect ? strItem1.Compare(strItem2) : -strItem1.Compare(strItem2);
-}
-
-int CALLBACK NetworkInterfaceDlg::SortFuncNum(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
-{
-	CListCtrl* pList = ((SORTPARAM*)lParamSort)->pList;
-	int iSortColumn = ((SORTPARAM*)lParamSort)->iSrotColumn;
-	bool bSortDirect = ((SORTPARAM*)lParamSort)->bSortDirect;
-
-
-	LVFINDINFO info1, info2;
-	info1.flags = LVFI_PARAM;
-	info1.lParam = lParam1;
-	info2.flags = LVFI_PARAM;
-	info2.lParam = lParam2;
-
-	int irow1 = pList->FindItem(&info1, -1);
-	int irow2 = pList->FindItem(&info2, -1);
-
-	int numItem1 = _ttoi(pList->GetItemText(irow1, iSortColumn));
-	int numItem2 = _ttoi(pList->GetItemText(irow2, iSortColumn));
-
-	return !bSortDirect ? numItem1 < numItem2 : numItem1 > numItem2;
 }
 
 BOOL NetworkInterfaceDlg::PreTranslateMessage(MSG* pMsg)
