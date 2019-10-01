@@ -4,72 +4,19 @@
 
 #pragma once
 #include "NetworkInterfaceDlg.h"
+#include "ProtocolHeader.hpp"
+#include <cstring>
+#include <string>
+#include <thread>
+#include <sstream>
+#include <pcap.h>
+#include <map>
+#include <vector>
+#include <sstream>
+#include <iomanip>
+#include <string>
 
-typedef struct ip_address {
-	u_char byte1;
-	u_char byte2;
-	u_char byte3;
-	u_char byte4;
-}ip_address;
-
-typedef struct ip_header {
-	u_char ver_ihl; // Version (4 bits) + Internet header length (4 bits)  
-	u_char tos; // Type of service   
-	u_short tlen; // Total length   
-	u_short identification; // Identification  
-	u_short flags_fo; // Flags (3 bits) + Fragment offset (13 bits)  
-	u_char ttl; // Time to live  
-	u_char proto; // Protocol  
-	u_short crc; // Header checksum  
-	ip_address saddr; // Source address  
-	ip_address daddr; // Destination address  
-	u_int op_pad; // Option + Padding  
-}ip_header;
-
-typedef struct udp_header {
-	u_short sport;   // Source port  
-	u_short dport;   // Destination port  
-	u_short len;   // Datagram length  
-	u_short crc;   // Checksum  
-}udp_header;
-
-typedef struct ether_header {
-	u_char dst_host[6];
-	u_char src_host[6];
-	u_short frame_type;
-}ether_header;
-
-typedef struct tcp_header {
-	u_short sport; // Source port  
-	u_short dport; // Destination port  
-	u_int seqnum; // Sequence Number  
-	u_int acknum; // Acknowledgement number  
-	u_char hlen; // Header length  
-	u_char flags; // packet flags  
-	u_short win; // Window size  
-	u_short crc; // Header Checksum  
-	u_short urgptr; // Urgent pointer...still don't know what this is...  
-}tcp_header;
-
-typedef struct icmp_header {
-	u_char type;
-	u_char code;
-	u_short checksum;
-	u_short id;
-	u_short seq;
-}icmp_header;
-
-typedef struct arp_header {
-	u_short htype;    /* Hardware Type           */
-	u_short ptype;    /* Protocol Type           */
-	u_char hlen;        /* Hardware Address Length */
-	u_char plen;        /* Protocol Address Length */
-	u_short oper;     /* Operation Code          */
-	u_char sha[6];      /* Sender hardware address */
-	u_char spa[4];      /* Sender IP address       */
-	u_char tha[6];      /* Target hardware address */
-	u_char tpa[4];      /* Target IP address       */
-}arp_header;
+void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_char* pkt_data);
 
 // CMFCApplication1Dlg 대화 상자
 class CMFCApplication1Dlg : public CDialogEx
@@ -103,12 +50,16 @@ public:
 		PAUSE = 2
 	};
 
+	struct SORTPARAM{
+		int iSrotColumn;
+		bool bSortDirect;
+		CListCtrl* pList;
+	};	
+
 	bool m_bThreadStart = false;
 	CWinThread* m_pThread = NULL;
 	ThreadWorking m_ThreadWorkType = STOP;
-
 	static UINT ThreadFunctionFirstTest(LPVOID _mothod);
-
 
 	int packet_cnt = 0;
 	int tcp_pkt_cnt = 0;
@@ -120,39 +71,44 @@ public:
 	CString m_strSelectedNetworkInterface;
 	BOOL m_bAscending = false;
 
-	struct SORTPARAM{
-		int iSrotColumn;
-		bool bSortDirect;
-		CListCtrl* pList;
-	};
+	CString Filter;
 
+	CTreeCtrl PacketDataCtrl;
+	CListCtrl PacketDumpList;
+	CEdit m_FilterEditCtrl;
 	CListCtrl m_ListCtrl;
-	afx_msg void OnBnClickedButton1();
 	CListBox m_HexEditorList;
+	CButton pause_button;
+
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
+
+	afx_msg void OnBnClickedButton1();
 	afx_msg void OnBnClickedButton2();
 	afx_msg void OnBnClickedButton3();
-	CButton pause_button;
-	void CMFCApplication1Dlg::ChangeStaticText(int all_pkt_cnt, int tcp_pkt_cnt, int udp_pkt_cnt, int arp_pkt_cnt, int icmp_pkt_cnt);
-	void ClearPacketCnt();
-	CString GetIPAddr(ip_address ip_addr);
+	afx_msg void OnBnClickedButton4();
+
 	afx_msg void OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnNMDblclkList2(NMHDR* pNMHDR, LRESULT* pResult);
-	CTreeCtrl PacketDataCtrl;
 	afx_msg void OnHdnItemclick(NMHDR* pNMHDR, LRESULT* Result);
 	static int CALLBACK SortFuncStr(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 	static int CALLBACK SortFuncNum(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
-	CListCtrl PacketDumpList;
-	CEdit m_FilterEditCtrl;
-	virtual BOOL PreTranslateMessage(MSG* pMsg);
+
+	void ChangeStaticText(int all_pkt_cnt, int tcp_pkt_cnt, int udp_pkt_cnt, int arp_pkt_cnt, int icmp_pkt_cnt);
+	void ClearPacketCnt();
+	void SetData(CString FrameNumber, CString Time, CString Source, CString Destination, CString Protocol, CString Length, CString Info, CString Packet_Dump_Data);
+	std::string GetCurrentTimeStr();
+
 	CString HexToDec(CString _number);
 	CString HexToBinary(CString _number);
 	CString GetTCPFlagToBin(CString _Flag);
 	CString GetTCPFlagToStr(CString _Flag);
 	CString GetTCPFlagToLongStr(CString _Flag);
-	void SetData(CString FrameNumber, CString Time, CString Source, CString Destination, CString Protocol, CString Length, CString Info, CString Packet_Dump_Data);
+	CString GetIPAddr(ip_address ip_addr);
 	CString GetFlagSetNotSet(CString _Flag);
 	CString Calculate4HexNumber(CString num1, CString num2, CString num3, CString num4);
 	CString Calculate2HexNumber(CString num1, CString num2);
 	CString MakeIPAddressV6(CString Aclass, CString Bclass, CString Cclass, CString Dclass, CString Eclass, CString Fclass);
 	CString ChangeHexToAscii(CString HexData);
+	CString ArpOpcde(CString OpcodeNumber);
+	CString ArpHardwareType(CString HardwareTypeNumber);
 };

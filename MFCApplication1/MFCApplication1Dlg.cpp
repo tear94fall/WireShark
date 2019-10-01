@@ -8,24 +8,12 @@
 #include "MFCApplication1Dlg.h"
 #include "afxdialogex.h"
 #include "Resource.h"
-#include "NetworkInterfaceDlg.h"
-
-#include <thread>
-#include <sstream>
-#include <pcap.h>
-#include <map>
-#include <vector>
-#include <sstream>
-#include <iomanip>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
 // 응용 프로그램 정보에 사용되는 CAboutDlg 대화 상자입니다.
-void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_char* pkt_data);
-std::string GetCurrentTimeStr(void);
-
 class CAboutDlg : public CDialogEx
 {
 public:
@@ -88,6 +76,7 @@ BEGIN_MESSAGE_MAP(CMFCApplication1Dlg, CDialogEx)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST2, &CMFCApplication1Dlg::OnNMDblclkList2)
 	ON_NOTIFY(HDN_ITEMCLICK, 0, &CMFCApplication1Dlg::OnHdnItemclick)
 //	ON_NOTIFY(NM_CUSTOMDRAW, IDC_LIST1, &CMFCApplication1Dlg::OnNMCustomdrawList1)
+ON_BN_CLICKED(IDC_BUTTON4, &CMFCApplication1Dlg::OnBnClickedButton4)
 END_MESSAGE_MAP()
 
 
@@ -372,8 +361,8 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 			column_count_str.Format(_T("%d"), column_count + 1);
 			pDlg->m_ListCtrl.InsertItem(column_count, column_count_str);
 
-
-			pDlg->m_ListCtrl.SetItem(column_count, 1, LVIF_TEXT, CString(GetCurrentTimeStr().c_str()), NULL, NULL, NULL, NULL);
+			pDlg->GetCurrentTimeStr();
+			pDlg->m_ListCtrl.SetItem(column_count, 1, LVIF_TEXT, CString(pDlg->GetCurrentTimeStr().c_str()), NULL, NULL, NULL, NULL);
 			pDlg->m_ListCtrl.SetItem(column_count, 2, LVIF_TEXT, source_ip, NULL, NULL, NULL, NULL);
 			pDlg->m_ListCtrl.SetItem(column_count, 3, LVIF_TEXT, destionation_ip, NULL, NULL, NULL, NULL);
 			pDlg->m_ListCtrl.SetItem(column_count, 4, LVIF_TEXT, _T("TCP"), NULL, NULL, NULL, NULL);
@@ -405,7 +394,7 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 			column_count_str.Format(_T("%d"), column_count + 1);
 			pDlg->m_ListCtrl.InsertItem(column_count, column_count_str);
 
-			pDlg->m_ListCtrl.SetItem(column_count, 1, LVIF_TEXT, CString(GetCurrentTimeStr().c_str()), NULL, NULL, NULL, NULL);
+			pDlg->m_ListCtrl.SetItem(column_count, 1, LVIF_TEXT, CString(pDlg->GetCurrentTimeStr().c_str()), NULL, NULL, NULL, NULL);
 			pDlg->m_ListCtrl.SetItem(column_count, 2, LVIF_TEXT, source_ip, NULL, NULL, NULL, NULL);
 			pDlg->m_ListCtrl.SetItem(column_count, 3, LVIF_TEXT, destionation_ip, NULL, NULL, NULL, NULL);
 			pDlg->m_ListCtrl.SetItem(column_count, 4, LVIF_TEXT, _T("UDP"), NULL, NULL, NULL, NULL);
@@ -433,7 +422,7 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 			column_count_str.Format(_T("%d"), column_count + 1);
 			pDlg->m_ListCtrl.InsertItem(column_count, column_count_str);
 
-			pDlg->m_ListCtrl.SetItem(column_count, 1, LVIF_TEXT, CString(GetCurrentTimeStr().c_str()), NULL, NULL, NULL, NULL);
+			pDlg->m_ListCtrl.SetItem(column_count, 1, LVIF_TEXT, CString(pDlg->GetCurrentTimeStr().c_str()), NULL, NULL, NULL, NULL);
 			pDlg->m_ListCtrl.SetItem(column_count, 2, LVIF_TEXT, source_ip, NULL, NULL, NULL, NULL);
 			pDlg->m_ListCtrl.SetItem(column_count, 3, LVIF_TEXT, destionation_ip, NULL, NULL, NULL, NULL);
 			pDlg->m_ListCtrl.SetItem(column_count, 4, LVIF_TEXT, _T("ICMP"), NULL, NULL, NULL, NULL);
@@ -504,7 +493,7 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 	target_hw_adr += target_hw_addr;
 
 
-	pDlg->m_ListCtrl.SetItem(column_count, 1, LVIF_TEXT, CString(GetCurrentTimeStr().c_str()), NULL, NULL, NULL, NULL);
+	pDlg->m_ListCtrl.SetItem(column_count, 1, LVIF_TEXT, CString(pDlg->GetCurrentTimeStr().c_str()), NULL, NULL, NULL, NULL);
 	pDlg->m_ListCtrl.SetItem(column_count, 2, LVIF_TEXT, source_ip, NULL, NULL, NULL, NULL);
 	pDlg->m_ListCtrl.SetItem(column_count, 3, LVIF_TEXT, destionation_ip, NULL, NULL, NULL, NULL);
 	pDlg->m_ListCtrl.SetItem(column_count, 4, LVIF_TEXT, _T("ARP"), NULL, NULL, NULL, NULL);
@@ -611,7 +600,7 @@ void CMFCApplication1Dlg::OnBnClickedButton3()
 }
 
 
-std::string GetCurrentTimeStr(void) {
+std::string CMFCApplication1Dlg::GetCurrentTimeStr() {
 	time_t     tm_time;
 	struct tm* st_time;
 	char       buff[1024];
@@ -1018,8 +1007,21 @@ void CMFCApplication1Dlg::SetData(CString FrameNumber, CString Time, CString Sou
 	CString PakcetDataLine2by2 = L"Source: " + Source_addr;
 
 	// IPv6 일때 작동하도록 수정
-	CString PakcetDataLine2by3 = L"Type: IPv4 (0x" + Packet_Dump_Data.Mid(24, 2) + L")";
-	CString PakcetDataLine2by4 = L"Padding: " + Packet_Dump_Data.Mid(108, 12);
+	CString Type = Packet_Dump_Data.Mid(24, 4);
+	CString TypeName;
+	CString Padding;
+	if (Type == L"0800") {
+		TypeName = L"IPv4";
+		Padding = Packet_Dump_Data.Mid(108, 12);
+	}
+	else if (Type == L"0806") {
+		TypeName = L"ARP";
+		Padding = Packet_Dump_Data.Mid(84, 36);
+	}
+	CString PakcetDataLine2by3 = L"Type: "+ TypeName+ L" (0x" + Type + L")";
+
+
+	CString PakcetDataLine2by4 = L"Padding: " + Padding;
 
 	CString ipVersion = Packet_Dump_Data.Mid(28, 1);
 	CString headerLength = Packet_Dump_Data.Mid(29, 1);
@@ -1069,7 +1071,6 @@ void CMFCApplication1Dlg::SetData(CString FrameNumber, CString Time, CString Sou
 	if (Length == L"60") {
 		HTREEITEM PacketDataRoot2Child4 = PacketDataCtrl.InsertItem(PakcetDataLine2by4, PacketDataRoot2);
 	}
-
 	// Line 3
 	PacketDataRoot3 = PacketDataCtrl.InsertItem(PacketDataLine3);
 	HTREEITEM PacketDataRoot3Child1 = PacketDataCtrl.InsertItem(PacketDataLine3by1, PacketDataRoot3);
@@ -1194,10 +1195,87 @@ void CMFCApplication1Dlg::SetData(CString FrameNumber, CString Time, CString Sou
 		HTREEITEM  PacketDataRoot4Child2 = PacketDataCtrl.InsertItem(PacketDataLine4by2, PacketDataRoot4);
 		HTREEITEM  PacketDataRoot4Child4 = PacketDataCtrl.InsertItem(PacketDataLine4by3, PacketDataRoot4);
 		HTREEITEM  PacketDataRoot4Child5 = PacketDataCtrl.InsertItem(PacketDataLine4by4, PacketDataRoot4);
+
+
+
+
 	}else if (Protocol == L"ARP") {
+		PacketDataLine4 = L"Address Resolution Protocol";
+
+		CString HardwareTypeNumber = Calculate4HexNumber(Packet_Dump_Data.Mid(28, 1), Packet_Dump_Data.Mid(29, 1), Packet_Dump_Data.Mid(30, 1), Packet_Dump_Data.Mid(31, 1));
+		CString HardwareTypeStr = ArpHardwareType(HardwareTypeNumber);
+		CString ProtocolType = Packet_Dump_Data.Mid(32, 4);
+		CString HardwareSize= Calculate2HexNumber(Packet_Dump_Data.Mid(36, 1), Packet_Dump_Data.Mid(37, 1));
+		CString ProtocolSize = Calculate2HexNumber(Packet_Dump_Data.Mid(38, 1), Packet_Dump_Data.Mid(39, 1));
+		CString OpCodeNumber = Calculate4HexNumber(Packet_Dump_Data.Mid(40, 1), Packet_Dump_Data.Mid(41, 1), Packet_Dump_Data.Mid(42, 1), Packet_Dump_Data.Mid(43, 1));
+		CString OpCodeStr = ArpOpcde(OpCodeNumber);
+		CString SenderMacAddr = MakeIPAddressV6(Packet_Dump_Data.Mid(44, 2), Packet_Dump_Data.Mid(46, 2), Packet_Dump_Data.Mid(48, 2), Packet_Dump_Data.Mid(50, 2), Packet_Dump_Data.Mid(52, 2), Packet_Dump_Data.Mid(54, 2));
+		CString SenderIpAddr = Source;
+		CString TargetMacAddr = MakeIPAddressV6(Packet_Dump_Data.Mid(64, 2), Packet_Dump_Data.Mid(66, 2), Packet_Dump_Data.Mid(68, 2), Packet_Dump_Data.Mid(70, 2), Packet_Dump_Data.Mid(72, 2), Packet_Dump_Data.Mid(74, 2));;
+		CString TargetIpAddr = Destination;
+
+		CString PacketDataLine4by1 = L"Hardware type: "+ HardwareTypeStr +L" (" + HardwareTypeNumber + L")";
+		CString PacketDataLine4by2 = L"Protocol type: IPv4 (0x" + ProtocolType + L")";
+		CString PacketDataLine4by3 = L"Hardware size: " + HardwareSize;
+		CString PacketDataLine4by4 = L"Protocol size: " + ProtocolSize;
+		CString PacketDataLine4by5 = L"Opcode: " + OpCodeStr + L" (" + OpCodeNumber + L")";
+		CString PacketDataLine4by6 = L"Sender MAC address: " + SenderMacAddr;
+		CString PacketDataLine4by7 = L"Sender IP address: " + SenderIpAddr;
+		CString PacketDataLine4by8 = L"Target MAC address: " + TargetMacAddr;
+		CString PacketDataLine4by9 = L"Target IP address: " + TargetIpAddr;
+
+		PacketDataRoot4 = PacketDataCtrl.InsertItem(PacketDataLine4);
+		HTREEITEM PacketDataRoot4Child1 = PacketDataCtrl.InsertItem(PacketDataLine4by1, PacketDataRoot4);
+		HTREEITEM PacketDataRoot4Child2 = PacketDataCtrl.InsertItem(PacketDataLine4by2, PacketDataRoot4);
+		HTREEITEM PacketDataRoot4Child3 = PacketDataCtrl.InsertItem(PacketDataLine4by3, PacketDataRoot4);
+		HTREEITEM PacketDataRoot4Child4 = PacketDataCtrl.InsertItem(PacketDataLine4by4, PacketDataRoot4);
+		HTREEITEM PacketDataRoot4Child5 = PacketDataCtrl.InsertItem(PacketDataLine4by5, PacketDataRoot4);
+		HTREEITEM PacketDataRoot4Child6 = PacketDataCtrl.InsertItem(PacketDataLine4by6, PacketDataRoot4);
+		HTREEITEM PacketDataRoot4Child7 = PacketDataCtrl.InsertItem(PacketDataLine4by7, PacketDataRoot4);
+		HTREEITEM PacketDataRoot4Child8 = PacketDataCtrl.InsertItem(PacketDataLine4by8, PacketDataRoot4);
+		HTREEITEM PacketDataRoot4Child9 = PacketDataCtrl.InsertItem(PacketDataLine4by9, PacketDataRoot4);
 
 	}else if (Protocol == L"ICMP") {
+		PacketDataLine4 = L"Ineternet Control Message Protocol";
 
+		CString ICMPType = Calculate2HexNumber(Packet_Dump_Data.Mid(68, 1), Packet_Dump_Data.Mid(69, 1));
+		CString ICMPCode = Calculate2HexNumber(Packet_Dump_Data.Mid(70, 1), Packet_Dump_Data.Mid(71, 1));
+		CString ICMPChecksum = Packet_Dump_Data.Mid(72, 4);
+
+		CString ICMPIdentifierBEDec = Calculate4HexNumber(Packet_Dump_Data.Mid(76, 1), Packet_Dump_Data.Mid(77, 1), Packet_Dump_Data.Mid(78, 1), Packet_Dump_Data.Mid(79, 1));
+		CString ICMPIdentifierBEHex = Packet_Dump_Data.Mid(76, 4);
+
+		CString ICMPIdentifierLEDec = Calculate4HexNumber(Packet_Dump_Data.Mid(78, 1), Packet_Dump_Data.Mid(79, 1), Packet_Dump_Data.Mid(76, 1), Packet_Dump_Data.Mid(77, 1));
+		CString ICMPIdentifierLEHex = Packet_Dump_Data.Mid(78, 2)+ Packet_Dump_Data.Mid(76, 2);
+
+		CString ICMPSquenceNumberBEDec = Calculate4HexNumber(Packet_Dump_Data.Mid(80, 1), Packet_Dump_Data.Mid(81, 1), Packet_Dump_Data.Mid(82, 1), Packet_Dump_Data.Mid(83, 1));
+		CString ICMPSquenceNumberBEHex = Packet_Dump_Data.Mid(80, 4);
+
+		CString ICMPSquenceNumberLEDec = Calculate4HexNumber(Packet_Dump_Data.Mid(82, 1), Packet_Dump_Data.Mid(83, 1), Packet_Dump_Data.Mid(80, 1), Packet_Dump_Data.Mid(81, 1));
+		CString ICMPSquenceNumberLEHex = Packet_Dump_Data.Mid(82, 2) + Packet_Dump_Data.Mid(80, 2);
+		CString ICMPData = Packet_Dump_Data.Mid(84, _ttoi(Length));
+		CString ICMPDataLength = CString(std::to_string(ICMPData.GetLength()).c_str());
+
+		CString PacketDataLine4by1 = L"Type: " + ICMPType;
+		CString PacketDataLine4by2 = L"Code: " + ICMPCode;
+		CString PacketDataLine4by3 = L"Checksum: " + ICMPChecksum;
+		CString PacketDataLine4by4 = L"Identifier (BE): " + ICMPIdentifierBEDec + L" (0x" + ICMPIdentifierBEHex + L")";
+		CString PacketDataLine4by5 = L"Identifier (LE): " + ICMPIdentifierLEDec + L" (0x" + ICMPIdentifierLEHex + L")";
+		CString PacketDataLine4by6 = L"Sequence number (BE): " + ICMPSquenceNumberBEDec + L" (0x" + ICMPSquenceNumberBEHex + L")";
+		CString PacketDataLine4by7 = L"Sequence number (LE): " + ICMPSquenceNumberLEDec + L" (0x" + ICMPSquenceNumberLEHex + L")";
+		CString PacketDataLine4by8 = L"Data (" + ICMPDataLength + ")";
+		CString PacketDataLine4by8by1 = L"Data :" + ICMPData;
+
+		PacketDataRoot4 = PacketDataCtrl.InsertItem(PacketDataLine4);
+		HTREEITEM PacketDataRoot4Child1 = PacketDataCtrl.InsertItem(PacketDataLine4by1, PacketDataRoot4);
+		HTREEITEM PacketDataRoot4Child2 = PacketDataCtrl.InsertItem(PacketDataLine4by2, PacketDataRoot4);
+		HTREEITEM PacketDataRoot4Child3 = PacketDataCtrl.InsertItem(PacketDataLine4by3, PacketDataRoot4);
+		HTREEITEM PacketDataRoot4Child4 = PacketDataCtrl.InsertItem(PacketDataLine4by4, PacketDataRoot4);
+		HTREEITEM PacketDataRoot4Child5 = PacketDataCtrl.InsertItem(PacketDataLine4by5, PacketDataRoot4);
+		HTREEITEM PacketDataRoot4Child6 = PacketDataCtrl.InsertItem(PacketDataLine4by6, PacketDataRoot4);
+		HTREEITEM PacketDataRoot4Child7 = PacketDataCtrl.InsertItem(PacketDataLine4by7, PacketDataRoot4);
+		HTREEITEM PacketDataRoot4Child8 = PacketDataCtrl.InsertItem(PacketDataLine4by8, PacketDataRoot4);
+		HTREEITEM PacketDataRoot4Child8Child1 = PacketDataCtrl.InsertItem(PacketDataLine4by8by1, PacketDataRoot4Child8);
 	}
 
 	PacketDataCtrl.Expand(PacketDataRoot1, TVE_EXPAND);
@@ -1244,41 +1322,64 @@ CString CMFCApplication1Dlg::MakeIPAddressV6(CString Aclass, CString Bclass, CSt
 CString CMFCApplication1Dlg::ChangeHexToAscii(CString HexData) {
 	if (HexData == L"a") {
 		HexData = L"10";
-	}
-	if (HexData == L"b") {
+	}else if (HexData == L"b") {
 		HexData = L"11";
-	}
-	if (HexData == L"c") {
+	}else if (HexData == L"c") {
 		HexData = L"12";
-	}
-	if (HexData == L"d") {
+	}else if (HexData == L"d") {
 		HexData = L"13";
-	}
-	if (HexData == L"e") {
+	}else if (HexData == L"e") {
 		HexData = L"14";
-	}
-	if (HexData == L"f") {
+	}else if (HexData == L"f") {
 		HexData = L"15";
 	}
 
 	if (HexData == L"a") {
 		HexData = L"10";
-	}
-	if (HexData == L"b") {
+	}else if (HexData == L"b") {
 		HexData = L"11";
-	}
-	if (HexData == L"c") {
+	}else if (HexData == L"c") {
 		HexData = L"12";
-	}
-	if (HexData == L"d") {
+	}else if (HexData == L"d") {
 		HexData = L"13";
-	}
-	if (HexData == L"e") {
+	}else if (HexData == L"e") {
 		HexData = L"14";
-	}
-	if (HexData == L"f") {
+	}else if (HexData == L"f") {
 		HexData = L"15";
 	}
 
 	return HexData;
+}
+
+void CMFCApplication1Dlg::OnBnClickedButton4()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	UpdateData(TRUE);
+	GetDlgItemText(IDC_EDIT1, Filter);
+}
+
+CString CMFCApplication1Dlg::ArpOpcde(CString OpcodeNumber) {
+	CString OpcodeStr = L"";
+	if (OpcodeNumber.Compare(L"1") == 0) {
+		OpcodeStr = "Request";
+	}else if (OpcodeNumber.Compare(L"2") == 0) {
+		OpcodeStr = "Reply";
+	}
+	return OpcodeStr;
+}
+
+CString CMFCApplication1Dlg::ArpHardwareType(CString HardwareTypeNumber) {
+	CString HardwareTypeStr = L"";
+	if (HardwareTypeNumber.Compare(L"1") == 0) {
+		HardwareTypeStr = "Ethernet";
+	}else if (HardwareTypeNumber.Compare(L"2") == 0) {
+		HardwareTypeStr = "Experimental Ethernet";
+	}else if (HardwareTypeNumber.Compare(L"3") == 0) {
+		HardwareTypeStr = "Amateur Radio";
+	}else if (HardwareTypeNumber.Compare(L"4") == 0) {
+		HardwareTypeStr = "Proteon ProNet Token Ring";
+	}else if (HardwareTypeNumber.Compare(L"5") == 0) {
+		HardwareTypeStr = "IEEE 802.3 networks";
+	}
+	return HardwareTypeStr;
 }

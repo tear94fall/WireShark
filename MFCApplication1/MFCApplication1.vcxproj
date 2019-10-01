@@ -201,6 +201,7 @@
     <ClInclude Include="MFCApplication1Dlg.h" />
     <ClInclude Include="NetworkInterfaceDlg.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="ProtocolHeader.hpp" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
@@ -220,7 +221,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="res\MFCApplication1.rc2" />
-    <None Include="test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\dolphin.ico" />

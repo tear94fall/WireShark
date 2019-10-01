@@ -36,6 +36,9 @@
     <ClInclude Include="NetworkInterfaceDlg.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="ProtocolHeader.hpp">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MFCApplication1.cpp">
@@ -59,9 +62,6 @@
   <ItemGroup>
     <None Include="res\MFCApplication1.rc2">
       <Filter>리소스 파일</Filter>
-    </None>
-    <None Include="test.cpp">
-      <Filter>소스 파일</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
