@@ -1241,7 +1241,7 @@ CString CMFCApplication1Dlg::MakeIPAddressV6(CString Aclass, CString Bclass, CSt
 	return Aclass + L":" + Bclass + L":" + Cclass + L":" + Dclass + L":" + Eclass + L":" + Fclass;
 }
 
-CString ChangeHexToAscii(CString HexData) {
+CString CMFCApplication1Dlg::ChangeHexToAscii(CString HexData) {
 	if (HexData == L"a") {
 		HexData = L"10";
 	}
@@ -1279,4 +1279,6 @@ CString ChangeHexToAscii(CString HexData) {
 	if (HexData == L"f") {
 		HexData = L"15";
 	}
+
+	return HexData;
 }
