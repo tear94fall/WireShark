@@ -15,6 +15,7 @@
 #include <sstream>
 #include <iomanip>
 #include <string>
+#include <afxmt.h>
 
 void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_char* pkt_data);
 
@@ -72,6 +73,7 @@ public:
 	BOOL m_bAscending = false;
 
 	CString Filter;
+	bool IsFilterApply = false;
 
 	CTreeCtrl PacketDataCtrl;
 	CListCtrl PacketDumpList;

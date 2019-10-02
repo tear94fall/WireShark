@@ -133,7 +133,7 @@ BOOL CMFCApplication1Dlg::OnInitDialog()
 
 	SetWindowText(_T("Wire Dolphin "));
 
-	m_FilterEditCtrl.SetWindowTextW(L"Enter filters...");
+	m_FilterEditCtrl.SetWindowTextW(L"Enter Filter....");
 
 	CRect rt;
 	m_ListCtrl.GetWindowRect(&rt);
@@ -347,10 +347,116 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 
 	int size = sizeof(pkt_data);
 
-	if (ntohs(ethhdr->frame_type) == 0x0800) {
-		if (ih->proto == IPPROTO_TCP) {
-			// TCP
-			th = (tcp_header*)((u_char*)ih + ip_len);
+	if (!pDlg->IsFilterApply) {
+		if (ntohs(ethhdr->frame_type) == 0x0800) {
+			if (ih->proto == IPPROTO_TCP) {
+				// TCP
+				th = (tcp_header*)((u_char*)ih + ip_len);
+
+				CString source_ip = pDlg->GetIPAddr(ih->saddr);
+				CString destionation_ip = pDlg->GetIPAddr(ih->daddr);
+
+				int column_count = pDlg->m_ListCtrl.GetItemCount();
+
+				CString column_count_str;
+				column_count_str.Format(_T("%d"), column_count + 1);
+				pDlg->m_ListCtrl.InsertItem(column_count, column_count_str);
+
+				pDlg->m_ListCtrl.SetItem(column_count, 1, LVIF_TEXT, CString(pDlg->GetCurrentTimeStr().c_str()), NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 2, LVIF_TEXT, source_ip, NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 3, LVIF_TEXT, destionation_ip, NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 4, LVIF_TEXT, _T("TCP"), NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 5, LVIF_TEXT, (CString)(std::to_string(header->caplen).c_str()), NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 6, LVIF_TEXT, (CString)(std::to_string(htons(th->sport)).c_str())
+					+ " -> " +
+					(CString)(std::to_string(ntohs(th->dport)).c_str())
+					, NULL, NULL, NULL, NULL);
+
+				++pDlg->tcp_pkt_cnt;
+				++pDlg->packet_cnt;
+
+				pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
+			} else if (ih->proto == 4) {
+				printf("IP\n");
+			} else if (ih->proto == IPPROTO_UDP) {
+				// UDP
+
+				uh = (udp_header*)((u_char*)ih + ip_len);
+
+				CString source_ip = pDlg->GetIPAddr(ih->saddr);
+				CString destionation_ip = pDlg->GetIPAddr(ih->daddr);
+
+				int column_count = pDlg->m_ListCtrl.GetItemCount();
+
+				CString column_count_str;
+				column_count_str.Format(_T("%d"), column_count + 1);
+				pDlg->m_ListCtrl.InsertItem(column_count, column_count_str);
+
+				pDlg->m_ListCtrl.SetItem(column_count, 1, LVIF_TEXT, CString(pDlg->GetCurrentTimeStr().c_str()), NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 2, LVIF_TEXT, source_ip, NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 3, LVIF_TEXT, destionation_ip, NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 4, LVIF_TEXT, _T("UDP"), NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 5, LVIF_TEXT, (CString)(std::to_string(header->caplen).c_str()), NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 6, LVIF_TEXT, (CString)(std::to_string(htons(uh->sport)).c_str())
+					+ " -> " +
+					(CString)(std::to_string(ntohs(uh->dport)).c_str())
+					, NULL, NULL, NULL, NULL);
+
+				++pDlg->udp_pkt_cnt;
+				++pDlg->packet_cnt;
+				pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
+			} else if (ih->proto == IPPROTO_ICMP) {
+				// ICMP
+
+				icmp_hdr = (icmp_header*)(ih + ip_len);
+
+				CString source_ip = pDlg->GetIPAddr(ih->saddr);
+				CString destionation_ip = pDlg->GetIPAddr(ih->daddr);
+
+				int column_count = pDlg->m_ListCtrl.GetItemCount();
+
+				CString column_count_str;
+				column_count_str.Format(_T("%d"), column_count + 1);
+				pDlg->m_ListCtrl.InsertItem(column_count, column_count_str);
+
+				pDlg->m_ListCtrl.SetItem(column_count, 1, LVIF_TEXT, CString(pDlg->GetCurrentTimeStr().c_str()), NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 2, LVIF_TEXT, source_ip, NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 3, LVIF_TEXT, destionation_ip, NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 4, LVIF_TEXT, _T("ICMP"), NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 5, LVIF_TEXT, (CString)(std::to_string(header->caplen).c_str()), NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 6, LVIF_TEXT, (CString)(std::to_string(icmp_hdr->code).c_str())
+					, NULL, NULL, NULL, NULL);
+
+
+				++pDlg->icmp_pkt_cnt;
+				++pDlg->packet_cnt;
+				pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
+			} else {
+				printf("Unknown Protocol\n");
+				unsigned char temp = ih->proto;
+
+			}
+
+			pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
+
+			int nCount = pDlg->m_ListCtrl.GetItemCount();
+			pDlg->m_ListCtrl.EnsureVisible(nCount - 1, FALSE);
+
+
+			std::string packet_dump_data;
+
+			for (i = 1; (i < header->caplen + 1); i++) {
+				char* temp = NULL;
+
+				int temp2 = pkt_data[i - 1];
+
+				std::stringstream stream;
+				stream << std::hex << temp2;
+				packet_dump_data += stream.str() + " ";
+
+			}
+		} else if (ntohs(ethhdr->frame_type) == 0x0806) {
+			arp_hdr = (struct arp_header*)(pkt_data + 14);
 
 			CString source_ip = pDlg->GetIPAddr(ih->saddr);
 			CString destionation_ip = pDlg->GetIPAddr(ih->daddr);
@@ -361,170 +467,58 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 			column_count_str.Format(_T("%d"), column_count + 1);
 			pDlg->m_ListCtrl.InsertItem(column_count, column_count_str);
 
-			pDlg->GetCurrentTimeStr();
-			pDlg->m_ListCtrl.SetItem(column_count, 1, LVIF_TEXT, CString(pDlg->GetCurrentTimeStr().c_str()), NULL, NULL, NULL, NULL);
-			pDlg->m_ListCtrl.SetItem(column_count, 2, LVIF_TEXT, source_ip, NULL, NULL, NULL, NULL);
-			pDlg->m_ListCtrl.SetItem(column_count, 3, LVIF_TEXT, destionation_ip, NULL, NULL, NULL, NULL);
-			pDlg->m_ListCtrl.SetItem(column_count, 4, LVIF_TEXT, _T("TCP"), NULL, NULL, NULL, NULL);
-			pDlg->m_ListCtrl.SetItem(column_count, 5, LVIF_TEXT, (CString)(std::to_string(header->caplen).c_str()), NULL, NULL, NULL, NULL);
-			pDlg->m_ListCtrl.SetItem(column_count, 6, LVIF_TEXT, (CString)(std::to_string(htons(th->sport)).c_str())
-				+ " -> " +
-				(CString)(std::to_string(ntohs(th->dport)).c_str())
-				, NULL, NULL, NULL, NULL);
+			char soure_hw_addr[4];
+			char target_hw_addr[4];
 
-			++pDlg->tcp_pkt_cnt;
-			++pDlg->packet_cnt;
+			CString sender_hw_addr, target_hw_adr;
+			for (int i = 0; i < 5; i++) {
+				sprintf(soure_hw_addr, "%02x:", arp_hdr->sha[i]);
+				sender_hw_addr += soure_hw_addr;
 
-			pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
-		}
-		else if (ih->proto == 4) {
-			printf("IP\n");
-		}
-		else if (ih->proto == IPPROTO_UDP) {
-			// UDP
+				sprintf(target_hw_addr, "%02x:", arp_hdr->tha[i]);
+				target_hw_adr += target_hw_addr;
+			}
 
-			uh = (udp_header*)((u_char*)ih + ip_len);
+			sprintf(soure_hw_addr, "%02x", arp_hdr->sha[5]);
+			sender_hw_addr += soure_hw_addr;
 
-			CString source_ip = pDlg->GetIPAddr(ih->saddr);
-			CString destionation_ip = pDlg->GetIPAddr(ih->daddr);
+			sprintf(target_hw_addr, "%02x", arp_hdr->tha[5]);
+			target_hw_adr += target_hw_addr;
 
-			int column_count = pDlg->m_ListCtrl.GetItemCount();
-
-			CString column_count_str;
-			column_count_str.Format(_T("%d"), column_count + 1);
-			pDlg->m_ListCtrl.InsertItem(column_count, column_count_str);
 
 			pDlg->m_ListCtrl.SetItem(column_count, 1, LVIF_TEXT, CString(pDlg->GetCurrentTimeStr().c_str()), NULL, NULL, NULL, NULL);
 			pDlg->m_ListCtrl.SetItem(column_count, 2, LVIF_TEXT, source_ip, NULL, NULL, NULL, NULL);
 			pDlg->m_ListCtrl.SetItem(column_count, 3, LVIF_TEXT, destionation_ip, NULL, NULL, NULL, NULL);
-			pDlg->m_ListCtrl.SetItem(column_count, 4, LVIF_TEXT, _T("UDP"), NULL, NULL, NULL, NULL);
+			pDlg->m_ListCtrl.SetItem(column_count, 4, LVIF_TEXT, _T("ARP"), NULL, NULL, NULL, NULL);
 			pDlg->m_ListCtrl.SetItem(column_count, 5, LVIF_TEXT, (CString)(std::to_string(header->caplen).c_str()), NULL, NULL, NULL, NULL);
-			pDlg->m_ListCtrl.SetItem(column_count, 6, LVIF_TEXT, (CString)(std::to_string(htons(uh->sport)).c_str())
-				+ " -> " +
-				(CString)(std::to_string(ntohs(uh->dport)).c_str())
-				, NULL, NULL, NULL, NULL);
 
-			++pDlg->udp_pkt_cnt;
+			// Info는 프로토콜 마다 달라야함
+			pDlg->m_ListCtrl.SetItem(column_count, 6, LVIF_TEXT, sender_hw_addr + L" -> " + target_hw_adr, NULL, NULL, NULL, NULL);
+
+
+			++pDlg->arp_pkt_cnt;
 			++pDlg->packet_cnt;
 			pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
 		}
-		else if (ih->proto == IPPROTO_ICMP) {
-			// ICMP
-
-			icmp_hdr = (icmp_header*)(ih + ip_len);
-
-			CString source_ip = pDlg->GetIPAddr(ih->saddr);
-			CString destionation_ip = pDlg->GetIPAddr(ih->daddr);
-
-			int column_count = pDlg->m_ListCtrl.GetItemCount();
-
-			CString column_count_str;
-			column_count_str.Format(_T("%d"), column_count + 1);
-			pDlg->m_ListCtrl.InsertItem(column_count, column_count_str);
-
-			pDlg->m_ListCtrl.SetItem(column_count, 1, LVIF_TEXT, CString(pDlg->GetCurrentTimeStr().c_str()), NULL, NULL, NULL, NULL);
-			pDlg->m_ListCtrl.SetItem(column_count, 2, LVIF_TEXT, source_ip, NULL, NULL, NULL, NULL);
-			pDlg->m_ListCtrl.SetItem(column_count, 3, LVIF_TEXT, destionation_ip, NULL, NULL, NULL, NULL);
-			pDlg->m_ListCtrl.SetItem(column_count, 4, LVIF_TEXT, _T("ICMP"), NULL, NULL, NULL, NULL);
-			pDlg->m_ListCtrl.SetItem(column_count, 5, LVIF_TEXT, (CString)(std::to_string(header->caplen).c_str()), NULL, NULL, NULL, NULL);
-			pDlg->m_ListCtrl.SetItem(column_count, 6, LVIF_TEXT, (CString)(std::to_string(icmp_hdr->code).c_str())
-				, NULL, NULL, NULL, NULL);
-
-
-			++pDlg->icmp_pkt_cnt;
-			++pDlg->packet_cnt;
-			pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
-		}
-		else {
-			printf("Unknown Protocol\n");
-			unsigned char temp = ih->proto;
-
-		}
-
-		pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
-
-		int nCount = pDlg->m_ListCtrl.GetItemCount();
-		pDlg->m_ListCtrl.EnsureVisible(nCount - 1, FALSE);
-
-
-		std::string packet_dump_data;
+		std::string result;
 
 		for (i = 1; (i < header->caplen + 1); i++) {
 			char* temp = NULL;
 
 			int temp2 = pkt_data[i - 1];
-
 			std::stringstream stream;
-			stream << std::hex << temp2;
-			packet_dump_data += stream.str() + " ";
+			stream << std::setw(2) << std::setfill('0') << std::hex << temp2;
 
+			result += stream.str();
 		}
+
+
+		CString packet_dump_data(result.c_str());
+		int column_count = pDlg->m_ListCtrl.GetItemCount() - 1;
+		pDlg->m_ListCtrl.SetItem(column_count, 7, LVIF_TEXT, packet_dump_data, NULL, NULL, NULL, NULL);
+	} else {
+
 	}
-	else if (ntohs(ethhdr->frame_type) == 0x0806) {
-
-	// ARP
-	arp_hdr = (struct arp_header*)(pkt_data + 14);
-
-	CString source_ip = pDlg->GetIPAddr(ih->saddr);
-	CString destionation_ip = pDlg->GetIPAddr(ih->daddr);
-
-	int column_count = pDlg->m_ListCtrl.GetItemCount();
-
-	CString column_count_str;
-	column_count_str.Format(_T("%d"), column_count + 1);
-	pDlg->m_ListCtrl.InsertItem(column_count, column_count_str);
-
-	char soure_hw_addr[4];
-	char target_hw_addr[4];
-
-	CString sender_hw_addr, target_hw_adr;
-	for (int i = 0; i < 5; i++) {
-		sprintf(soure_hw_addr, "%02x:", arp_hdr->sha[i]);
-		sender_hw_addr += soure_hw_addr;
-
-		sprintf(target_hw_addr, "%02x:", arp_hdr->tha[i]);
-		target_hw_adr += target_hw_addr;
-	}
-
-	sprintf(soure_hw_addr, "%02x", arp_hdr->sha[5]);
-	sender_hw_addr += soure_hw_addr;
-
-	sprintf(target_hw_addr, "%02x", arp_hdr->tha[5]);
-	target_hw_adr += target_hw_addr;
-
-
-	pDlg->m_ListCtrl.SetItem(column_count, 1, LVIF_TEXT, CString(pDlg->GetCurrentTimeStr().c_str()), NULL, NULL, NULL, NULL);
-	pDlg->m_ListCtrl.SetItem(column_count, 2, LVIF_TEXT, source_ip, NULL, NULL, NULL, NULL);
-	pDlg->m_ListCtrl.SetItem(column_count, 3, LVIF_TEXT, destionation_ip, NULL, NULL, NULL, NULL);
-	pDlg->m_ListCtrl.SetItem(column_count, 4, LVIF_TEXT, _T("ARP"), NULL, NULL, NULL, NULL);
-	pDlg->m_ListCtrl.SetItem(column_count, 5, LVIF_TEXT, (CString)(std::to_string(header->caplen).c_str()), NULL, NULL, NULL, NULL);
-
-	// Info는 프로토콜 마다 달라야함
-	pDlg->m_ListCtrl.SetItem(column_count, 6, LVIF_TEXT,sender_hw_addr + L" -> " + target_hw_adr, NULL, NULL, NULL, NULL);
-
-
-	++pDlg->arp_pkt_cnt;
-	++pDlg->packet_cnt;
-	pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
-	}
-
-
-	std::string result;
-
-	for (i = 1; (i < header->caplen + 1); i++) {
-		char* temp = NULL;
-
-		int temp2 = pkt_data[i - 1];
-		std::stringstream stream;
-		stream << std::setw(2) << std::setfill('0') << std::hex << temp2;
-
-		result += stream.str();
-	}
-
-
-	CString packet_dump_data(result.c_str());
-	int column_count = pDlg->m_ListCtrl.GetItemCount()-1;
-	pDlg->m_ListCtrl.SetItem(column_count, 7, LVIF_TEXT, packet_dump_data, NULL, NULL, NULL, NULL);
 }
 
 void CMFCApplication1Dlg::OnBnClickedButton2()
@@ -626,7 +620,6 @@ CString CMFCApplication1Dlg::GetIPAddr(ip_address ip_addr) {
 }
 
 void CMFCApplication1Dlg::OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult) {
-
 	LPNMCUSTOMDRAW pNMCD = reinterpret_cast<LPNMCUSTOMDRAW>(pNMHDR);
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	NMLVCUSTOMDRAW* pLVCD = (NMLVCUSTOMDRAW*)pNMHDR;
@@ -635,23 +628,18 @@ void CMFCApplication1Dlg::OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult) {
 
 	if (CDDS_PREPAINT == pLVCD->nmcd.dwDrawStage) {
 		*pResult = CDRF_NOTIFYITEMDRAW;
-	}
-	else if (CDDS_ITEMPREPAINT == pLVCD->nmcd.dwDrawStage)
-	{
-		if (m_ListCtrl.GetItemText(pLVCD->nmcd.dwItemSpec, 4) == L"TCP") {
-			//pLVCD->clrText = RGB(0, 0, 0, );  // 글자 색 변경
-			pLVCD->clrTextBk = RGB(231, 230, 255); // 배경 색 변경 
-		}
-		else if (m_ListCtrl.GetItemText(pLVCD->nmcd.dwItemSpec, 4) == L"UDP") {
+	} else if (CDDS_ITEMPREPAINT == pLVCD->nmcd.dwDrawStage) {
+		CString Protocl = m_ListCtrl.GetItemText(pLVCD->nmcd.dwItemSpec, 4);
+
+		if (Protocl == L"TCP") {
+			pLVCD->clrTextBk = RGB(231, 230, 255);
+		} else if (Protocl == L"UDP") {
 			pLVCD->clrTextBk = RGB(218, 238, 255);
-		}
-		else if (m_ListCtrl.GetItemText(pLVCD->nmcd.dwItemSpec, 4) == L"ICMP") {
+		} else if (Protocl == L"ICMP") {
 			pLVCD->clrTextBk = RGB(252, 224, 255);
-		}
-		else if (m_ListCtrl.GetItemText(pLVCD->nmcd.dwItemSpec, 4) == L"ARP") {
+		} else if (Protocl == L"ARP") {
 			pLVCD->clrTextBk = RGB(250, 240, 215);
 		}
-
 		*pResult = CDRF_DODEFAULT;
 	}
 }
@@ -1147,7 +1135,7 @@ void CMFCApplication1Dlg::SetData(CString FrameNumber, CString Time, CString Sou
 		PacketDataLine4by6by7 = L". . . .  . . . .  " + Push + L". . . = Push : " + GetFlagSetNotSet(Push);		// Push
 		PacketDataLine4by6by8 = L". . . .  . . . .  . " + Reset + L". . = Reset : " + GetFlagSetNotSet(Reset);		// Reset
 		PacketDataLine4by6by9 = L". . . .  . . . .  . . " + Syn + L". = Syn : " + GetFlagSetNotSet(Syn);		// Syn
-		PacketDataLine4by6by10 = L". . . .  . . . .  . . . " + Fin + L" = Fin : " + GetFlagSetNotSet(Fin);		// Fin
+		PacketDataLine4by6by10 = L". . . .  . . . .  . . ." + Fin + L" = Fin : " + GetFlagSetNotSet(Fin);		// Fin
 
 		CString windowSize = Calculate4HexNumber(Packet_Dump_Data.Mid(96, 1), Packet_Dump_Data.Mid(97, 1), Packet_Dump_Data.Mid(98, 1), Packet_Dump_Data.Mid(99, 1));
 		CString urgentPointer = Calculate4HexNumber(Packet_Dump_Data.Mid(104, 1), Packet_Dump_Data.Mid(105, 1), Packet_Dump_Data.Mid(106, 1), Packet_Dump_Data.Mid(107, 1));
@@ -1364,6 +1352,14 @@ void CMFCApplication1Dlg::OnBnClickedButton4()
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	UpdateData(TRUE);
 	GetDlgItemText(IDC_EDIT1, Filter);
+
+	if (IsFilterApply) {
+		IsFilterApply = false;
+	} else {
+		IsFilterApply = true;
+	}
+	
+	m_ListCtrl.DeleteAllItems();
 }
 
 CString CMFCApplication1Dlg::ArpOpcde(CString OpcodeNumber) {
