@@ -14,17 +14,16 @@
 #endif
 
 // 응용 프로그램 정보에 사용되는 CAboutDlg 대화 상자입니다.
-class CAboutDlg : public CDialogEx
-{
+class CAboutDlg : public CDialogEx {
 public:
 	CAboutDlg();
 
-// 대화 상자 데이터입니다.
+	// 대화 상자 데이터입니다.
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_ABOUTBOX };
 #endif
 
-	protected:
+protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 지원입니다.
 
 // 구현입니다.
@@ -32,12 +31,10 @@ protected:
 	DECLARE_MESSAGE_MAP()
 };
 
-CAboutDlg::CAboutDlg() : CDialogEx(IDD_ABOUTBOX)
-{
+CAboutDlg::CAboutDlg() : CDialogEx(IDD_ABOUTBOX) {
 }
 
-void CAboutDlg::DoDataExchange(CDataExchange* pDX)
-{
+void CAboutDlg::DoDataExchange(CDataExchange* pDX) {
 	CDialogEx::DoDataExchange(pDX);
 }
 
@@ -50,13 +47,11 @@ END_MESSAGE_MAP()
 
 
 CMFCApplication1Dlg::CMFCApplication1Dlg(CWnd* pParent /*=nullptr*/)
-	: CDialogEx(IDD_MFCAPPLICATION1_DIALOG, pParent)
-{
+	: CDialogEx(IDD_MFCAPPLICATION1_DIALOG, pParent) {
 	m_hIcon = AfxGetApp()->LoadIcon(IDI_ICON1);
 }
 
-void CMFCApplication1Dlg::DoDataExchange(CDataExchange* pDX)
-{
+void CMFCApplication1Dlg::DoDataExchange(CDataExchange* pDX) {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST2, m_ListCtrl);
 	DDX_Control(pDX, IDC_BUTTON3, pause_button);
@@ -75,15 +70,14 @@ BEGIN_MESSAGE_MAP(CMFCApplication1Dlg, CDialogEx)
 	ON_NOTIFY(NM_CUSTOMDRAW, IDC_LIST2, &CMFCApplication1Dlg::OnCustomdrawList)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST2, &CMFCApplication1Dlg::OnNMDblclkList2)
 	ON_NOTIFY(HDN_ITEMCLICK, 0, &CMFCApplication1Dlg::OnHdnItemclick)
-//	ON_NOTIFY(NM_CUSTOMDRAW, IDC_LIST1, &CMFCApplication1Dlg::OnNMCustomdrawList1)
-ON_BN_CLICKED(IDC_BUTTON4, &CMFCApplication1Dlg::OnBnClickedButton4)
+	//	ON_NOTIFY(NM_CUSTOMDRAW, IDC_LIST1, &CMFCApplication1Dlg::OnNMCustomdrawList1)
+	ON_BN_CLICKED(IDC_BUTTON4, &CMFCApplication1Dlg::OnBnClickedButton4)
 END_MESSAGE_MAP()
 
 
 // CMFCApplication1Dlg 메시지 처리기
 
-BOOL CMFCApplication1Dlg::OnInitDialog()
-{
+BOOL CMFCApplication1Dlg::OnInitDialog() {
 	netInterfaceDlg.DoModal();
 	bool cancelButtonClickedChecker = netInterfaceDlg.CancelButtonClickedFunction();
 
@@ -102,14 +96,12 @@ BOOL CMFCApplication1Dlg::OnInitDialog()
 	ASSERT(IDM_ABOUTBOX < 0xF000);
 
 	CMenu* pSysMenu = GetSystemMenu(FALSE);
-	if (pSysMenu != nullptr)
-	{
+	if (pSysMenu != nullptr) {
 		BOOL bNameValid;
 		CString strAboutMenu;
 		bNameValid = strAboutMenu.LoadString(IDS_ABOUTBOX);
 		ASSERT(bNameValid);
-		if (!strAboutMenu.IsEmpty())
-		{
+		if (!strAboutMenu.IsEmpty()) {
 			pSysMenu->AppendMenu(MF_SEPARATOR);
 			pSysMenu->AppendMenu(MF_STRING, IDM_ABOUTBOX, strAboutMenu);
 		}
@@ -122,6 +114,12 @@ BOOL CMFCApplication1Dlg::OnInitDialog()
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
 
+
+
+	/* 파일에 쓰기 */
+	std::remove("test.txt");
+	/* 파일에 쓰기 */
+
 	m_strSelectedNetworkInterface = netInterfaceDlg.InterfaceDescription;
 	SetDlgItemText(IDC_STATIC_NET, L"Interface: " + m_strSelectedNetworkInterface);
 
@@ -131,7 +129,7 @@ BOOL CMFCApplication1Dlg::OnInitDialog()
 	CButton* pButton3 = (CButton*)GetDlgItem(IDC_BUTTON3);
 	pButton3->EnableWindow(FALSE);
 
-	SetWindowText(_T("Wire Dolphin "));
+	SetWindowText(_T("Wire Dolphin"));
 
 	m_FilterEditCtrl.SetWindowTextW(L"Enter Filter....");
 
@@ -172,15 +170,11 @@ BOOL CMFCApplication1Dlg::OnInitDialog()
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
 
-void CMFCApplication1Dlg::OnSysCommand(UINT nID, LPARAM lParam)
-{
-	if ((nID & 0xFFF0) == IDM_ABOUTBOX)
-	{
+void CMFCApplication1Dlg::OnSysCommand(UINT nID, LPARAM lParam) {
+	if ((nID & 0xFFF0) == IDM_ABOUTBOX) {
 		CAboutDlg dlgAbout;
 		dlgAbout.DoModal();
-	}
-	else
-	{
+	} else {
 		CDialogEx::OnSysCommand(nID, lParam);
 	}
 }
@@ -189,10 +183,8 @@ void CMFCApplication1Dlg::OnSysCommand(UINT nID, LPARAM lParam)
 //  아래 코드가 필요합니다.  문서/뷰 모델을 사용하는 MFC 애플리케이션의 경우에는
 //  프레임워크에서 이 작업을 자동으로 수행합니다.
 
-void CMFCApplication1Dlg::OnPaint()
-{
-	if (IsIconic())
-	{
+void CMFCApplication1Dlg::OnPaint() {
+	if (IsIconic()) {
 		CPaintDC dc(this); // 그리기를 위한 디바이스 컨텍스트입니다.
 
 		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
@@ -207,24 +199,19 @@ void CMFCApplication1Dlg::OnPaint()
 
 		// 아이콘을 그립니다.
 		dc.DrawIcon(x, y, m_hIcon);
-	}
-	else
-	{
+	} else {
 		CDialogEx::OnPaint();
 	}
 }
 
 // 사용자가 최소화된 창을 끄는 동안에 커서가 표시되도록 시스템에서
 //  이 함수를 호출합니다.
-HCURSOR CMFCApplication1Dlg::OnQueryDragIcon()
-{
+HCURSOR CMFCApplication1Dlg::OnQueryDragIcon() {
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
 
-
-void CMFCApplication1Dlg::OnBnClickedButton1()
-{
+void CMFCApplication1Dlg::OnBnClickedButton1() {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	if (m_pThread == NULL) {
 		m_pThread = AfxBeginThread(ThreadFunctionFirstTest, this);
@@ -239,15 +226,14 @@ void CMFCApplication1Dlg::OnBnClickedButton1()
 		pButton3->EnableWindow(TRUE);
 
 		if (m_pThread == NULL) {
-			AfxMessageBox(_T("Error!!!"));
+			AfxMessageBox(_T("캡처 시작을 할 수 없습니다."));
 		}
 
 		if (m_pThread != NULL) {
 			m_pThread->m_bAutoDelete = FALSE;
 		}
 		m_ThreadWorkType = RUNNING;
-	}
-	else {
+	} else {
 		if (m_ThreadWorkType == RUNNING || m_ThreadWorkType == PAUSE) {
 			//m_pThread->ResumeThread();
 			//m_ThreadWorkType = RUNNING;
@@ -271,19 +257,13 @@ UINT CMFCApplication1Dlg::ThreadFunctionFirstTest(LPVOID _mothod) {
 	bpf_u_int32 NetMask;
 
 	if (pcap_findalldevs(&alldevs, errbuf) == -1) {
-		fprintf(stderr, "Error in pcap_findalldevs: %s\n", errbuf);
+		AfxMessageBox(CString(errbuf));
+		//fprintf(stderr, "Error in pcap_findalldevs: %s\n", errbuf);
 		exit(1);
 	}
 
 	for (d = alldevs; d; d = d->next) {
-		printf("%d. %s", ++i, d->name);
-
-		if (d->description) {
-			printf(" (%s)\n", d->description);
-		}
-		else {
-			printf(" (No description available)\n");
-		}
+		++i;
 	}
 
 	if (i == 0) {
@@ -424,8 +404,7 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 				pDlg->m_ListCtrl.SetItem(column_count, 3, LVIF_TEXT, destionation_ip, NULL, NULL, NULL, NULL);
 				pDlg->m_ListCtrl.SetItem(column_count, 4, LVIF_TEXT, _T("ICMP"), NULL, NULL, NULL, NULL);
 				pDlg->m_ListCtrl.SetItem(column_count, 5, LVIF_TEXT, (CString)(std::to_string(header->caplen).c_str()), NULL, NULL, NULL, NULL);
-				pDlg->m_ListCtrl.SetItem(column_count, 6, LVIF_TEXT, (CString)(std::to_string(icmp_hdr->code).c_str())
-					, NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 6, LVIF_TEXT, (CString)(std::to_string(icmp_hdr->code).c_str()), NULL, NULL, NULL, NULL);
 
 
 				++pDlg->icmp_pkt_cnt;
@@ -499,6 +478,8 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 			++pDlg->arp_pkt_cnt;
 			++pDlg->packet_cnt;
 			pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
+		} else {
+			return;
 		}
 		std::string result;
 
@@ -512,22 +493,78 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 			result += stream.str();
 		}
 
-
 		CString packet_dump_data(result.c_str());
 		int column_count = pDlg->m_ListCtrl.GetItemCount() - 1;
 		pDlg->m_ListCtrl.SetItem(column_count, 7, LVIF_TEXT, packet_dump_data, NULL, NULL, NULL, NULL);
+
+		//====================================================================================
+		//pDlg->m_ListCtrl.SetItem(column_count, 1, LVIF_TEXT, CString(pDlg->GetCurrentTimeStr().c_str()), NULL, NULL, NULL, NULL);
+		//pDlg->m_ListCtrl.SetItem(column_count, 2, LVIF_TEXT, source_ip, NULL, NULL, NULL, NULL);
+		//pDlg->m_ListCtrl.SetItem(column_count, 3, LVIF_TEXT, destionation_ip, NULL, NULL, NULL, NULL);
+		//pDlg->m_ListCtrl.SetItem(column_count, 4, LVIF_TEXT, _T("ARP"), NULL, NULL, NULL, NULL);
+		//pDlg->m_ListCtrl.SetItem(column_count, 5, LVIF_TEXT, (CString)(std::to_string(header->caplen).c_str()), NULL, NULL, NULL, NULL);
+		//pDlg->m_ListCtrl.SetItem(column_count, 6, LVIF_TEXT, sender_hw_addr + L" -> " + target_hw_adr, NULL, NULL, NULL, NULL);
+		//pDlg->m_ListCtrl.SetItem(column_count, 7, LVIF_TEXT, packet_dump_data, NULL, NULL, NULL, NULL);
 	} else {
 
 	}
+
+	/* 파일에 쓰기 */
+
+	if (ntohs(ethhdr->frame_type) == 0x0806 || ntohs(ethhdr->frame_type) == 0x0800) {
+
+		unsigned char c;
+		int packet_size = header->caplen;
+		std::ofstream out("test.txt", std::ios::app);
+
+		CT2CA pszConvertedAnsiString(pDlg->GetIPAddr(ih->saddr));
+		std::string s(pszConvertedAnsiString);
+		std::string sip = s;
+
+		CT2CA pszConvertedAnsiString2(pDlg->GetIPAddr(ih->daddr));
+		std::string s2(pszConvertedAnsiString2);
+		std::string dip = s2;
+
+		std::string protocol;
+		if (ntohs(ethhdr->frame_type) == 0x0800) {
+			if (ih->proto == IPPROTO_TCP) {
+				protocol = "TCP";
+			} else if (ih->proto == IPPROTO_UDP) {
+				protocol = "UDP";
+			}if (ih->proto == IPPROTO_ICMP) {
+				protocol = "ICMP";
+			}
+		} else if (ntohs(ethhdr->frame_type) == 0x0806) {
+			protocol = "ARP";
+		}
+
+
+		out << pDlg->GetCurrentTimeStr() << "\n";
+		out << sip << " \n";
+		out << dip << " \n";
+		out << protocol << " \n";
+		out << header->caplen << " \n";
+		out << "Info" << " \n";
+
+		for (int i = 0; i < packet_size; i++) {
+			c = pkt_data[i];
+			out.width(2);
+			out << std::hex << std::setfill('0') << (unsigned int)pkt_data[i] << " ";
+
+			if ((i != 0 && (i + 1) % 16 == 0) || i == packet_size - 1) {
+				out << "\n";
+			}
+		}
+		out << "-----------------------------------------------\n";
+		//====================================================================================
+	}
 }
 
-void CMFCApplication1Dlg::OnBnClickedButton2()
-{
+void CMFCApplication1Dlg::OnBnClickedButton2() {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	if (m_pThread == NULL) {
 
-	}
-	else {
+	} else {
 		m_pThread->SuspendThread();
 
 		DWORD dwResult;
@@ -556,8 +593,8 @@ void CMFCApplication1Dlg::OnBnClickedButton2()
 	}
 }
 
-void CMFCApplication1Dlg::	ChangeStaticText(int all_pkt_cnt, int tcp_pkt_cnt, int udp_pkt_cnt, int arp_pkt_cnt, int icmp_pkt_cnt){
-	SetDlgItemText(IDC_STATIC, 
+void CMFCApplication1Dlg::ChangeStaticText(int all_pkt_cnt, int tcp_pkt_cnt, int udp_pkt_cnt, int arp_pkt_cnt, int icmp_pkt_cnt) {
+	SetDlgItemText(IDC_STATIC,
 		L"ALL : " + (CString)(std::to_string(all_pkt_cnt).c_str()) +
 		L" TCP : " + (CString)(std::to_string(tcp_pkt_cnt).c_str()) +
 		L" UDP : " + (CString)(std::to_string(udp_pkt_cnt).c_str()) +
@@ -574,18 +611,15 @@ void CMFCApplication1Dlg::ClearPacketCnt() {
 	icmp_pkt_cnt = 0;
 }
 
-void CMFCApplication1Dlg::OnBnClickedButton3()
-{
+void CMFCApplication1Dlg::OnBnClickedButton3() {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	if (m_pThread == NULL) {
-	}
-	else {
+	} else {
 		if (m_ThreadWorkType == RUNNING) {
 			pause_button.SetWindowText(L"Resume");
 			m_pThread->SuspendThread();
 			m_ThreadWorkType = PAUSE;
-		}
-		else {
+		} else {
 			pause_button.SetWindowText(L"Pause");
 			m_pThread->ResumeThread();
 			m_ThreadWorkType = RUNNING;
@@ -644,8 +678,7 @@ void CMFCApplication1Dlg::OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult) {
 	}
 }
 
-void CMFCApplication1Dlg::OnNMDblclkList2(NMHDR* pNMHDR, LRESULT* pResult)
-{
+void CMFCApplication1Dlg::OnNMDblclkList2(NMHDR* pNMHDR, LRESULT* pResult) {
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	*pResult = 0;
@@ -715,7 +748,7 @@ void CMFCApplication1Dlg::OnNMDblclkList2(NMHDR* pNMHDR, LRESULT* pResult)
 				ten = 0;
 				one = 0;
 
-				if (sum < 32 || sum>126) {
+				if (sum < 32 || sum>128) {
 					sum = 46;
 				}
 
@@ -723,8 +756,7 @@ void CMFCApplication1Dlg::OnNMDblclkList2(NMHDR* pNMHDR, LRESULT* pResult)
 				ascii[0] = (char)sum;
 				if (sum == 46) {
 					sprintf(ascii, "%2c", ascii[0]);
-				}
-				else {
+				} else {
 					sprintf(ascii, "%c", ascii[0]);
 				}
 				convAscii += ascii;
@@ -735,8 +767,7 @@ void CMFCApplication1Dlg::OnNMDblclkList2(NMHDR* pNMHDR, LRESULT* pResult)
 	}
 }
 
-void CMFCApplication1Dlg::OnHdnItemclick(NMHDR* pNMHDR, LRESULT* pResult)
-{
+void CMFCApplication1Dlg::OnHdnItemclick(NMHDR* pNMHDR, LRESULT* pResult) {
 	LPNMHEADER pNMLV = reinterpret_cast<LPNMHEADER>(pNMHDR);
 
 	int nColumn = pNMLV->iItem;
@@ -748,8 +779,7 @@ void CMFCApplication1Dlg::OnHdnItemclick(NMHDR* pNMHDR, LRESULT* pResult)
 
 	if (m_bAscending) {
 		m_bAscending = false;
-	}
-	else {
+	} else {
 		m_bAscending = true;
 	}
 
@@ -760,7 +790,7 @@ void CMFCApplication1Dlg::OnHdnItemclick(NMHDR* pNMHDR, LRESULT* pResult)
 
 	if (nColumn == 0 || nColumn == 5) {
 		m_ListCtrl.SortItems(&SortFuncNum, (LPARAM)& sortparams);
-	}else {
+	} else {
 		m_ListCtrl.SortItems(&SortFuncStr, (LPARAM)& sortparams);
 	}
 
@@ -768,8 +798,7 @@ void CMFCApplication1Dlg::OnHdnItemclick(NMHDR* pNMHDR, LRESULT* pResult)
 }
 
 
-int CALLBACK CMFCApplication1Dlg::SortFuncStr(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
-{
+int CALLBACK CMFCApplication1Dlg::SortFuncStr(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort) {
 	CListCtrl* pList = ((SORTPARAM*)lParamSort)->pList;
 	int iSortColumn = ((SORTPARAM*)lParamSort)->iSrotColumn;
 	bool bSortDirect = ((SORTPARAM*)lParamSort)->bSortDirect;
@@ -790,8 +819,7 @@ int CALLBACK CMFCApplication1Dlg::SortFuncStr(LPARAM lParam1, LPARAM lParam2, LP
 	return bSortDirect ? strItem1.Compare(strItem2) : -strItem1.Compare(strItem2);
 }
 
-int CALLBACK CMFCApplication1Dlg::SortFuncNum(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
-{
+int CALLBACK CMFCApplication1Dlg::SortFuncNum(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort) {
 	CListCtrl* pList = ((SORTPARAM*)lParamSort)->pList;
 	int iSortColumn = ((SORTPARAM*)lParamSort)->iSrotColumn;
 	bool bSortDirect = ((SORTPARAM*)lParamSort)->bSortDirect;
@@ -812,12 +840,10 @@ int CALLBACK CMFCApplication1Dlg::SortFuncNum(LPARAM lParam1, LPARAM lParam2, LP
 	return !bSortDirect ? numItem1 < numItem2 : numItem1 > numItem2;
 }
 
-BOOL CMFCApplication1Dlg::PreTranslateMessage(MSG* pMsg)
-{
+BOOL CMFCApplication1Dlg::PreTranslateMessage(MSG* pMsg) {
 	// TODO: 여기에 특수화된 코드를 추가 및/또는 기본 클래스를 호출합니다.
 
-	if (pMsg->message == WM_KEYDOWN)
-	{
+	if (pMsg->message == WM_KEYDOWN) {
 		if (pMsg->wParam == VK_ESCAPE)
 			return TRUE;
 		else if (pMsg->wParam == VK_RETURN)
@@ -829,18 +855,17 @@ BOOL CMFCApplication1Dlg::PreTranslateMessage(MSG* pMsg)
 CString CMFCApplication1Dlg::HexToDec(CString _number) {
 	if (_number == L"a" || _number == L"A") {
 		_number = L"10";
-	}else 	if (_number == L"b" || _number == L"B") {
+	} else 	if (_number == L"b" || _number == L"B") {
 		_number = L"11";
-	}else 	if (_number == L"c" || _number == L"C") {
+	} else 	if (_number == L"c" || _number == L"C") {
 		_number = L"12";
-	}else 	if (_number == L"d" || _number == L"D") {
+	} else 	if (_number == L"d" || _number == L"D") {
 		_number = L"13";
-	}else 	if (_number == L"e" || _number == L"E") {
+	} else 	if (_number == L"e" || _number == L"E") {
 		_number = L"14";
-	}else 	if (_number == L"f" || _number == L"F") {
+	} else 	if (_number == L"f" || _number == L"F") {
 		_number = L"15";
-	}
-	else {
+	} else {
 		_number = _number;
 	}
 
@@ -890,51 +915,41 @@ CString CMFCApplication1Dlg::GetTCPFlagToStr(CString _Flag) {
 
 	CString Urgent = _Flag.Mid(0, 1);
 	CString Acknowledgment = _Flag.Mid(0, 1);
-	CString Push= _Flag.Mid(0, 1);
+	CString Push = _Flag.Mid(0, 1);
 	CString Reset = _Flag.Mid(0, 1);
 	CString Syn = _Flag.Mid(0, 1);
 	CString Fin = _Flag.Mid(0, 1);
 
 	if (Urgent == L"1") {
 		Result = "URG";
-	}
-	else if(Acknowledgment = L"1") {
+	} else if (Acknowledgment = L"1") {
 		if (Result.IsEmpty() == true) {
 			Result = "ACK";
-		}
-		else {
+		} else {
 			Result.Append(L", ACK");
 		}
-	}
-	else if (Push = L"1") {
+	} else if (Push = L"1") {
 		if (Result.IsEmpty() == true) {
 			Result = "PUSH";
-		}
-		else {
+		} else {
 			Result.Append(L", PUSH");
 		}
-	}
-	else if (Reset = L"1") {
+	} else if (Reset = L"1") {
 		if (Result.IsEmpty() == true) {
 			Result = "RST";
-		}
-		else {
+		} else {
 			Result.Append(L", RST");
 		}
-	}
-	else if (Syn = L"1") {
+	} else if (Syn = L"1") {
 		if (Result.IsEmpty() == true) {
 			Result = "SYN";
-		}
-		else {
+		} else {
 			Result.Append(L", SYN");
 		}
-	}
-	else if (Fin = L"1") {
+	} else if (Fin = L"1") {
 		if (Result.IsEmpty() == true) {
 			Result = "FIN";
-		}
-		else {
+		} else {
 			Result.Append(L", FIN");
 		}
 	}
@@ -948,10 +963,9 @@ CString CMFCApplication1Dlg::GetTCPFlagToLongStr(CString _Flag) {
 	CString FlagArray[6] = { L"U",L"A",L"P",L"R",L"S",L"F" };
 
 	for (int i = 0; i < _Flag.GetLength(); i++) {
-		if (_Flag.Mid(i, 1) == L"1"&&i>5) {
-			Result.Append(FlagArray[i-6]);
-		}
-		else {
+		if (_Flag.Mid(i, 1) == L"1" && i > 5) {
+			Result.Append(FlagArray[i - 6]);
+		} else {
 			Result.Append(L". ");
 		}
 	}
@@ -988,7 +1002,7 @@ void CMFCApplication1Dlg::SetData(CString FrameNumber, CString Time, CString Sou
 	CString PakcetDataLine1by5 = L"Frame Length: " + Length + L" bytes (" + CString(std::to_string(_ttoi(Length) * 8).c_str()) + L" bits)";
 	CString PakcetDataLine1by6 = L"Capture Length: " + Length + L" bytes (" + CString(std::to_string(_ttoi(Length) * 8).c_str()) + L" bits)";
 
-	CString Destination_addr = MakeIPAddressV6(Packet_Dump_Data.Mid(2, 2), Packet_Dump_Data.Mid(4, 2), Packet_Dump_Data.Mid(6, 2), Packet_Dump_Data.Mid(8, 2), Packet_Dump_Data.Mid(10, 2), Packet_Dump_Data.Mid(12, 2));
+	CString Destination_addr = MakeIPAddressV6(Packet_Dump_Data.Mid(0, 2), Packet_Dump_Data.Mid(2, 2), Packet_Dump_Data.Mid(4, 2), Packet_Dump_Data.Mid(6, 2), Packet_Dump_Data.Mid(8, 2), Packet_Dump_Data.Mid(10, 2));
 	CString Source_addr = MakeIPAddressV6(Packet_Dump_Data.Mid(12, 2), Packet_Dump_Data.Mid(14, 2), Packet_Dump_Data.Mid(16, 2), Packet_Dump_Data.Mid(18, 2), Packet_Dump_Data.Mid(20, 2), Packet_Dump_Data.Mid(22, 2));
 
 	PacketDataLine2 = L"Ethernet ⅠⅠ, Src: " + Source_addr + L", Dst: " + Destination_addr;
@@ -1002,12 +1016,11 @@ void CMFCApplication1Dlg::SetData(CString FrameNumber, CString Time, CString Sou
 	if (Type == L"0800") {
 		TypeName = L"IPv4";
 		Padding = Packet_Dump_Data.Mid(108, 12);
-	}
-	else if (Type == L"0806") {
+	} else if (Type == L"0806") {
 		TypeName = L"ARP";
 		Padding = Packet_Dump_Data.Mid(84, 36);
 	}
-	CString PakcetDataLine2by3 = L"Type: "+ TypeName+ L" (0x" + Type + L")";
+	CString PakcetDataLine2by3 = L"Type: " + TypeName + L" (0x" + Type + L")";
 
 
 	CString PakcetDataLine2by4 = L"Padding: " + Padding;
@@ -1168,12 +1181,11 @@ void CMFCApplication1Dlg::SetData(CString FrameNumber, CString Time, CString Sou
 		HTREEITEM PacketDataRoot4Child8 = PacketDataCtrl.InsertItem(PacketDataLine4by8, PacketDataRoot4);
 		HTREEITEM PacketDataRoot4Child9 = PacketDataCtrl.InsertItem(PacketDataLine4by9, PacketDataRoot4);
 		HTREEITEM PacketDataRoot4Child10 = PacketDataCtrl.InsertItem(PacketDataLine4by10, PacketDataRoot4);
-	}
-	else if (Protocol == L"UDP") {
+	} else if (Protocol == L"UDP") {
 		PacketDataLine4 = L"User Datagram protocol, Src Port: " + Line4SourcePort + L", Dst Port: " + Line4DestinationPort;
 
 		CString Length = Calculate4HexNumber(Packet_Dump_Data.Mid(76, 1), Packet_Dump_Data.Mid(77, 1), Packet_Dump_Data.Mid(78, 1), Packet_Dump_Data.Mid(79, 1));
-	
+
 		CString PacketDataLine4by1 = L"Source Port: " + Line4SourcePort;
 		CString PacketDataLine4by2 = L"Destination Port: " + Line4DestinationPort;
 		CString PacketDataLine4by3 = L"Length: " + Length;
@@ -1189,18 +1201,20 @@ void CMFCApplication1Dlg::SetData(CString FrameNumber, CString Time, CString Sou
 		CString UDPDataLength = CString(std::to_string(UDPData.GetLength()).c_str());
 
 		CString PacketDataLine5 = L"Data (" + UDPDataLength + " bytes )";
-		CString PacketDataLine5by1 = L"Data :" + UDPData.Mid(0, 40) + L"...";
+		CString PacketDataLine5by1 = L"Data: " + UDPData.Mid(0, 40) + L"...";
+		CString PacketDataLine5by2 = L"[Length: " + UDPDataLength + L"]";
 
 		PacketDataRoot5 = PacketDataCtrl.InsertItem(PacketDataLine5);
 		HTREEITEM PacketDataRoot5Child1 = PacketDataCtrl.InsertItem(PacketDataLine5by1, PacketDataRoot5);
+		HTREEITEM PacketDataRoot5Child2 = PacketDataCtrl.InsertItem(PacketDataLine5by2, PacketDataRoot5);
 
-	}else if (Protocol == L"ARP") {
+	} else if (Protocol == L"ARP") {
 		PacketDataLine4 = L"Address Resolution Protocol";
 
 		CString HardwareTypeNumber = Calculate4HexNumber(Packet_Dump_Data.Mid(28, 1), Packet_Dump_Data.Mid(29, 1), Packet_Dump_Data.Mid(30, 1), Packet_Dump_Data.Mid(31, 1));
 		CString HardwareTypeStr = ArpHardwareType(HardwareTypeNumber);
 		CString ProtocolType = Packet_Dump_Data.Mid(32, 4);
-		CString HardwareSize= Calculate2HexNumber(Packet_Dump_Data.Mid(36, 1), Packet_Dump_Data.Mid(37, 1));
+		CString HardwareSize = Calculate2HexNumber(Packet_Dump_Data.Mid(36, 1), Packet_Dump_Data.Mid(37, 1));
 		CString ProtocolSize = Calculate2HexNumber(Packet_Dump_Data.Mid(38, 1), Packet_Dump_Data.Mid(39, 1));
 		CString OpCodeNumber = Calculate4HexNumber(Packet_Dump_Data.Mid(40, 1), Packet_Dump_Data.Mid(41, 1), Packet_Dump_Data.Mid(42, 1), Packet_Dump_Data.Mid(43, 1));
 		CString OpCodeStr = ArpOpcde(OpCodeNumber);
@@ -1209,7 +1223,7 @@ void CMFCApplication1Dlg::SetData(CString FrameNumber, CString Time, CString Sou
 		CString TargetMacAddr = MakeIPAddressV6(Packet_Dump_Data.Mid(64, 2), Packet_Dump_Data.Mid(66, 2), Packet_Dump_Data.Mid(68, 2), Packet_Dump_Data.Mid(70, 2), Packet_Dump_Data.Mid(72, 2), Packet_Dump_Data.Mid(74, 2));;
 		CString TargetIpAddr = Destination;
 
-		CString PacketDataLine4by1 = L"Hardware type: "+ HardwareTypeStr +L" (" + HardwareTypeNumber + L")";
+		CString PacketDataLine4by1 = L"Hardware type: " + HardwareTypeStr + L" (" + HardwareTypeNumber + L")";
 		CString PacketDataLine4by2 = L"Protocol type: IPv4 (0x" + ProtocolType + L")";
 		CString PacketDataLine4by3 = L"Hardware size: " + HardwareSize;
 		CString PacketDataLine4by4 = L"Protocol size: " + ProtocolSize;
@@ -1230,7 +1244,7 @@ void CMFCApplication1Dlg::SetData(CString FrameNumber, CString Time, CString Sou
 		HTREEITEM PacketDataRoot4Child8 = PacketDataCtrl.InsertItem(PacketDataLine4by8, PacketDataRoot4);
 		HTREEITEM PacketDataRoot4Child9 = PacketDataCtrl.InsertItem(PacketDataLine4by9, PacketDataRoot4);
 
-	}else if (Protocol == L"ICMP") {
+	} else if (Protocol == L"ICMP") {
 		PacketDataLine4 = L"Ineternet Control Message Protocol";
 
 		CString ICMPType = Calculate2HexNumber(Packet_Dump_Data.Mid(68, 1), Packet_Dump_Data.Mid(69, 1));
@@ -1241,7 +1255,7 @@ void CMFCApplication1Dlg::SetData(CString FrameNumber, CString Time, CString Sou
 		CString ICMPIdentifierBEHex = Packet_Dump_Data.Mid(76, 4);
 
 		CString ICMPIdentifierLEDec = Calculate4HexNumber(Packet_Dump_Data.Mid(78, 1), Packet_Dump_Data.Mid(79, 1), Packet_Dump_Data.Mid(76, 1), Packet_Dump_Data.Mid(77, 1));
-		CString ICMPIdentifierLEHex = Packet_Dump_Data.Mid(78, 2)+ Packet_Dump_Data.Mid(76, 2);
+		CString ICMPIdentifierLEHex = Packet_Dump_Data.Mid(78, 2) + Packet_Dump_Data.Mid(76, 2);
 
 		CString ICMPSquenceNumberBEDec = Calculate4HexNumber(Packet_Dump_Data.Mid(80, 1), Packet_Dump_Data.Mid(81, 1), Packet_Dump_Data.Mid(82, 1), Packet_Dump_Data.Mid(83, 1));
 		CString ICMPSquenceNumberBEHex = Packet_Dump_Data.Mid(80, 4);
@@ -1273,11 +1287,11 @@ void CMFCApplication1Dlg::SetData(CString FrameNumber, CString Time, CString Sou
 		HTREEITEM PacketDataRoot4Child8Child1 = PacketDataCtrl.InsertItem(PacketDataLine4by8by1, PacketDataRoot4Child8);
 	}
 
-	PacketDataCtrl.Expand(PacketDataRoot1, TVE_EXPAND);
-	PacketDataCtrl.Expand(PacketDataRoot2, TVE_EXPAND);
-	PacketDataCtrl.Expand(PacketDataRoot3, TVE_EXPAND);
-	PacketDataCtrl.Expand(PacketDataRoot4, TVE_EXPAND);
-	PacketDataCtrl.Expand(PacketDataRoot5, TVE_EXPAND);
+	//PacketDataCtrl.Expand(PacketDataRoot1, TVE_EXPAND);
+	//PacketDataCtrl.Expand(PacketDataRoot2, TVE_EXPAND);
+	//PacketDataCtrl.Expand(PacketDataRoot3, TVE_EXPAND);
+	//PacketDataCtrl.Expand(PacketDataRoot4, TVE_EXPAND);
+	//PacketDataCtrl.Expand(PacketDataRoot5, TVE_EXPAND);
 
 	PacketDataCtrl.Invalidate();
 	PacketDataCtrl.UpdateWindow();
@@ -1285,7 +1299,7 @@ void CMFCApplication1Dlg::SetData(CString FrameNumber, CString Time, CString Sou
 
 CString CMFCApplication1Dlg::GetFlagSetNotSet(CString _Flag) {
 	int Length = _Flag.GetLength();
-	
+
 	if (Length == 3) {
 		return (_Flag.Compare(L"000") == 0) ? L"Not set" : L"Set";
 	}
@@ -1318,37 +1332,36 @@ CString CMFCApplication1Dlg::MakeIPAddressV6(CString Aclass, CString Bclass, CSt
 CString CMFCApplication1Dlg::ChangeHexToAscii(CString HexData) {
 	if (HexData == L"a") {
 		HexData = L"10";
-	}else if (HexData == L"b") {
+	} else if (HexData == L"b") {
 		HexData = L"11";
-	}else if (HexData == L"c") {
+	} else if (HexData == L"c") {
 		HexData = L"12";
-	}else if (HexData == L"d") {
+	} else if (HexData == L"d") {
 		HexData = L"13";
-	}else if (HexData == L"e") {
+	} else if (HexData == L"e") {
 		HexData = L"14";
-	}else if (HexData == L"f") {
+	} else if (HexData == L"f") {
 		HexData = L"15";
 	}
 
 	if (HexData == L"a") {
 		HexData = L"10";
-	}else if (HexData == L"b") {
+	} else if (HexData == L"b") {
 		HexData = L"11";
-	}else if (HexData == L"c") {
+	} else if (HexData == L"c") {
 		HexData = L"12";
-	}else if (HexData == L"d") {
+	} else if (HexData == L"d") {
 		HexData = L"13";
-	}else if (HexData == L"e") {
+	} else if (HexData == L"e") {
 		HexData = L"14";
-	}else if (HexData == L"f") {
+	} else if (HexData == L"f") {
 		HexData = L"15";
 	}
 
 	return HexData;
 }
 
-void CMFCApplication1Dlg::OnBnClickedButton4()
-{
+void CMFCApplication1Dlg::OnBnClickedButton4() {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	UpdateData(TRUE);
 	GetDlgItemText(IDC_EDIT1, Filter);
@@ -1358,15 +1371,89 @@ void CMFCApplication1Dlg::OnBnClickedButton4()
 	} else {
 		IsFilterApply = true;
 	}
-	
+
 	m_ListCtrl.DeleteAllItems();
+
+	/* 파일에서 읽어오기 */
+	CString Time;
+	CString SIP;
+	CString DIP;
+	CString PROTO;
+	CString LENGTH;
+	CString INFO;
+	CString DUMP;
+
+
+	std::ifstream is("test.txt");
+	long length = 1024;
+	char* buffer = NULL;
+	std::string temp;
+
+	buffer = new char[length];
+	memset(buffer, 0, length);
+
+	int cnt = 0;
+	int i = 0;
+	while (i<10) {
+		is.getline(buffer, 49);
+		//std::cout << buffer << std::endl;
+		if (strcmp(buffer, "-----------------------------------------------") == 0) {
+			std::cout << temp << std::endl;
+			std::cout << "-----------------------------------------------\n" << std::endl;
+
+			DUMP = temp.c_str();
+			DUMP.Replace(L" ", L"");
+			DUMP.Replace(L"\n", L"");
+
+
+			PROTO.Replace(L" ", L"");
+			
+			int column_count = m_ListCtrl.GetItemCount();
+
+			CString column_count_str;
+			column_count_str.Format(_T("%d"), column_count + 1);
+			m_ListCtrl.InsertItem(column_count, column_count_str);
+
+			m_ListCtrl.SetItem(column_count, 1, LVIF_TEXT, Time, NULL, NULL, NULL, NULL);
+			m_ListCtrl.SetItem(column_count, 2, LVIF_TEXT, SIP, NULL, NULL, NULL, NULL);
+			m_ListCtrl.SetItem(column_count, 3, LVIF_TEXT, DIP, NULL, NULL, NULL, NULL);
+			m_ListCtrl.SetItem(column_count, 4, LVIF_TEXT, PROTO, NULL, NULL, NULL, NULL);
+			m_ListCtrl.SetItem(column_count, 5, LVIF_TEXT, LENGTH, NULL, NULL, NULL, NULL);
+			m_ListCtrl.SetItem(column_count, 6, LVIF_TEXT, INFO, NULL, NULL, NULL, NULL);
+			m_ListCtrl.SetItem(column_count, 7, LVIF_TEXT, DUMP, NULL, NULL, NULL, NULL);
+
+			i++;
+			cnt = 0;
+			temp = "";
+		} else {
+			if (cnt == 0) {
+				Time = buffer;
+			} else if (cnt == 1) {
+				SIP = buffer;
+			} else if (cnt == 2) {
+				DIP = buffer;
+			} else if (cnt == 3) {
+				PROTO = buffer;
+			} else if (cnt == 4) {
+				LENGTH = buffer;
+			} else if (cnt == 5) {
+				INFO = buffer;
+			} else {
+				temp += buffer;
+				if (strlen(buffer) % 16 == 0) {
+					temp += "\n";
+				}
+			}
+			cnt++;
+		}
+	}
 }
 
 CString CMFCApplication1Dlg::ArpOpcde(CString OpcodeNumber) {
 	CString OpcodeStr = L"";
 	if (OpcodeNumber.Compare(L"1") == 0) {
 		OpcodeStr = "Request";
-	}else if (OpcodeNumber.Compare(L"2") == 0) {
+	} else if (OpcodeNumber.Compare(L"2") == 0) {
 		OpcodeStr = "Reply";
 	}
 	return OpcodeStr;
@@ -1376,13 +1463,13 @@ CString CMFCApplication1Dlg::ArpHardwareType(CString HardwareTypeNumber) {
 	CString HardwareTypeStr = L"";
 	if (HardwareTypeNumber.Compare(L"1") == 0) {
 		HardwareTypeStr = "Ethernet";
-	}else if (HardwareTypeNumber.Compare(L"2") == 0) {
+	} else if (HardwareTypeNumber.Compare(L"2") == 0) {
 		HardwareTypeStr = "Experimental Ethernet";
-	}else if (HardwareTypeNumber.Compare(L"3") == 0) {
+	} else if (HardwareTypeNumber.Compare(L"3") == 0) {
 		HardwareTypeStr = "Amateur Radio";
-	}else if (HardwareTypeNumber.Compare(L"4") == 0) {
+	} else if (HardwareTypeNumber.Compare(L"4") == 0) {
 		HardwareTypeStr = "Proteon ProNet Token Ring";
-	}else if (HardwareTypeNumber.Compare(L"5") == 0) {
+	} else if (HardwareTypeNumber.Compare(L"5") == 0) {
 		HardwareTypeStr = "IEEE 802.3 networks";
 	}
 	return HardwareTypeStr;

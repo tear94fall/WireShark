@@ -1,7 +1,9 @@
-﻿  MFCApplication1Dlg.cpp
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(152,38): warning C4244:  '=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(166,30): warning C4244:  '=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(448,19): warning C4018:  '<': signed 또는 unsigned가 일치하지 않습니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(505,18): warning C4018:  '<': signed 또는 unsigned가 일치하지 않습니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(1036,83): warning C4552:  '+': 식의 결과가 사용되지 않습니다.
+﻿  MFCApplication1.cpp
+  MFCApplication1Dlg.cpp
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(150,38): warning C4244:  '=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(164,30): warning C4244:  '=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(427,19): warning C4018:  '<': signed 또는 unsigned가 일치하지 않습니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(486,18): warning C4018:  '<': signed 또는 unsigned가 일치하지 않습니다.
+  코드를 생성하고 있습니다...
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(1049,83): warning C4552:  '+': 식의 결과가 사용되지 않습니다.
   MFCApplication1.vcxproj -> C:\Users\limjoonsub\source\repos\MFCApplication1\Debug\MFCApplication1.exe

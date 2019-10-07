@@ -12,16 +12,17 @@
 #include <pcap.h>
 #include <map>
 #include <vector>
-#include <sstream>
 #include <iomanip>
 #include <string>
 #include <afxmt.h>
+#include <afxwin.h>
+#include <iostream>
+#include <fstream>
 
 void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_char* pkt_data);
 
 // CMFCApplication1Dlg 대화 상자
-class CMFCApplication1Dlg : public CDialogEx
-{
+class CMFCApplication1Dlg : public CDialogEx {
 	// 생성입니다.
 public:
 	CMFCApplication1Dlg(CWnd* pParent = nullptr);	// 표준 생성자입니다.
@@ -51,11 +52,11 @@ public:
 		PAUSE = 2
 	};
 
-	struct SORTPARAM{
+	struct SORTPARAM {
 		int iSrotColumn;
 		bool bSortDirect;
 		CListCtrl* pList;
-	};	
+	};
 
 	bool m_bThreadStart = false;
 	CWinThread* m_pThread = NULL;
