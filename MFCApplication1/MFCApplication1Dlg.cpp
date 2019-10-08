@@ -1420,7 +1420,7 @@ UINT CMFCApplication1Dlg::ThreadFunctionSecondTest(LPVOID _mothod) {
 	CMFCApplication1Dlg* pDlg = (CMFCApplication1Dlg*)AfxGetApp()->m_pMainWnd;
 
 	/* 파일에서 읽어오기 */
-	CString Time;
+	CString TIME;
 	CString SIP;
 	CString DIP;
 	CString PROTO;
@@ -1441,53 +1441,76 @@ UINT CMFCApplication1Dlg::ThreadFunctionSecondTest(LPVOID _mothod) {
 	int i = 0;
 	while (1) {
 		if (is) {
-			is.getline(buffer, 49);
+			is.seekg(0, is.end);
+			pDlg->end_pos = is.tellg();
 
-			if (strcmp(buffer, "-----------------------------------------------") == 0) {
-				DUMP = temp.c_str();
-				DUMP.Replace(L" ", L"");
-				DUMP.Replace(L"\n", L"");
+			is.seekg(pDlg->start_pos, is.beg);
+			length = pDlg->end_pos - pDlg->start_pos;
 
-				//마지막에 공백 한칸 있음
-				//PROTO.Replace(L" ", L"");
+			std::string str;
+			int column_cnt = 0;
+			if (pDlg->start_pos != pDlg->end_pos) {
+				for (int i = 0; i < length; i++) {
+					std::getline(is, str);
 
-				int column_count = pDlg->m_ListCtrl.GetItemCount();
+					if (column_cnt == 0) {
+						TIME = (CString)str.c_str();
+					} else if (column_cnt == 1) {
+						SIP = (CString)str.c_str();
+					} else if (column_cnt == 2) {
+						DIP = (CString)str.c_str();
+					} else if (column_cnt == 3) {
+						PROTO = (CString)str.c_str();
+					} else if (column_cnt == 4) {
+						LENGTH = (CString)str.c_str();
+					} else if (column_cnt == 5) {
+						INFO = (CString)str.c_str();
+					} else if (column_cnt > 5) {
+						DUMP += (CString)str.c_str();
+					}
 
-				CString column_count_str;
-				column_count_str.Format(_T("%d"), column_count + 1);
-				pDlg->m_ListCtrl.InsertItem(column_count, column_count_str);
+					if (str == "-----------------------------------------------"&&PROTO==L"TCP ") {
+						//PROTO.Replace(L" ", L"");
 
-				pDlg->m_ListCtrl.SetItem(column_count, 1, LVIF_TEXT, Time, NULL, NULL, NULL, NULL);
-				pDlg->m_ListCtrl.SetItem(column_count, 2, LVIF_TEXT, SIP, NULL, NULL, NULL, NULL);
-				pDlg->m_ListCtrl.SetItem(column_count, 3, LVIF_TEXT, DIP, NULL, NULL, NULL, NULL);
-				pDlg->m_ListCtrl.SetItem(column_count, 4, LVIF_TEXT, PROTO, NULL, NULL, NULL, NULL);
-				pDlg->m_ListCtrl.SetItem(column_count, 5, LVIF_TEXT, LENGTH, NULL, NULL, NULL, NULL);
-				pDlg->m_ListCtrl.SetItem(column_count, 6, LVIF_TEXT, INFO, NULL, NULL, NULL, NULL);
-				pDlg->m_ListCtrl.SetItem(column_count, 7, LVIF_TEXT, DUMP, NULL, NULL, NULL, NULL);
+						DUMP.Replace(L" ", L"");
+						DUMP.Replace(L"\n", L"");
 
-				i++;
-				cnt = 0;
-				temp = "";
-			} else {
-				if (cnt == 0) {
-					Time = buffer;
-				} else if (cnt == 1) {
-					SIP = buffer;
-				} else if (cnt == 2) {
-					DIP = buffer;
-				} else if (cnt == 3) {
-					PROTO = buffer;
-				} else if (cnt == 4) {
-					LENGTH = buffer;
-				} else if (cnt == 5) {
-					INFO = buffer;
-				} else {
-					temp += buffer;
+						int column_count = pDlg->m_ListCtrl.GetItemCount();
+
+						CString column_count_str;
+						column_count_str.Format(_T("%d"), column_count + 1);
+						pDlg->m_ListCtrl.InsertItem(column_count, column_count_str);
+
+						pDlg->m_ListCtrl.SetItem(column_count, 1, LVIF_TEXT, TIME, NULL, NULL, NULL, NULL);
+						pDlg->m_ListCtrl.SetItem(column_count, 2, LVIF_TEXT, SIP, NULL, NULL, NULL, NULL);
+						pDlg->m_ListCtrl.SetItem(column_count, 3, LVIF_TEXT, DIP, NULL, NULL, NULL, NULL);
+						pDlg->m_ListCtrl.SetItem(column_count, 4, LVIF_TEXT, PROTO, NULL, NULL, NULL, NULL);
+						pDlg->m_ListCtrl.SetItem(column_count, 5, LVIF_TEXT, LENGTH, NULL, NULL, NULL, NULL);
+						pDlg->m_ListCtrl.SetItem(column_count, 6, LVIF_TEXT, INFO, NULL, NULL, NULL, NULL);
+						pDlg->m_ListCtrl.SetItem(column_count, 7, LVIF_TEXT, DUMP, NULL, NULL, NULL, NULL);
+
+
+						int nCount = pDlg->m_ListCtrl.GetItemCount();
+						pDlg->m_ListCtrl.EnsureVisible(nCount - 1, FALSE);
+
+						TIME = L"";
+						SIP = L"";
+						DIP = L"";
+						PROTO = L"";
+						LENGTH = L"";
+						INFO = L"";
+						DUMP = L"";
+						column_cnt = 0;
+					} else {
+						column_cnt++;
+					}
 				}
-				cnt++;
 			}
+			is.close();
+			pDlg->start_pos = pDlg->end_pos;
 		}
+		Sleep(1);
+		is.open("test.txt");
 	}
-
 	return 0;
 }

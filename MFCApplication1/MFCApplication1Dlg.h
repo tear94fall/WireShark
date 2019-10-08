@@ -59,6 +59,8 @@ public:
 	};
 
 	int end_pos = 0, start_pos = 0;
+	long file_length;
+	char* file_buffer;
 
 	bool m_bThreadStart = false;
 	CWinThread* m_pThread = NULL;
