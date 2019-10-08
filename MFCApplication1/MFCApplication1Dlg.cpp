@@ -1374,77 +1374,18 @@ void CMFCApplication1Dlg::OnBnClickedButton4() {
 
 	m_ListCtrl.DeleteAllItems();
 
-	/* 파일에서 읽어오기 */
-	CString Time;
-	CString SIP;
-	CString DIP;
-	CString PROTO;
-	CString LENGTH;
-	CString INFO;
-	CString DUMP;
+	if (m_pThread123 == NULL) {
+		m_ListCtrl.DeleteAllItems();
+		m_pThread123 = AfxBeginThread(ThreadFunctionSecondTest, this);
 
-
-	std::ifstream is("test.txt");
-	long length = 1024;
-	char* buffer = NULL;
-	std::string temp;
-
-	buffer = new char[length];
-	memset(buffer, 0, length);
-
-	int cnt = 0;
-	int i = 0;
-	while (i<10) {
-		is.getline(buffer, 49);
-		//std::cout << buffer << std::endl;
-		if (strcmp(buffer, "-----------------------------------------------") == 0) {
-			std::cout << temp << std::endl;
-			std::cout << "-----------------------------------------------\n" << std::endl;
-
-			DUMP = temp.c_str();
-			DUMP.Replace(L" ", L"");
-			DUMP.Replace(L"\n", L"");
-
-
-			PROTO.Replace(L" ", L"");
-			
-			int column_count = m_ListCtrl.GetItemCount();
-
-			CString column_count_str;
-			column_count_str.Format(_T("%d"), column_count + 1);
-			m_ListCtrl.InsertItem(column_count, column_count_str);
-
-			m_ListCtrl.SetItem(column_count, 1, LVIF_TEXT, Time, NULL, NULL, NULL, NULL);
-			m_ListCtrl.SetItem(column_count, 2, LVIF_TEXT, SIP, NULL, NULL, NULL, NULL);
-			m_ListCtrl.SetItem(column_count, 3, LVIF_TEXT, DIP, NULL, NULL, NULL, NULL);
-			m_ListCtrl.SetItem(column_count, 4, LVIF_TEXT, PROTO, NULL, NULL, NULL, NULL);
-			m_ListCtrl.SetItem(column_count, 5, LVIF_TEXT, LENGTH, NULL, NULL, NULL, NULL);
-			m_ListCtrl.SetItem(column_count, 6, LVIF_TEXT, INFO, NULL, NULL, NULL, NULL);
-			m_ListCtrl.SetItem(column_count, 7, LVIF_TEXT, DUMP, NULL, NULL, NULL, NULL);
-
-			i++;
-			cnt = 0;
-			temp = "";
-		} else {
-			if (cnt == 0) {
-				Time = buffer;
-			} else if (cnt == 1) {
-				SIP = buffer;
-			} else if (cnt == 2) {
-				DIP = buffer;
-			} else if (cnt == 3) {
-				PROTO = buffer;
-			} else if (cnt == 4) {
-				LENGTH = buffer;
-			} else if (cnt == 5) {
-				INFO = buffer;
-			} else {
-				temp += buffer;
-				if (strlen(buffer) % 16 == 0) {
-					temp += "\n";
-				}
-			}
-			cnt++;
+		m_ThreadWorkType123 = RUNNING;
+	} else {
+		if (m_ThreadWorkType123 == RUNNING) {
+			m_pThread123->SuspendThread();
+			m_ThreadWorkType123 = PAUSE;
+		} else if (m_ThreadWorkType123 == PAUSE) {
+			m_pThread123->ResumeThread();
+			m_ThreadWorkType123 = RUNNING;
 		}
 	}
 }
@@ -1473,4 +1414,80 @@ CString CMFCApplication1Dlg::ArpHardwareType(CString HardwareTypeNumber) {
 		HardwareTypeStr = "IEEE 802.3 networks";
 	}
 	return HardwareTypeStr;
+}
+
+UINT CMFCApplication1Dlg::ThreadFunctionSecondTest(LPVOID _mothod) {
+	CMFCApplication1Dlg* pDlg = (CMFCApplication1Dlg*)AfxGetApp()->m_pMainWnd;
+
+	/* 파일에서 읽어오기 */
+	CString Time;
+	CString SIP;
+	CString DIP;
+	CString PROTO;
+	CString LENGTH;
+	CString INFO;
+	CString DUMP;
+
+
+	std::ifstream is("test.txt");
+	long length = 1024;
+	char* buffer = NULL;
+	std::string temp;
+
+	buffer = new char[length];
+	memset(buffer, 0, length);
+
+	int cnt = 0;
+	int i = 0;
+	while (1) {
+		if (is) {
+			is.getline(buffer, 49);
+
+			if (strcmp(buffer, "-----------------------------------------------") == 0) {
+				DUMP = temp.c_str();
+				DUMP.Replace(L" ", L"");
+				DUMP.Replace(L"\n", L"");
+
+				//마지막에 공백 한칸 있음
+				//PROTO.Replace(L" ", L"");
+
+				int column_count = pDlg->m_ListCtrl.GetItemCount();
+
+				CString column_count_str;
+				column_count_str.Format(_T("%d"), column_count + 1);
+				pDlg->m_ListCtrl.InsertItem(column_count, column_count_str);
+
+				pDlg->m_ListCtrl.SetItem(column_count, 1, LVIF_TEXT, Time, NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 2, LVIF_TEXT, SIP, NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 3, LVIF_TEXT, DIP, NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 4, LVIF_TEXT, PROTO, NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 5, LVIF_TEXT, LENGTH, NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 6, LVIF_TEXT, INFO, NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 7, LVIF_TEXT, DUMP, NULL, NULL, NULL, NULL);
+
+				i++;
+				cnt = 0;
+				temp = "";
+			} else {
+				if (cnt == 0) {
+					Time = buffer;
+				} else if (cnt == 1) {
+					SIP = buffer;
+				} else if (cnt == 2) {
+					DIP = buffer;
+				} else if (cnt == 3) {
+					PROTO = buffer;
+				} else if (cnt == 4) {
+					LENGTH = buffer;
+				} else if (cnt == 5) {
+					INFO = buffer;
+				} else {
+					temp += buffer;
+				}
+				cnt++;
+			}
+		}
+	}
+
+	return 0;
 }

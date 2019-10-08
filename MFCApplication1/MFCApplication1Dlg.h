@@ -58,10 +58,16 @@ public:
 		CListCtrl* pList;
 	};
 
+	int end_pos = 0, start_pos = 0;
+
 	bool m_bThreadStart = false;
 	CWinThread* m_pThread = NULL;
 	ThreadWorking m_ThreadWorkType = STOP;
 	static UINT ThreadFunctionFirstTest(LPVOID _mothod);
+
+	CWinThread* m_pThread123 = NULL;
+	ThreadWorking m_ThreadWorkType123 = STOP;
+	static UINT ThreadFunctionSecondTest(LPVOID _mothod);
 
 	int packet_cnt = 0;
 	int tcp_pkt_cnt = 0;
