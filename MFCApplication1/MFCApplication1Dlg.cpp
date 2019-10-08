@@ -72,6 +72,7 @@ BEGIN_MESSAGE_MAP(CMFCApplication1Dlg, CDialogEx)
 	ON_NOTIFY(HDN_ITEMCLICK, 0, &CMFCApplication1Dlg::OnHdnItemclick)
 	//	ON_NOTIFY(NM_CUSTOMDRAW, IDC_LIST1, &CMFCApplication1Dlg::OnNMCustomdrawList1)
 	ON_BN_CLICKED(IDC_BUTTON4, &CMFCApplication1Dlg::OnBnClickedButton4)
+	ON_COMMAND(ID_FILE_1, &CMFCApplication1Dlg::OnFile1)
 END_MESSAGE_MAP()
 
 
@@ -117,7 +118,7 @@ BOOL CMFCApplication1Dlg::OnInitDialog() {
 
 
 	/* 파일에 쓰기 */
-	std::remove("test.txt");
+	//std::remove(file_name);
 	/* 파일에 쓰기 */
 
 	m_strSelectedNetworkInterface = netInterfaceDlg.InterfaceDescription;
@@ -515,7 +516,7 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 
 		unsigned char c;
 		int packet_size = header->caplen;
-		std::ofstream out("test.txt", std::ios::app);
+		std::ofstream out(pDlg->file_name, std::ios::app);
 
 		CT2CA pszConvertedAnsiString(pDlg->GetIPAddr(ih->saddr));
 		std::string s(pszConvertedAnsiString);
@@ -1383,6 +1384,8 @@ void CMFCApplication1Dlg::OnBnClickedButton4() {
 		if (m_ThreadWorkType123 == RUNNING) {
 			m_pThread123->SuspendThread();
 			m_ThreadWorkType123 = PAUSE;
+			end_pos = 0;
+			start_pos = 0;
 		} else if (m_ThreadWorkType123 == PAUSE) {
 			m_pThread123->ResumeThread();
 			m_ThreadWorkType123 = RUNNING;
@@ -1429,7 +1432,7 @@ UINT CMFCApplication1Dlg::ThreadFunctionSecondTest(LPVOID _mothod) {
 	CString DUMP;
 
 
-	std::ifstream is("test.txt");
+	std::ifstream is(pDlg->file_name);
 	long length = 1024;
 	char* buffer = NULL;
 	std::string temp;
@@ -1466,11 +1469,13 @@ UINT CMFCApplication1Dlg::ThreadFunctionSecondTest(LPVOID _mothod) {
 					} else if (column_cnt == 5) {
 						INFO = (CString)str.c_str();
 					} else if (column_cnt > 5) {
-						DUMP += (CString)str.c_str();
+						if (str != "-----------------------------------------------") {
+							DUMP += (CString)str.c_str();
+						}
 					}
 
-					if (str == "-----------------------------------------------"&&PROTO==L"TCP ") {
-						//PROTO.Replace(L" ", L"");
+					if (str == "-----------------------------------------------") {
+						PROTO.Replace(L" ", L"");
 
 						DUMP.Replace(L" ", L"");
 						DUMP.Replace(L"\n", L"");
@@ -1510,7 +1515,21 @@ UINT CMFCApplication1Dlg::ThreadFunctionSecondTest(LPVOID _mothod) {
 			pDlg->start_pos = pDlg->end_pos;
 		}
 		Sleep(1);
-		is.open("test.txt");
+		is.open(pDlg->file_name);
 	}
 	return 0;
+}
+
+void CMFCApplication1Dlg::OnFile1() {
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	TCHAR szFilter[] = _T("All Files(*.*)|*.*||");
+	CFileDialog dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY, szFilter);
+	dlg.DoModal();
+	
+
+	CString strPathName = dlg.GetPathName();
+	CT2CA pszConvertedAnsiString(strPathName);
+	std::string str(pszConvertedAnsiString);
+	char* temp = (char*)str.c_str();
+
 }

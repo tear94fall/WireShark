@@ -61,6 +61,8 @@ public:
 	int end_pos = 0, start_pos = 0;
 	long file_length;
 	char* file_buffer;
+	char* file_name = "tmp.dat";
+
 
 	bool m_bThreadStart = false;
 	CWinThread* m_pThread = NULL;
@@ -122,4 +124,5 @@ public:
 	CString ChangeHexToAscii(CString HexData);
 	CString ArpOpcde(CString OpcodeNumber);
 	CString ArpHardwareType(CString HardwareTypeNumber);
+ void OnFile1();
 };
