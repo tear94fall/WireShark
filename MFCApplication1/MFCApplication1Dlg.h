@@ -61,8 +61,9 @@ public:
 	int end_pos = 0, start_pos = 0;
 	long file_length;
 	char* file_buffer;
-	char* file_name = "tmp.dat";
-
+	CString file_name_read;
+	char* file_name_write = "temp.dat";
+	bool is_file_save = false;
 
 	bool m_bThreadStart = false;
 	CWinThread* m_pThread = NULL;
@@ -124,5 +125,6 @@ public:
 	CString ChangeHexToAscii(CString HexData);
 	CString ArpOpcde(CString OpcodeNumber);
 	CString ArpHardwareType(CString HardwareTypeNumber);
- void OnFile1();
+	void OpenPacketDataFile();
+	afx_msg void FileSave();
 };

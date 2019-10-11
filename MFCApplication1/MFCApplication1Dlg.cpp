@@ -67,12 +67,13 @@ BEGIN_MESSAGE_MAP(CMFCApplication1Dlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON1, &CMFCApplication1Dlg::OnBnClickedButton1)
 	ON_BN_CLICKED(IDC_BUTTON2, &CMFCApplication1Dlg::OnBnClickedButton2)
 	ON_BN_CLICKED(IDC_BUTTON3, &CMFCApplication1Dlg::OnBnClickedButton3)
+	ON_BN_CLICKED(IDC_BUTTON4, &CMFCApplication1Dlg::OnBnClickedButton4)
 	ON_NOTIFY(NM_CUSTOMDRAW, IDC_LIST2, &CMFCApplication1Dlg::OnCustomdrawList)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST2, &CMFCApplication1Dlg::OnNMDblclkList2)
 	ON_NOTIFY(HDN_ITEMCLICK, 0, &CMFCApplication1Dlg::OnHdnItemclick)
 	//	ON_NOTIFY(NM_CUSTOMDRAW, IDC_LIST1, &CMFCApplication1Dlg::OnNMCustomdrawList1)
-	ON_BN_CLICKED(IDC_BUTTON4, &CMFCApplication1Dlg::OnBnClickedButton4)
-	ON_COMMAND(ID_FILE_1, &CMFCApplication1Dlg::OnFile1)
+	ON_COMMAND(ID_FILE_1, &CMFCApplication1Dlg::OpenPacketDataFile)
+	ON_COMMAND(ID_1_1, &CMFCApplication1Dlg::FileSave)
 END_MESSAGE_MAP()
 
 
@@ -214,7 +215,15 @@ HCURSOR CMFCApplication1Dlg::OnQueryDragIcon() {
 
 void CMFCApplication1Dlg::OnBnClickedButton1() {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	SetDlgItemText(IDC_STATIC_NET, L"Interface: " + m_strSelectedNetworkInterface);
+
 	if (m_pThread == NULL) {
+		ClearPacketCnt();
+
+		if (IsFilterApply == TRUE) {
+			IsFilterApply = FALSE;
+			m_ListCtrl.DeleteAllItems();
+		}
 		m_pThread = AfxBeginThread(ThreadFunctionFirstTest, this);
 		//AfxMessageBox(_T("캡처를 시작합니다"));
 		CButton* pButton = (CButton*)GetDlgItem(IDC_BUTTON1);
@@ -355,8 +364,6 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 
 				++pDlg->tcp_pkt_cnt;
 				++pDlg->packet_cnt;
-
-				pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
 			} else if (ih->proto == 4) {
 				printf("IP\n");
 			} else if (ih->proto == IPPROTO_UDP) {
@@ -385,7 +392,6 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 
 				++pDlg->udp_pkt_cnt;
 				++pDlg->packet_cnt;
-				pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
 			} else if (ih->proto == IPPROTO_ICMP) {
 				// ICMP
 
@@ -410,18 +416,14 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 
 				++pDlg->icmp_pkt_cnt;
 				++pDlg->packet_cnt;
-				pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
 			} else {
 				printf("Unknown Protocol\n");
 				unsigned char temp = ih->proto;
 
 			}
 
-			pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
-
 			int nCount = pDlg->m_ListCtrl.GetItemCount();
 			pDlg->m_ListCtrl.EnsureVisible(nCount - 1, FALSE);
-
 
 			std::string packet_dump_data;
 
@@ -475,13 +477,11 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 			// Info는 프로토콜 마다 달라야함
 			pDlg->m_ListCtrl.SetItem(column_count, 6, LVIF_TEXT, sender_hw_addr + L" -> " + target_hw_adr, NULL, NULL, NULL, NULL);
 
-
 			++pDlg->arp_pkt_cnt;
 			++pDlg->packet_cnt;
-			pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
 		} else {
-			return;
 		}
+
 		std::string result;
 
 		for (i = 1; (i < header->caplen + 1); i++) {
@@ -507,8 +507,22 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 		//pDlg->m_ListCtrl.SetItem(column_count, 6, LVIF_TEXT, sender_hw_addr + L" -> " + target_hw_adr, NULL, NULL, NULL, NULL);
 		//pDlg->m_ListCtrl.SetItem(column_count, 7, LVIF_TEXT, packet_dump_data, NULL, NULL, NULL, NULL);
 	} else {
-
+		if (ntohs(ethhdr->frame_type) == 0x0800) {
+			if (ih->proto == IPPROTO_TCP) {
+				pDlg->tcp_pkt_cnt++;
+			} else if (ih->proto == IPPROTO_UDP) {
+				pDlg->udp_pkt_cnt++;
+			} else if (ih->proto == IPPROTO_ICMP) {
+				pDlg->icmp_pkt_cnt++;
+			}
+		} else if (ntohs(ethhdr->frame_type) == 0x0806) {
+			pDlg->arp_pkt_cnt++;
+		}
+		pDlg->packet_cnt++;
 	}
+
+	/* 패킷 갯수 갱신 */
+	pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
 
 	/* 파일에 쓰기 */
 
@@ -516,7 +530,7 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 
 		unsigned char c;
 		int packet_size = header->caplen;
-		std::ofstream out(pDlg->file_name, std::ios::app);
+		std::ofstream out(pDlg->file_name_write, std::ios::app);
 
 		CT2CA pszConvertedAnsiString(pDlg->GetIPAddr(ih->saddr));
 		std::string s(pszConvertedAnsiString);
@@ -1367,6 +1381,14 @@ void CMFCApplication1Dlg::OnBnClickedButton4() {
 	UpdateData(TRUE);
 	GetDlgItemText(IDC_EDIT1, Filter);
 
+	ClearPacketCnt();
+	ChangeStaticText(packet_cnt, tcp_pkt_cnt, udp_pkt_cnt, arp_pkt_cnt, icmp_pkt_cnt);
+
+	if (file_name_read == L"") {
+		AfxMessageBox(L"파일이 선택되지 않았습니다");
+		return;
+	}
+
 	if (IsFilterApply) {
 		IsFilterApply = false;
 	} else {
@@ -1416,11 +1438,14 @@ CString CMFCApplication1Dlg::ArpHardwareType(CString HardwareTypeNumber) {
 	} else if (HardwareTypeNumber.Compare(L"5") == 0) {
 		HardwareTypeStr = "IEEE 802.3 networks";
 	}
+
 	return HardwareTypeStr;
 }
 
 UINT CMFCApplication1Dlg::ThreadFunctionSecondTest(LPVOID _mothod) {
 	CMFCApplication1Dlg* pDlg = (CMFCApplication1Dlg*)AfxGetApp()->m_pMainWnd;
+
+	pDlg->ClearPacketCnt();
 
 	/* 파일에서 읽어오기 */
 	CString TIME;
@@ -1431,8 +1456,13 @@ UINT CMFCApplication1Dlg::ThreadFunctionSecondTest(LPVOID _mothod) {
 	CString INFO;
 	CString DUMP;
 
+	char file_name[100];
+	CT2CA pszConvertedAnsiString(pDlg->file_name_read);
+	std::string str(pszConvertedAnsiString);
+	char cstr[10];
+	strcpy(file_name, str.c_str());
 
-	std::ifstream is(pDlg->file_name);
+	std::ifstream is(file_name);
 	long length = 1024;
 	char* buffer = NULL;
 	std::string temp;
@@ -1498,6 +1528,19 @@ UINT CMFCApplication1Dlg::ThreadFunctionSecondTest(LPVOID _mothod) {
 						int nCount = pDlg->m_ListCtrl.GetItemCount();
 						pDlg->m_ListCtrl.EnsureVisible(nCount - 1, FALSE);
 
+						if (PROTO == L"TCP") {
+							pDlg->tcp_pkt_cnt++;
+						} else if (PROTO == L"UDP") {
+							pDlg->udp_pkt_cnt++;
+						} else if (PROTO == L"ICMP") {
+							pDlg->icmp_pkt_cnt++;
+						} else if (PROTO == L"ARP") {
+							pDlg->arp_pkt_cnt;
+						}
+
+						pDlg->packet_cnt++;
+						pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
+
 						TIME = L"";
 						SIP = L"";
 						DIP = L"";
@@ -1515,21 +1558,25 @@ UINT CMFCApplication1Dlg::ThreadFunctionSecondTest(LPVOID _mothod) {
 			pDlg->start_pos = pDlg->end_pos;
 		}
 		Sleep(1);
-		is.open(pDlg->file_name);
+		is.open(file_name);
 	}
 	return 0;
 }
 
-void CMFCApplication1Dlg::OnFile1() {
+void CMFCApplication1Dlg::OpenPacketDataFile() {
 	// TODO: 여기에 명령 처리기 코드를 추가합니다.
 	TCHAR szFilter[] = _T("All Files(*.*)|*.*||");
 	CFileDialog dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY, szFilter);
 	dlg.DoModal();
-	
 
 	CString strPathName = dlg.GetPathName();
-	CT2CA pszConvertedAnsiString(strPathName);
-	std::string str(pszConvertedAnsiString);
-	char* temp = (char*)str.c_str();
+	this->file_name_read = strPathName;
 
+	SetDlgItemText(IDC_STATIC_NET, L"File Selected: " + strPathName);
+}
+
+void CMFCApplication1Dlg::FileSave() {
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	is_file_save = true;
+	MessageBox(L"캡처된 패킷을 파일로 저장합니다.", L"파일 저장");
 }
