@@ -84,7 +84,7 @@ BOOL NetworkInterfaceDlg::OnInitDialog() {
 	}
 
 	if (column_count == 0) {
-		AfxMessageBox(_T("연결된 인터페이스가 없습니다."));
+		MessageBox(_T("연결된 네트워크 인터페이스가 없습니다."), _T("오류"), MB_ICONASTERISK);
 		m_nSelectedIndex = -1;
 	}
 
@@ -122,7 +122,7 @@ void NetworkInterfaceDlg::OnBnClickedSelectInterfaceButton() {
 	InterfaceName = m_strSelectedValue;
 
 	if (m_nSelectedIndex == -1) {
-		MessageBox(L"Select Interface", L"Error");
+		MessageBox(_T("Nothing Selected."), _T("Error"), MB_ICONWARNING);
 		SetDlgItemText(IDC_STATIC, L"Selected nothing");
 	} else {
 		CDialogEx::OnOK();

@@ -78,7 +78,6 @@ public:
 	ThreadWorking m_FileOpenThreadWorkType = STOP;
 	static UINT FileOpenThreadFunction(LPVOID _mothod);
 
-
 	int packet_cnt = 0;
 	int tcp_pkt_cnt = 0;
 	int udp_pkt_cnt = 0;
@@ -92,11 +91,11 @@ public:
 	CString Filter;
 	bool IsFilterApply = false;
 
-	CTreeCtrl PacketDataCtrl;
-	CListCtrl PacketDumpList;
+	CListCtrl m_PacketCapturedListCtrl;
+	CListCtrl m_PacketDumpListCtrl;
+	CTreeCtrl m_PacketDataTreeCtrl;
+
 	CEdit m_FilterEditCtrl;
-	CListCtrl m_ListCtrl;
-	CListBox m_HexEditorList;
 	CButton pause_button;
 
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
@@ -106,6 +105,12 @@ public:
 	afx_msg void OnBnClickedCapturePauseButton();
 	afx_msg void OnBnClickedFilterApplyButton();
 
+	void ChangeStaticText(int all_pkt_cnt, int tcp_pkt_cnt, int udp_pkt_cnt, int arp_pkt_cnt, int icmp_pkt_cnt);
+	void ClearPacketCnt();
+	void OpenPacketDataFile();
+	void FileSave();
+	void SetData(CString FrameNumber, CString Time, CString Source, CString Destination, CString Protocol, CString Length, CString Info, CString Packet_Dump_Data);
+	void SetDataToHDXEditor(CString ALLPacketData);
 	void OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult);
 	void OnNMDblclkList2(NMHDR* pNMHDR, LRESULT* pResult);
 	void OnHdnItemclick(NMHDR* pNMHDR, LRESULT* Result);
@@ -113,9 +118,6 @@ public:
 	static int CALLBACK SortFuncStr(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 	static int CALLBACK SortFuncNum(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
-	void ChangeStaticText(int all_pkt_cnt, int tcp_pkt_cnt, int udp_pkt_cnt, int arp_pkt_cnt, int icmp_pkt_cnt);
-	void ClearPacketCnt();
-	void SetData(CString FrameNumber, CString Time, CString Source, CString Destination, CString Protocol, CString Length, CString Info, CString Packet_Dump_Data);
 	std::string GetCurrentTimeStr();
 
 	CString HexToDec(CString _number);
@@ -131,6 +133,8 @@ public:
 	CString ChangeHexToAscii(CString HexData);
 	CString ArpOpcde(CString OpcodeNumber);
 	CString ArpHardwareType(CString HardwareTypeNumber);
-	void OpenPacketDataFile();
-	void FileSave();
+
+	BOOL CheckFilter(CString Filter, std::vector<CString> vec);
+
+	afx_msg void OnClose();
 };
