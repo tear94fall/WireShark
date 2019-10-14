@@ -64,16 +64,17 @@ BEGIN_MESSAGE_MAP(CMFCApplication1Dlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
-	ON_BN_CLICKED(IDC_BUTTON1, &CMFCApplication1Dlg::OnBnClickedButton1)
-	ON_BN_CLICKED(IDC_BUTTON2, &CMFCApplication1Dlg::OnBnClickedButton2)
-	ON_BN_CLICKED(IDC_BUTTON3, &CMFCApplication1Dlg::OnBnClickedButton3)
-	ON_BN_CLICKED(IDC_BUTTON4, &CMFCApplication1Dlg::OnBnClickedButton4)
+	ON_BN_CLICKED(IDC_BUTTON1, &CMFCApplication1Dlg::OnBnClickedCaptureStartButton)
+	ON_BN_CLICKED(IDC_BUTTON2, &CMFCApplication1Dlg::OnBnClickedCaptureQuitButton)
+	ON_BN_CLICKED(IDC_BUTTON3, &CMFCApplication1Dlg::OnBnClickedCapturePauseButton)
+	ON_BN_CLICKED(IDC_BUTTON4, &CMFCApplication1Dlg::OnBnClickedFilterApplyButton)
 	ON_NOTIFY(NM_CUSTOMDRAW, IDC_LIST2, &CMFCApplication1Dlg::OnCustomdrawList)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST2, &CMFCApplication1Dlg::OnNMDblclkList2)
 	ON_NOTIFY(HDN_ITEMCLICK, 0, &CMFCApplication1Dlg::OnHdnItemclick)
-	//	ON_NOTIFY(NM_CUSTOMDRAW, IDC_LIST1, &CMFCApplication1Dlg::OnNMCustomdrawList1)
 	ON_COMMAND(ID_FILE_1, &CMFCApplication1Dlg::OpenPacketDataFile)
 	ON_COMMAND(ID_1_1, &CMFCApplication1Dlg::FileSave)
+//	ON_NOTIFY(NM_CUSTOMDRAW, IDC_LIST1, &CMFCApplication1Dlg::OnNMCustomdrawList1)
+//	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST1, &CMFCApplication1Dlg::OnLvnItemchangedList1)
 END_MESSAGE_MAP()
 
 
@@ -116,11 +117,10 @@ BOOL CMFCApplication1Dlg::OnInitDialog() {
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
 
+	//temp 파일 삭제
+	std::remove(file_name_write);
 
-
-	/* 파일에 쓰기 */
-	//std::remove(file_name);
-	/* 파일에 쓰기 */
+	GetDlgItem(IDC_CHECK2)->EnableWindow(FALSE);   //비활성
 
 	m_strSelectedNetworkInterface = netInterfaceDlg.InterfaceDescription;
 	SetDlgItemText(IDC_STATIC_NET, L"Interface: " + m_strSelectedNetworkInterface);
@@ -213,18 +213,18 @@ HCURSOR CMFCApplication1Dlg::OnQueryDragIcon() {
 }
 
 
-void CMFCApplication1Dlg::OnBnClickedButton1() {
+void CMFCApplication1Dlg::OnBnClickedCaptureStartButton() {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	SetDlgItemText(IDC_STATIC_NET, L"Interface: " + m_strSelectedNetworkInterface);
 
-	if (m_pThread == NULL) {
+	if (m_PacketCaptrueThread == NULL) {
 		ClearPacketCnt();
+		m_ListCtrl.DeleteAllItems();
 
 		if (IsFilterApply == TRUE) {
 			IsFilterApply = FALSE;
-			m_ListCtrl.DeleteAllItems();
 		}
-		m_pThread = AfxBeginThread(ThreadFunctionFirstTest, this);
+		m_PacketCaptrueThread = AfxBeginThread(PacketCaptureThreadFunction, this);
 		//AfxMessageBox(_T("캡처를 시작합니다"));
 		CButton* pButton = (CButton*)GetDlgItem(IDC_BUTTON1);
 		pButton->EnableWindow(FALSE);
@@ -235,16 +235,16 @@ void CMFCApplication1Dlg::OnBnClickedButton1() {
 		CButton* pButton3 = (CButton*)GetDlgItem(IDC_BUTTON3);
 		pButton3->EnableWindow(TRUE);
 
-		if (m_pThread == NULL) {
+		if (m_PacketCaptrueThread == NULL) {
 			AfxMessageBox(_T("캡처 시작을 할 수 없습니다."));
 		}
 
-		if (m_pThread != NULL) {
-			m_pThread->m_bAutoDelete = FALSE;
+		if (m_PacketCaptrueThread != NULL) {
+			m_PacketCaptrueThread->m_bAutoDelete = FALSE;
 		}
-		m_ThreadWorkType = RUNNING;
+		m_PacketCaptureThreadWorkType = RUNNING;
 	} else {
-		if (m_ThreadWorkType == RUNNING || m_ThreadWorkType == PAUSE) {
+		if (m_PacketCaptureThreadWorkType == RUNNING || m_PacketCaptureThreadWorkType == PAUSE) {
 			//m_pThread->ResumeThread();
 			//m_ThreadWorkType = RUNNING;
 		}
@@ -252,7 +252,7 @@ void CMFCApplication1Dlg::OnBnClickedButton1() {
 }
 
 
-UINT CMFCApplication1Dlg::ThreadFunctionFirstTest(LPVOID _mothod) {
+UINT CMFCApplication1Dlg::PacketCaptureThreadFunction(LPVOID _mothod) {
 	CMFCApplication1Dlg* pDlg = (CMFCApplication1Dlg*)AfxGetApp()->m_pMainWnd;
 	pcap_if_t* alldevs;
 	pcap_if_t* d = NULL;
@@ -552,8 +552,8 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 		} else if (ntohs(ethhdr->frame_type) == 0x0806) {
 			protocol = "ARP";
 		}
-
-
+		int column_count = pDlg->m_ListCtrl.GetItemCount();
+		out << column_count << "\n";
 		out << pDlg->GetCurrentTimeStr() << "\n";
 		out << sip << " \n";
 		out << dip << " \n";
@@ -575,20 +575,34 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 	}
 }
 
-void CMFCApplication1Dlg::OnBnClickedButton2() {
+void CMFCApplication1Dlg::OnBnClickedCaptureQuitButton() {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
-	if (m_pThread == NULL) {
+	if (m_PacketCaptrueThread == NULL) {
 
 	} else {
-		m_pThread->SuspendThread();
-
 		DWORD dwResult;
-		::GetExitCodeThread(m_pThread->m_hThread, &dwResult);
 
-		delete m_pThread;
-		m_pThread = NULL;
+		m_PacketCaptrueThread->SuspendThread();
+		m_PacketCaptureThreadWorkType = STOP;
+		::GetExitCodeThread(m_PacketCaptrueThread->m_hThread, &dwResult);
+		delete m_PacketCaptrueThread;
+		m_PacketCaptrueThread = NULL;
 
-		m_ThreadWorkType = STOP;
+		if (m_FileReadThread != NULL) {
+			m_FileReadThread->SuspendThread();
+			m_FileReadThreadWorkType = STOP;
+			::GetExitCodeThread(m_FileReadThread->m_hThread, &dwResult);
+			delete m_FileReadThread;
+			m_FileReadThread = NULL;
+		}
+
+		if (m_FileOpenThread != NULL) {
+			m_FileOpenThread->SuspendThread();
+			m_FileOpenThreadWorkType = STOP;
+			::GetExitCodeThread(m_FileOpenThread->m_hThread, &dwResult);
+			delete m_FileOpenThread;
+			m_FileOpenThread = NULL;
+		}
 
 		CButton* pButton = (CButton*)GetDlgItem(IDC_BUTTON1);
 		pButton->EnableWindow(TRUE);
@@ -626,18 +640,18 @@ void CMFCApplication1Dlg::ClearPacketCnt() {
 	icmp_pkt_cnt = 0;
 }
 
-void CMFCApplication1Dlg::OnBnClickedButton3() {
+void CMFCApplication1Dlg::OnBnClickedCapturePauseButton() {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
-	if (m_pThread == NULL) {
+	if (m_PacketCaptrueThread == NULL) {
 	} else {
-		if (m_ThreadWorkType == RUNNING) {
+		if (m_PacketCaptureThreadWorkType == RUNNING) {
 			pause_button.SetWindowText(L"Resume");
-			m_pThread->SuspendThread();
-			m_ThreadWorkType = PAUSE;
+			m_PacketCaptrueThread->SuspendThread();
+			m_PacketCaptureThreadWorkType = PAUSE;
 		} else {
 			pause_button.SetWindowText(L"Pause");
-			m_pThread->ResumeThread();
-			m_ThreadWorkType = RUNNING;
+			m_PacketCaptrueThread->ResumeThread();
+			m_PacketCaptureThreadWorkType = RUNNING;
 		}
 	}
 }
@@ -1302,6 +1316,7 @@ void CMFCApplication1Dlg::SetData(CString FrameNumber, CString Time, CString Sou
 		HTREEITEM PacketDataRoot4Child8Child1 = PacketDataCtrl.InsertItem(PacketDataLine4by8by1, PacketDataRoot4Child8);
 	}
 
+	//항목 펼치기
 	//PacketDataCtrl.Expand(PacketDataRoot1, TVE_EXPAND);
 	//PacketDataCtrl.Expand(PacketDataRoot2, TVE_EXPAND);
 	//PacketDataCtrl.Expand(PacketDataRoot3, TVE_EXPAND);
@@ -1376,7 +1391,7 @@ CString CMFCApplication1Dlg::ChangeHexToAscii(CString HexData) {
 	return HexData;
 }
 
-void CMFCApplication1Dlg::OnBnClickedButton4() {
+void CMFCApplication1Dlg::OnBnClickedFilterApplyButton() {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	UpdateData(TRUE);
 	GetDlgItemText(IDC_EDIT1, Filter);
@@ -1384,33 +1399,36 @@ void CMFCApplication1Dlg::OnBnClickedButton4() {
 	ClearPacketCnt();
 	ChangeStaticText(packet_cnt, tcp_pkt_cnt, udp_pkt_cnt, arp_pkt_cnt, icmp_pkt_cnt);
 
-	if (file_name_read == L"") {
+	if (file_name_write == "") {
 		AfxMessageBox(L"파일이 선택되지 않았습니다");
 		return;
 	}
 
 	if (IsFilterApply) {
-		IsFilterApply = false;
+		IsFilterApply = FALSE;
+		m_ListCtrl.DeleteAllItems();
+		if (m_PacketCaptrueThread != NULL) {
+			m_PacketCaptrueThread->SuspendThread();
+			m_PacketCaptureThreadWorkType = PAUSE;
+		}
 	} else {
-		IsFilterApply = true;
+		IsFilterApply = TRUE;
 	}
 
-	m_ListCtrl.DeleteAllItems();
-
-	if (m_pThread123 == NULL) {
+	if (m_FileReadThread == NULL) {
 		m_ListCtrl.DeleteAllItems();
-		m_pThread123 = AfxBeginThread(ThreadFunctionSecondTest, this);
+		m_FileReadThread = AfxBeginThread(FileReadThreadFunction, this);
 
-		m_ThreadWorkType123 = RUNNING;
+		m_FileReadThreadWorkType = RUNNING;
 	} else {
-		if (m_ThreadWorkType123 == RUNNING) {
-			m_pThread123->SuspendThread();
-			m_ThreadWorkType123 = PAUSE;
+		if (m_FileReadThreadWorkType == RUNNING) {
+			m_FileReadThread->SuspendThread();
+			m_FileReadThreadWorkType = PAUSE;
 			end_pos = 0;
 			start_pos = 0;
-		} else if (m_ThreadWorkType123 == PAUSE) {
-			m_pThread123->ResumeThread();
-			m_ThreadWorkType123 = RUNNING;
+		} else if (m_FileReadThreadWorkType == PAUSE) {
+			m_FileReadThread->ResumeThread();
+			m_FileReadThreadWorkType = RUNNING;
 		}
 	}
 }
@@ -1442,12 +1460,13 @@ CString CMFCApplication1Dlg::ArpHardwareType(CString HardwareTypeNumber) {
 	return HardwareTypeStr;
 }
 
-UINT CMFCApplication1Dlg::ThreadFunctionSecondTest(LPVOID _mothod) {
+UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 	CMFCApplication1Dlg* pDlg = (CMFCApplication1Dlg*)AfxGetApp()->m_pMainWnd;
 
 	pDlg->ClearPacketCnt();
 
 	/* 파일에서 읽어오기 */
+	CString NO; 
 	CString TIME;
 	CString SIP;
 	CString DIP;
@@ -1456,13 +1475,7 @@ UINT CMFCApplication1Dlg::ThreadFunctionSecondTest(LPVOID _mothod) {
 	CString INFO;
 	CString DUMP;
 
-	char file_name[100];
-	CT2CA pszConvertedAnsiString(pDlg->file_name_read);
-	std::string str(pszConvertedAnsiString);
-	char cstr[10];
-	strcpy(file_name, str.c_str());
-
-	std::ifstream is(file_name);
+	std::ifstream is(pDlg->file_name_write);
 	long length = 1024;
 	char* buffer = NULL;
 	std::string temp;
@@ -1487,18 +1500,20 @@ UINT CMFCApplication1Dlg::ThreadFunctionSecondTest(LPVOID _mothod) {
 					std::getline(is, str);
 
 					if (column_cnt == 0) {
-						TIME = (CString)str.c_str();
+						NO = (CString)str.c_str();
 					} else if (column_cnt == 1) {
-						SIP = (CString)str.c_str();
+						TIME = (CString)str.c_str();
 					} else if (column_cnt == 2) {
-						DIP = (CString)str.c_str();
+						SIP = (CString)str.c_str();
 					} else if (column_cnt == 3) {
-						PROTO = (CString)str.c_str();
+						DIP = (CString)str.c_str();
 					} else if (column_cnt == 4) {
-						LENGTH = (CString)str.c_str();
+						PROTO = (CString)str.c_str();
 					} else if (column_cnt == 5) {
+						LENGTH = (CString)str.c_str();
+					} else if (column_cnt == 6) {
 						INFO = (CString)str.c_str();
-					} else if (column_cnt > 5) {
+					} else if (column_cnt > 6) {
 						if (str != "-----------------------------------------------") {
 							DUMP += (CString)str.c_str();
 						}
@@ -1535,7 +1550,7 @@ UINT CMFCApplication1Dlg::ThreadFunctionSecondTest(LPVOID _mothod) {
 						} else if (PROTO == L"ICMP") {
 							pDlg->icmp_pkt_cnt++;
 						} else if (PROTO == L"ARP") {
-							pDlg->arp_pkt_cnt;
+							pDlg->arp_pkt_cnt++;
 						}
 
 						pDlg->packet_cnt++;
@@ -1558,7 +1573,7 @@ UINT CMFCApplication1Dlg::ThreadFunctionSecondTest(LPVOID _mothod) {
 			pDlg->start_pos = pDlg->end_pos;
 		}
 		Sleep(1);
-		is.open(file_name);
+		is.open(pDlg->file_name_write);
 	}
 	return 0;
 }
@@ -1571,12 +1586,132 @@ void CMFCApplication1Dlg::OpenPacketDataFile() {
 
 	CString strPathName = dlg.GetPathName();
 	this->file_name_read = strPathName;
+	m_ListCtrl.DeleteAllItems();
+	if (strPathName.GetLength() > 50) {
+		strPathName = strPathName.Right(strPathName.GetLength() - strPathName.ReverseFind('\\') - 1);
+	}
+	SetDlgItemText(IDC_STATIC_NET, L"Selected: " + strPathName);
 
-	SetDlgItemText(IDC_STATIC_NET, L"File Selected: " + strPathName);
+	CheckDlgButton(IDC_CHECK2, TRUE);
+	
+	if (m_FileReadThread == NULL) {
+		m_FileReadThread = AfxBeginThread(FileOpenThreadFunction, this);
+		m_FileReadThreadWorkType = RUNNING;
+	}
 }
 
 void CMFCApplication1Dlg::FileSave() {
 	// TODO: 여기에 명령 처리기 코드를 추가합니다.
 	is_file_save = true;
 	MessageBox(L"캡처된 패킷을 파일로 저장합니다.", L"파일 저장");
+}
+
+UINT CMFCApplication1Dlg::FileOpenThreadFunction(LPVOID _mothod) {
+	CMFCApplication1Dlg* pDlg = (CMFCApplication1Dlg*)AfxGetApp()->m_pMainWnd;
+
+	pDlg->ClearPacketCnt();
+
+	/* 파일에서 읽어오기 */
+	CString NO;
+	CString TIME;
+	CString SIP;
+	CString DIP;
+	CString PROTO;
+	CString LENGTH;
+	CString INFO;
+	CString DUMP;
+
+	char file_name[100];
+	CT2CA pszConvertedAnsiString(pDlg->file_name_read);
+	std::string file_name_str(pszConvertedAnsiString);
+	char cstr[10];
+	strcpy(file_name, file_name_str.c_str());
+	std::string str = "FILEOPEN?";
+
+	std::ifstream is(file_name);
+
+	int cnt = 0;
+	int i = 0;
+	if(is){
+		int column_cnt = 0;
+		while(str!=""){
+			std::getline(is, str);
+
+			if (column_cnt == 0) {
+				NO = (CString)str.c_str();
+			} else if (column_cnt == 1) {
+				TIME = (CString)str.c_str();
+			} else if (column_cnt == 2) {
+				SIP = (CString)str.c_str();
+			} else if (column_cnt == 3) {
+				DIP = (CString)str.c_str();
+			} else if (column_cnt == 4) {
+				PROTO = (CString)str.c_str();
+			} else if (column_cnt == 5) {
+				LENGTH = (CString)str.c_str();
+			} else if (column_cnt == 6) {
+				INFO = (CString)str.c_str();
+			} else if (column_cnt > 6) {
+				if (str != "-----------------------------------------------") {
+					DUMP += (CString)str.c_str();
+				}
+			}
+
+			if (str == "-----------------------------------------------") {
+				PROTO.Replace(L" ", L"");
+
+				DUMP.Replace(L" ", L"");
+				DUMP.Replace(L"\n", L"");
+
+				int column_count = pDlg->m_ListCtrl.GetItemCount();
+
+				CString column_count_str;
+				column_count_str.Format(_T("%d"), column_count + 1);
+				pDlg->m_ListCtrl.InsertItem(column_count, column_count_str);
+
+				pDlg->m_ListCtrl.SetItem(column_count, 1, LVIF_TEXT, TIME, NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 2, LVIF_TEXT, SIP, NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 3, LVIF_TEXT, DIP, NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 4, LVIF_TEXT, PROTO, NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 5, LVIF_TEXT, LENGTH, NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 6, LVIF_TEXT, INFO, NULL, NULL, NULL, NULL);
+				pDlg->m_ListCtrl.SetItem(column_count, 7, LVIF_TEXT, DUMP, NULL, NULL, NULL, NULL);
+
+
+				int nCount = pDlg->m_ListCtrl.GetItemCount();
+				pDlg->m_ListCtrl.EnsureVisible(nCount - 1, FALSE);
+
+				if (PROTO == L"TCP") {
+					pDlg->tcp_pkt_cnt++;
+				} else if (PROTO == L"UDP") {
+					pDlg->udp_pkt_cnt++;
+				} else if (PROTO == L"ICMP") {
+					pDlg->icmp_pkt_cnt++;
+				} else if (PROTO == L"ARP") {
+					pDlg->arp_pkt_cnt++;
+				}
+
+				pDlg->packet_cnt++;
+				pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
+
+				TIME = L"";
+				SIP = L"";
+				DIP = L"";
+				PROTO = L"";
+				LENGTH = L"";
+				INFO = L"";
+				DUMP = L"";
+				column_cnt = 0;
+			} else {
+				column_cnt++;
+			}
+		}
+		is.close();
+	}
+
+	pDlg->CheckDlgButton(IDC_CHECK2, FALSE);
+
+	pDlg->m_FileReadThreadWorkType = pDlg->STOP;
+	pDlg->m_FileReadThread = NULL;
+	return 0;
 }

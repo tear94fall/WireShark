@@ -59,20 +59,25 @@ public:
 	};
 
 	int end_pos = 0, start_pos = 0;
-	long file_length;
-	char* file_buffer;
+	long file_length = 0;
+	char* file_buffer = NULL;
 	CString file_name_read;
 	char* file_name_write = "temp.dat";
 	bool is_file_save = false;
 
 	bool m_bThreadStart = false;
-	CWinThread* m_pThread = NULL;
-	ThreadWorking m_ThreadWorkType = STOP;
-	static UINT ThreadFunctionFirstTest(LPVOID _mothod);
+	CWinThread* m_PacketCaptrueThread = NULL;
+	ThreadWorking m_PacketCaptureThreadWorkType = STOP;
+	static UINT PacketCaptureThreadFunction(LPVOID _mothod);
 
-	CWinThread* m_pThread123 = NULL;
-	ThreadWorking m_ThreadWorkType123 = STOP;
-	static UINT ThreadFunctionSecondTest(LPVOID _mothod);
+	CWinThread* m_FileReadThread = NULL;
+	ThreadWorking m_FileReadThreadWorkType = STOP;
+	static UINT FileReadThreadFunction(LPVOID _mothod);
+
+	CWinThread* m_FileOpenThread = NULL;
+	ThreadWorking m_FileOpenThreadWorkType = STOP;
+	static UINT FileOpenThreadFunction(LPVOID _mothod);
+
 
 	int packet_cnt = 0;
 	int tcp_pkt_cnt = 0;
@@ -96,14 +101,15 @@ public:
 
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 
-	afx_msg void OnBnClickedButton1();
-	afx_msg void OnBnClickedButton2();
-	afx_msg void OnBnClickedButton3();
-	afx_msg void OnBnClickedButton4();
+	afx_msg void OnBnClickedCaptureStartButton();
+	afx_msg void OnBnClickedCaptureQuitButton();
+	afx_msg void OnBnClickedCapturePauseButton();
+	afx_msg void OnBnClickedFilterApplyButton();
 
-	afx_msg void OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnNMDblclkList2(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnHdnItemclick(NMHDR* pNMHDR, LRESULT* Result);
+	void OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult);
+	void OnNMDblclkList2(NMHDR* pNMHDR, LRESULT* pResult);
+	void OnHdnItemclick(NMHDR* pNMHDR, LRESULT* Result);
+
 	static int CALLBACK SortFuncStr(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 	static int CALLBACK SortFuncNum(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
@@ -126,5 +132,5 @@ public:
 	CString ArpOpcde(CString OpcodeNumber);
 	CString ArpHardwareType(CString HardwareTypeNumber);
 	void OpenPacketDataFile();
-	afx_msg void FileSave();
+	void FileSave();
 };

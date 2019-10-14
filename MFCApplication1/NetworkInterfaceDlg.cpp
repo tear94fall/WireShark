@@ -25,8 +25,8 @@ void NetworkInterfaceDlg::DoDataExchange(CDataExchange* pDX) {
 
 
 BEGIN_MESSAGE_MAP(NetworkInterfaceDlg, CDialogEx)
-	ON_BN_CLICKED(IDCANCEL, &NetworkInterfaceDlg::OnBnClickedCancel)
-	ON_BN_CLICKED(IDOK, &NetworkInterfaceDlg::OnBnClickedOk)
+	ON_BN_CLICKED(IDCANCEL, &NetworkInterfaceDlg::OnBnClickedQuitButton)
+	ON_BN_CLICKED(IDOK, &NetworkInterfaceDlg::OnBnClickedSelectInterfaceButton)
 	ON_NOTIFY(NM_CLICK, IDC_LIST1, &NetworkInterfaceDlg::OnNMClickList1)
 	ON_NOTIFY(HDN_ITEMCLICK, 0, &NetworkInterfaceDlg::OnHdnItemclickList1)
 END_MESSAGE_MAP()
@@ -96,7 +96,7 @@ BOOL NetworkInterfaceDlg::OnInitDialog() {
 // NetworkInterfaceDlg 메시지 처리기
 
 
-void NetworkInterfaceDlg::OnBnClickedCancel() {
+void NetworkInterfaceDlg::OnBnClickedQuitButton() {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 
 	this->CancelButtonClicked = true;
@@ -111,7 +111,7 @@ bool NetworkInterfaceDlg::CancelButtonClickedFunction(void) {
 }
 
 
-void NetworkInterfaceDlg::OnBnClickedOk() {
+void NetworkInterfaceDlg::OnBnClickedSelectInterfaceButton() {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	 //value
 

@@ -47,12 +47,12 @@ public:
 
 
 	CListCtrl NetWorkListCtrl;
-	afx_msg void OnBnClickedCancel();
 
 	bool CancelButtonClickedFunction(void);
 	virtual BOOL OnInitDialog();
 
-	afx_msg void OnBnClickedOk();
+	afx_msg void OnBnClickedSelectInterfaceButton();
+	afx_msg void OnBnClickedQuitButton();
 	afx_msg void OnNMClickList1(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnHdnItemclickList1(NMHDR* pNMHDR, LRESULT* pResult);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
