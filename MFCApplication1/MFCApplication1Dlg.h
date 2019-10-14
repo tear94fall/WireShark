@@ -109,7 +109,7 @@ public:
 	void ClearPacketCnt();
 	void OpenPacketDataFile();
 	void FileSave();
-	void SetData(CString FrameNumber, CString Time, CString Source, CString Destination, CString Protocol, CString Length, CString Info, CString Packet_Dump_Data);
+	void SetDataToPacketData(CString FrameNumber, CString Time, CString Source, CString Destination, CString Protocol, CString Length, CString Info, CString Packet_Dump_Data);
 	void SetDataToHDXEditor(CString ALLPacketData);
 	void OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult);
 	void OnNMDblclkList2(NMHDR* pNMHDR, LRESULT* pResult);

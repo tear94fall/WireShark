@@ -523,7 +523,7 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 	if (column_count == 1) {
 		CString column_count_str;
 		column_count_str.Format(_T("%d"), column_count);
-		pDlg->SetData(column_count_str, CString(pDlg->GetCurrentTimeStr().c_str()), source_ip, destionation_ip, Protocol, (CString)(std::to_string(header->caplen).c_str()), NULL, packet_dump_data_cstr);
+		pDlg->SetDataToPacketData(column_count_str, CString(pDlg->GetCurrentTimeStr().c_str()), source_ip, destionation_ip, Protocol, (CString)(std::to_string(header->caplen).c_str()), NULL, packet_dump_data_cstr);
 		pDlg->SetDataToHDXEditor(packet_dump_data_cstr);
 	}
 
@@ -727,7 +727,6 @@ void CMFCApplication1Dlg::OnNMDblclkList2(NMHDR* pNMHDR, LRESULT* pResult) {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	*pResult = 0;
 
-	pNMItemActivate->iItem;
 	if (pNMItemActivate->iItem != -1) {
 		CString FrameNumber = m_PacketCapturedListCtrl.GetItemText(pNMItemActivate->iItem, 0);
 		CString Time = m_PacketCapturedListCtrl.GetItemText(pNMItemActivate->iItem, 1);
@@ -738,76 +737,11 @@ void CMFCApplication1Dlg::OnNMDblclkList2(NMHDR* pNMHDR, LRESULT* pResult) {
 		CString Info = m_PacketCapturedListCtrl.GetItemText(pNMItemActivate->iItem, 6);
 		CString Packet_Dump_Data = m_PacketCapturedListCtrl.GetItemText(pNMItemActivate->iItem, 7);
 
-		SetData(FrameNumber, Time, Source, Destination, Protocol, Length, Info, Packet_Dump_Data);
-	}
+		m_PacketDataTreeCtrl.DeleteAllItems();
+		m_PacketDumpListCtrl.DeleteAllItems();
 
-	m_PacketDumpListCtrl.DeleteAllItems();
-	CString Packet_dump_data = m_PacketCapturedListCtrl.GetItemText(pNMItemActivate->iItem, 7);
-
-	if (Packet_dump_data != L"") {
-		for (int i = 0; i < Packet_dump_data.GetLength() + 1; i += 32) {
-			int column_count = m_PacketDumpListCtrl.GetItemCount();
-			CString column_count_str;
-			column_count_str.Format(_T("%d"), column_count + 1);
-
-			std::stringstream stream;
-			stream << std::setw(6) << std::setfill('0') << std::hex << (i / 2);
-
-			std::string seq_number_str = stream.str();
-			LPCSTR lpcstrSeqNum = (LPCSTR)seq_number_str.c_str();
-			USES_CONVERSION;
-			CString CstrSeqNum = A2CT(lpcstrSeqNum);
-			CstrSeqNum.MakeUpper();
-			m_PacketDumpListCtrl.InsertItem(column_count, CstrSeqNum);
-
-			CString allHex = Packet_dump_data.Mid(i, 32);
-			CString AsciiAllHex = allHex;
-			allHex = allHex.MakeUpper();
-
-			CString hex1, hex2;
-
-			for (int i = 0; i < 16; i += 2) {
-				hex1 += allHex.Mid(i, 2) + L"  ";
-			}
-
-			for (int i = 16; i < 32; i += 2) {
-				hex2 += allHex.Mid(i, 2) + L"  ";
-			}
-
-			m_PacketDumpListCtrl.SetItem(column_count, 1, LVIF_TEXT, hex1, NULL, NULL, NULL, NULL);
-			m_PacketDumpListCtrl.SetItem(column_count, 2, LVIF_TEXT, hex2, NULL, NULL, NULL, NULL);
-
-			CString convAscii;
-			CString PacketAscii1;
-			CString PacketAscii2;
-
-			for (int i = 0; i < AsciiAllHex.GetLength(); i += 2) {
-				PacketAscii1 = ChangeHexToAscii(AsciiAllHex.Mid(i, 1));
-				PacketAscii2 = ChangeHexToAscii(AsciiAllHex.Mid(i + 1, 1));
-
-				int ten = _ttoi(PacketAscii1) * 16;
-				int one = _ttoi(PacketAscii2);
-
-				int sum = ten + one;
-				ten = 0;
-				one = 0;
-
-				if (sum < 32 || sum>128) {
-					sum = 46;
-				}
-
-				char ascii[4];
-				ascii[0] = (char)sum;
-				if (sum == 46) {
-					sprintf(ascii, "%2c", ascii[0]);
-				} else {
-					sprintf(ascii, "%c", ascii[0]);
-				}
-				convAscii += ascii;
-			}
-
-			m_PacketDumpListCtrl.SetItem(column_count, 3, LVIF_TEXT, convAscii, NULL, NULL, NULL, NULL);
-		}
+		SetDataToPacketData(FrameNumber, Time, Source, Destination, Protocol, Length, Info, Packet_Dump_Data);
+		SetDataToHDXEditor(Packet_Dump_Data);
 	}
 }
 
@@ -1017,7 +951,7 @@ CString CMFCApplication1Dlg::GetTCPFlagToLongStr(CString _Flag) {
 	return Result;
 }
 
-void CMFCApplication1Dlg::SetData(CString FrameNumber, CString Time, CString Source, CString Destination, CString Protocol, CString Length, CString Info, CString Packet_Dump_Data) {
+void CMFCApplication1Dlg::SetDataToPacketData(CString FrameNumber, CString Time, CString Source, CString Destination, CString Protocol, CString Length, CString Info, CString Packet_Dump_Data) {
 	HTREEITEM  PacketDataRoot1 = NULL;
 	HTREEITEM  PacketDataRoot2 = NULL;
 	HTREEITEM  PacketDataRoot3 = NULL;
@@ -1628,7 +1562,7 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 
 							if (column_count == 0) {
 								column_count_str.Format(_T("%d"), column_count+1);
-								pDlg->SetData(column_count_str, TIME, SIP, DIP, PROTO, LENGTH, NULL, DUMP);
+								pDlg->SetDataToPacketData(column_count_str, TIME, SIP, DIP, PROTO, LENGTH, NULL, DUMP);
 								pDlg->SetDataToHDXEditor(DUMP);
 							}
 
@@ -1792,7 +1726,7 @@ UINT CMFCApplication1Dlg::FileOpenThreadFunction(LPVOID _mothod) {
 				/* 첫 패킷이면 데이터 세팅*/
 				if (column_count == 0) {
 					column_count_str.Format(_T("%d"), column_count+1);
-					pDlg->SetData(column_count_str, TIME, SIP, DIP, PROTO, LENGTH, NULL, DUMP);
+					pDlg->SetDataToPacketData(column_count_str, TIME, SIP, DIP, PROTO, LENGTH, NULL, DUMP);
 					pDlg->SetDataToHDXEditor(DUMP);
 				}
 
