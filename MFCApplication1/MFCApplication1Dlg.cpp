@@ -118,7 +118,6 @@ BOOL CMFCApplication1Dlg::OnInitDialog() {
 
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
-	//temp 파일 삭제
 	std::remove(file_name_write);
 
 	SetWindowText(_T("Wire Dolphin"));
@@ -137,47 +136,43 @@ BOOL CMFCApplication1Dlg::OnInitDialog() {
 
 	m_FilterEditCtrl.SetWindowTextW(L"Enter Filter....");
 
-	CRect rt;
-	m_PacketCapturedListCtrl.GetWindowRect(&rt);
+	CRect rectangle;
+	m_PacketCapturedListCtrl.GetWindowRect(&rectangle);
 	m_PacketCapturedListCtrl.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
 	LV_COLUMN add_column;
 
 	// 컬럼 속성을 지정한다. 텍스트 형식을 사용하고 폭을 명시하겠다고 설정한다.
 	add_column.mask = LVCF_TEXT | LVCF_WIDTH;
 
-	LPWSTR column_name[9] = { L"No",L"Time", L"Source", L"Destination", L"Protocol", L"Length", L"Info" ,L"Dump Data" };
-	int count = 0;
-	double column_width[9] = { 0.1, 0.17, 0.15, 0.15, 0.075, 0.075, 0.28, 0 };
+	const int packet_list_column_count = 9;
+	LPWSTR column_name[packet_list_column_count] = { L"No",L"Time", L"Source", L"Destination", L"Protocol", L"Length", L"Info" ,L"Dump Data" };
+	double column_width[packet_list_column_count] = { 0.1, 0.17, 0.15, 0.15, 0.075, 0.075, 0.28, 0 };
 
-	for (int i = 0; i < 8; i++) {
+	for (int i = 0; i < packet_list_column_count -1; i++) {
 		add_column.pszText = column_name[i];
-		add_column.cx = (double)rt.Width() * column_width[i];
+		add_column.cx = (double)rectangle.Width() * column_width[i];
 		m_PacketCapturedListCtrl.InsertColumn(i, &add_column);
 	}
 
-	m_PacketDumpListCtrl.GetWindowRect(&rt);
+	m_PacketDumpListCtrl.GetWindowRect(&rectangle);
 	m_PacketDumpListCtrl.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
-	// 컬럼 속성을 지정한다. 텍스트 형식을 사용하고 폭을 명시하겠다고 설정한다.
 
-	add_column.mask = LVCF_TEXT | LVCF_WIDTH;
-	LPWSTR packet_dump_header[4] = { L"Seq",L"Hex 1",L"HEX 2", L"ASCII" };
-	double pakcet_dump_header_width[4] = { 0.1,0.27,0.27,0.3 };
+	const int packet_dump_column_count = 4;
+	LPWSTR packet_dump_header[packet_dump_column_count] = { L"Seq",L"Hex 1",L"HEX 2", L"ASCII" };
+	double pakcet_dump_header_width[packet_dump_column_count] = { 0.1,0.27,0.27,0.3 };
 
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < packet_dump_column_count; i++) {
 		add_column.pszText = packet_dump_header[i];
-		add_column.cx = rt.Width() * pakcet_dump_header_width[i];
+		add_column.cx = rectangle.Width() * pakcet_dump_header_width[i];
 		m_PacketDumpListCtrl.InsertColumn(i, &add_column);
 	}
 
-	// 패킷의 갯수 카운트
 	ChangeStaticText(packet_cnt, tcp_pkt_cnt, udp_pkt_cnt, arp_pkt_cnt, icmp_pkt_cnt);
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
 
 void CMFCApplication1Dlg::OnSysCommand(UINT nID, LPARAM lParam) {
-	// 종료 버튼 클릭하면 스레드를 전부 소멸후 종료
-
 	if ((nID & 0xFFF0) == IDM_ABOUTBOX) {
 		CAboutDlg dlgAbout;
 		dlgAbout.DoModal();
@@ -226,11 +221,7 @@ void CMFCApplication1Dlg::OnBnClickedCaptureStartButton() {
 		ClearPacketCnt();
 		m_PacketCapturedListCtrl.DeleteAllItems();
 
-		if (IsFilterApply == TRUE) {
-			IsFilterApply = FALSE;
-		}
 		m_PacketCaptrueThread = AfxBeginThread(PacketCaptureThreadFunction, this);
-		//AfxMessageBox(_T("캡처를 시작합니다"));
 		CButton* pButton = (CButton*)GetDlgItem(IDC_BUTTON1);
 		pButton->EnableWindow(FALSE);
 
@@ -250,8 +241,6 @@ void CMFCApplication1Dlg::OnBnClickedCaptureStartButton() {
 		m_PacketCaptureThreadWorkType = RUNNING;
 	} else {
 		if (m_PacketCaptureThreadWorkType == RUNNING || m_PacketCaptureThreadWorkType == PAUSE) {
-			//m_pThread->ResumeThread();
-			//m_ThreadWorkType = RUNNING;
 		}
 	}
 }
@@ -259,8 +248,8 @@ void CMFCApplication1Dlg::OnBnClickedCaptureStartButton() {
 
 UINT CMFCApplication1Dlg::PacketCaptureThreadFunction(LPVOID _mothod) {
 	CMFCApplication1Dlg* pDlg = (CMFCApplication1Dlg*)AfxGetApp()->m_pMainWnd;
-	pcap_if_t* alldevs;
-	pcap_if_t* d = NULL;
+	pcap_if_t* all_net_device;
+	pcap_if_t* net_device = NULL;
 	int inum;
 	int i = 0;
 	pcap_t* adhandle;
@@ -271,13 +260,13 @@ UINT CMFCApplication1Dlg::PacketCaptureThreadFunction(LPVOID _mothod) {
 	struct bpf_program fcode;
 	bpf_u_int32 NetMask;
 
-	if (pcap_findalldevs(&alldevs, errbuf) == -1) {
+	if (pcap_findalldevs(&all_net_device, errbuf) == -1) {
 		AfxMessageBox(CString(errbuf));
 		//fprintf(stderr, "Error in pcap_findalldevs: %s\n", errbuf);
 		exit(1);
 	}
 
-	for (d = alldevs; d; d = d->next) {
+	for (net_device = all_net_device; net_device; net_device = net_device->next) {
 		++i;
 	}
 
@@ -292,16 +281,16 @@ UINT CMFCApplication1Dlg::PacketCaptureThreadFunction(LPVOID _mothod) {
 
 	if (inum < 1 || inum > i) {
 		printf("\nInterface number out of range.\n");
-		pcap_freealldevs(alldevs);
+		pcap_freealldevs(all_net_device);
 		return -1;
 	}
 
-	for (d = alldevs, i = 0; i < inum - 1; d = d->next, i++);
+	for (net_device = all_net_device, i = 0; i < inum - 1; net_device = net_device->next, i++);
 
 
-	if ((adhandle = pcap_open_live(d->name, 65536, 1, 1000, errbuf)) == NULL) {
-		fprintf(stderr, "\nUnable to open the adapter. %s is not supported by WinPcap\n", d->name);
-		pcap_freealldevs(alldevs);
+	if ((adhandle = pcap_open_live(net_device->name, 65536, 1, 1000, errbuf)) == NULL) {
+		fprintf(stderr, "\nUnable to open the adapter. %s is not supported by WinPcap\n", net_device->name);
+		pcap_freealldevs(all_net_device);
 		return -1;
 	}
 
@@ -318,7 +307,7 @@ UINT CMFCApplication1Dlg::PacketCaptureThreadFunction(LPVOID _mothod) {
 		return -4;
 	}
 
-	pcap_freealldevs(alldevs);
+	pcap_freealldevs(all_net_device);
 	pcap_loop(adhandle, 0, packet_handler, NULL);
 
 	return 0;
@@ -504,18 +493,18 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 		pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 7, LVIF_TEXT, packet_dump_data_cstr, NULL, NULL, NULL, NULL);
 
 	} else {
-		if (ntohs(ethhdr->frame_type) == 0x0800) {
+		if (ntohs(ethhdr->frame_type) == 0x0800 || ntohs(ethhdr->frame_type) == 0x0806) {
+			pDlg->packet_cnt += 1;
 			if (ih->proto == IPPROTO_TCP) {
 				pDlg->tcp_pkt_cnt++;
 			} else if (ih->proto == IPPROTO_UDP) {
 				pDlg->udp_pkt_cnt++;
 			} else if (ih->proto == IPPROTO_ICMP) {
 				pDlg->icmp_pkt_cnt++;
+			} else if (ntohs(ethhdr->frame_type) == 0x0806) {
+				pDlg->arp_pkt_cnt++;
 			}
-		} else if (ntohs(ethhdr->frame_type) == 0x0806) {
-			pDlg->arp_pkt_cnt++;
 		}
-		pDlg->packet_cnt++;
 	}
 
 	/* 첫 패킷이면 데이터 세팅*/
@@ -533,7 +522,6 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 	/* 파일에 쓰기 */
 
 	if (ntohs(ethhdr->frame_type) == 0x0806 || ntohs(ethhdr->frame_type) == 0x0800) {
-
 		unsigned char c;
 		int packet_size = header->caplen;
 		std::ofstream out(pDlg->file_name_write, std::ios::app);
@@ -558,8 +546,8 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 		} else if (ntohs(ethhdr->frame_type) == 0x0806) {
 			protocol = "ARP";
 		}
-		int column_count = pDlg->m_PacketCapturedListCtrl.GetItemCount();
-		out << column_count << "\n";
+
+		out << pDlg->packet_cnt << "\n";
 		out << pDlg->GetCurrentTimeStr() << "\n";
 		out << sip << " \n";
 		out << dip << " \n";
@@ -576,7 +564,7 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 				out << "\n";
 			}
 		}
-		out << "-----------------------------------------------\n";
+		out << "END\n";
 		//====================================================================================
 	}
 }
@@ -1415,11 +1403,11 @@ void CMFCApplication1Dlg::OnBnClickedFilterApplyButton() {
 	GetDlgItemText(IDC_EDIT1, Filter);
 
 	// 필터가 빈칸이 아닐때만 작업진행
-	if (Filter.Trim() != L"") {
+	if (true) {
 		IsFilterApply = TRUE;
 
 		if (m_FileReadThread == NULL) {
-			ClearPacketCnt();
+			//ClearPacketCnt();
 			m_PacketCapturedListCtrl.DeleteAllItems();
 			m_PacketDataTreeCtrl.DeleteAllItems();
 			m_PacketDumpListCtrl.DeleteAllItems();
@@ -1435,7 +1423,7 @@ void CMFCApplication1Dlg::OnBnClickedFilterApplyButton() {
 			delete m_FileReadThread;
 			m_FileReadThread = NULL;
 
-			ClearPacketCnt();
+			//ClearPacketCnt();
 			m_PacketCapturedListCtrl.DeleteAllItems();
 			m_PacketDataTreeCtrl.DeleteAllItems();
 			m_PacketDumpListCtrl.DeleteAllItems();
@@ -1478,13 +1466,9 @@ CString CMFCApplication1Dlg::ArpHardwareType(CString HardwareTypeNumber) {
 // 필터 적용시에 패킷 정보를 파일에서 읽어들이는 쓰레드 함수
 UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 	CMFCApplication1Dlg* pDlg = (CMFCApplication1Dlg*)AfxGetApp()->m_pMainWnd;
+	int start_pos = 0;
 
-	pDlg->ClearPacketCnt();
-	pDlg->end_pos = 0;
-	pDlg->start_pos = 0;
-
-	/* 파일에서 읽어오기 */
-	CString NO; 
+	CString NO;
 	CString TIME;
 	CString SIP;
 	CString DIP;
@@ -1493,118 +1477,94 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 	CString INFO;
 	CString DUMP;
 
-	std::ifstream is(pDlg->file_name_write);
-	long length = 1024;
-	char* buffer = NULL;
-	std::string temp;
-
-	buffer = new char[length];
-	memset(buffer, 0, length);
-
-	int cnt = 0;
+	std::ifstream is;
 	int i = 0;
+
 	while (1) {
-		if (is) {
-			is.seekg(0, is.end);
-			pDlg->end_pos = is.tellg();
+		is.open(pDlg->file_name_write);
+		is.seekg(0, is.end);
+		int end_pos = is.tellg();
 
-			is.seekg(pDlg->start_pos, is.beg);
-			length = pDlg->end_pos - pDlg->start_pos;
+		is.seekg(start_pos, is.beg);
 
-			std::string str;
-			int column_cnt = 0;
-			if (pDlg->start_pos != pDlg->end_pos) {
-				for (int i = 0; i < length; i++) {
-					std::getline(is, str);
+		std::string str;
+		int column_cnt = 0;
 
-					if (column_cnt == 0) {
-						NO = (CString)str.c_str();
-					} else if (column_cnt == 1) {
-						TIME = (CString)str.c_str();
-					} else if (column_cnt == 2) {
-						SIP = (CString)str.c_str();
-					} else if (column_cnt == 3) {
-						DIP = (CString)str.c_str();
-					} else if (column_cnt == 4) {
-						PROTO = (CString)str.c_str();
-					} else if (column_cnt == 5) {
-						LENGTH = (CString)str.c_str();
-					} else if (column_cnt == 6) {
-						INFO = (CString)str.c_str();
-					} else if (column_cnt > 6) {
-						if (str != "-----------------------------------------------") {
-							DUMP += (CString)str.c_str();
-						}
-					}
+		if (start_pos < end_pos) {
+			for (i = start_pos; i < end_pos; ) {
+				std::getline(is, str);
 
-					if (str == "-----------------------------------------------") {
-						PROTO.Replace(L" ", L"");
-
-						DUMP.Replace(L" ", L"");
-						DUMP.Replace(L"\n", L"");
-
-						std::vector<CString> vec;
-						vec.push_back(TIME);
-						vec.push_back(SIP);
-						vec.push_back(DIP);
-						vec.push_back(PROTO);
-						vec.push_back(LENGTH);
-						vec.push_back(INFO);
-						vec.push_back(DUMP);
-						
-						// 필터 처리 하는 부분 로직
-						if (pDlg->CheckFilter(pDlg->Filter, vec)) {
-							int column_count = pDlg->m_PacketCapturedListCtrl.GetItemCount();
-
-							CString column_count_str;
-							column_count_str.Format(_T("%d"), column_count + 1);
-							pDlg->m_PacketCapturedListCtrl.InsertItem(column_count, column_count_str);
-
-							if (column_count == 0) {
-								column_count_str.Format(_T("%d"), column_count+1);
-								pDlg->SetDataToPacketData(column_count_str, TIME, SIP, DIP, PROTO, LENGTH, NULL, DUMP);
-								pDlg->SetDataToHDXEditor(DUMP);
-							}
-
-							for (int i = 1; i < 8; i++) {
-								pDlg->m_PacketCapturedListCtrl.SetItem(column_count, i, LVIF_TEXT, vec[i - 1], NULL, NULL, NULL, NULL);
-							}
-						}
-
-						int nCount = pDlg->m_PacketCapturedListCtrl.GetItemCount();
-						pDlg->m_PacketCapturedListCtrl.EnsureVisible(nCount - 1, FALSE);
-
-						if (PROTO == L"TCP") {
-							pDlg->tcp_pkt_cnt++;
-						} else if (PROTO == L"UDP") {
-							pDlg->udp_pkt_cnt++;
-						} else if (PROTO == L"ICMP") {
-							pDlg->icmp_pkt_cnt++;
-						} else if (PROTO == L"ARP") {
-							pDlg->arp_pkt_cnt++;
-						}
-
-						pDlg->packet_cnt++;
-						pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
-
-						TIME = L"";
-						SIP = L"";
-						DIP = L"";
-						PROTO = L"";
-						LENGTH = L"";
-						INFO = L"";
-						DUMP = L"";
-						column_cnt = 0;
-					} else {
-						column_cnt++;
+				i++;
+				if (column_cnt == 0) {
+					NO = (CString)str.c_str();
+				} else if (column_cnt == 1) {
+					TIME = (CString)str.c_str();
+				} else if (column_cnt == 2) {
+					SIP = (CString)str.c_str();
+				} else if (column_cnt == 3) {
+					DIP = (CString)str.c_str();
+				} else if (column_cnt == 4) {
+					PROTO = (CString)str.c_str();
+				} else if (column_cnt == 5) {
+					LENGTH = (CString)str.c_str();
+				} else if (column_cnt == 6) {
+					INFO = (CString)str.c_str();
+				} else if (column_cnt > 6) {
+					if (str != "END") {
+						DUMP += (CString)str.c_str();
 					}
 				}
+
+				if (str == "END") {
+					PROTO.Replace(L" ", L"");
+
+					DUMP.Replace(L" ", L"");
+					DUMP.Replace(L"\n", L"");
+
+					std::vector<CString> vec;
+					vec.push_back(TIME);
+					vec.push_back(SIP);
+					vec.push_back(DIP);
+					vec.push_back(PROTO);
+					vec.push_back(LENGTH);
+					vec.push_back(NO);
+					vec.push_back(DUMP);
+
+					int column_count = pDlg->m_PacketCapturedListCtrl.GetItemCount();
+
+					CString column_count_str;
+					column_count_str.Format(_T("%d"), column_count + 1);
+
+					if (column_count == 0) {
+						column_count_str.Format(_T("%d"), column_count + 1);
+						pDlg->SetDataToPacketData(column_count_str, TIME, SIP, DIP, PROTO, LENGTH, NULL, DUMP);
+						pDlg->SetDataToHDXEditor(DUMP);
+					}
+
+					if (column_count < _ttoi(NO)) {
+						pDlg->m_PacketCapturedListCtrl.InsertItem(column_count, column_count_str);
+						for (int j = 1; j < 8; j++) {
+							pDlg->m_PacketCapturedListCtrl.SetItem(column_count, j, LVIF_TEXT, vec[j - 1], NULL, NULL, NULL, NULL);
+						}
+						int nCount = pDlg->m_PacketCapturedListCtrl.GetItemCount();
+						pDlg->m_PacketCapturedListCtrl.EnsureVisible(nCount - 1, FALSE);
+					}
+
+					TIME = L"";
+					SIP = L"";
+					DIP = L"";
+					PROTO = L"";
+					LENGTH = L"";
+					INFO = L"";
+					DUMP = L"";
+					column_cnt = 0;
+				} else {
+					column_cnt++;
+				}
 			}
-			is.close();
-			pDlg->start_pos = pDlg->end_pos;
 		}
-		Sleep(1);
-		is.open(pDlg->file_name_write);
+		is.close();
+		start_pos = i;
 	}
 	return 0;
 }

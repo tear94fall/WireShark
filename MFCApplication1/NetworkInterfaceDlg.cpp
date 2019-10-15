@@ -41,26 +41,22 @@ BOOL NetworkInterfaceDlg::OnInitDialog() {
 	// TODO:  여기에 추가 초기화 작업을 추가합니다.
 	SetWindowText(_T("Wire Dolphin"));
 
-	CRect rt;
-	NetWorkListCtrl.GetWindowRect(&rt);
-	NetWorkListCtrl.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
+	CRect rectangle;
 	LV_COLUMN add_column;
-	// 컬럼 속성을 지정한다. 텍스트 형식을 사용하고 폭을 명시하겠다고 설정한다.
-
 	add_column.mask = LVCF_TEXT | LVCF_WIDTH;
-	add_column.pszText = L"No";
-	add_column.cx = rt.Width() * 0.1;
-	NetWorkListCtrl.InsertColumn(0, &add_column);
 
-	// Description
-	add_column.pszText = L"Network Interface";
-	add_column.cx = rt.Width() * 0.89;
-	NetWorkListCtrl.InsertColumn(1, &add_column);
+	NetWorkListCtrl.GetWindowRect(&rectangle);
+	NetWorkListCtrl.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
 
-	// name
-	add_column.pszText = L"Network Interface";
-	add_column.cx = rt.Width() * 0;
-	NetWorkListCtrl.InsertColumn(2, &add_column);
+	const int column_property_count = 3;
+	wchar_t* column_property_name[column_property_count] = { L"No", L"Network Interface", L"Network Name" };
+	double column_porperty_width[column_property_count] = { 0.1,0.89,0 };
+
+	for (int i = 0; i < column_property_count; i++) {
+		add_column.pszText = column_property_name[i];
+		add_column.cx = rectangle.Width() * column_porperty_width[i];
+		NetWorkListCtrl.InsertColumn(i, &add_column);
+	}
 
 	if (pcap_findalldevs(&alldevs, errbuf) == -1) {
 		fprintf(stderr, "Error in pcap_findalldevs: %s\n", errbuf);
@@ -77,7 +73,6 @@ BOOL NetworkInterfaceDlg::OnInitDialog() {
 
 		InterfaceDescription = ((LPSTR)d->description);
 		InterfaceName = ((LPSTR)d->name);
-		// netInterfaceStr += ((LPSTR)d->name);
 
 		NetWorkListCtrl.SetItem(column_count, 1, LVIF_TEXT, InterfaceDescription, NULL, NULL, NULL, NULL);
 		NetWorkListCtrl.SetItem(column_count, 2, LVIF_TEXT, InterfaceName, NULL, NULL, NULL, NULL);
@@ -123,7 +118,7 @@ void NetworkInterfaceDlg::OnBnClickedSelectInterfaceButton() {
 
 	if (m_nSelectedIndex == -1) {
 		MessageBox(_T("Nothing Selected."), _T("Error"), MB_ICONWARNING);
-		SetDlgItemText(IDC_STATIC, L"Selected nothing");
+		SetDlgItemText(IDC_STATIC, L"Select Interface");
 	} else {
 		CDialogEx::OnOK();
 	}

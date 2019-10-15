@@ -104,6 +104,7 @@ public:
 	afx_msg void OnBnClickedCaptureQuitButton();
 	afx_msg void OnBnClickedCapturePauseButton();
 	afx_msg void OnBnClickedFilterApplyButton();
+	afx_msg void OnClose();
 
 	void ChangeStaticText(int all_pkt_cnt, int tcp_pkt_cnt, int udp_pkt_cnt, int arp_pkt_cnt, int icmp_pkt_cnt);
 	void ClearPacketCnt();
@@ -135,6 +136,4 @@ public:
 	CString ArpHardwareType(CString HardwareTypeNumber);
 
 	BOOL CheckFilter(CString Filter, std::vector<CString> vec);
-
-	afx_msg void OnClose();
 };

@@ -2,6 +2,7 @@
 
 #include "pcap.h"
 #include <string>
+#include <wchar.h>
 // NetworkInterfaceDlg 대화 상자
 
 class NetworkInterfaceDlg : public CDialogEx {
