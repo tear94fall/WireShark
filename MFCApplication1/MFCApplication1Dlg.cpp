@@ -146,7 +146,7 @@ BOOL CMFCApplication1Dlg::OnInitDialog() {
 
 	const int packet_list_column_count = 9;
 	LPWSTR column_name[packet_list_column_count] = { L"No",L"Time", L"Source", L"Destination", L"Protocol", L"Length", L"Info" ,L"Dump Data" };
-	double column_width[packet_list_column_count] = { 0.1, 0.17, 0.15, 0.15, 0.075, 0.075, 0.28, 0 };
+	double column_width[packet_list_column_count] = { 0.1, 0.17, 0.15, 0.15, 0.075, 0.075, 0.25, 0 };
 
 	for (int i = 0; i < packet_list_column_count -1; i++) {
 		add_column.pszText = column_name[i];
@@ -1253,12 +1253,11 @@ void CMFCApplication1Dlg::SetDataToPacketData(CString FrameNumber, CString Time,
 		HTREEITEM PacketDataRoot4Child8Child1 = m_PacketDataTreeCtrl.InsertItem(PacketDataLine4by8by1, PacketDataRoot4Child8);
 	}
 
-	//항목 펼치기
-	//PacketDataCtrl.Expand(PacketDataRoot1, TVE_EXPAND);
-	//PacketDataCtrl.Expand(PacketDataRoot2, TVE_EXPAND);
-	//PacketDataCtrl.Expand(PacketDataRoot3, TVE_EXPAND);
-	//PacketDataCtrl.Expand(PacketDataRoot4, TVE_EXPAND);
-	//PacketDataCtrl.Expand(PacketDataRoot5, TVE_EXPAND);
+	m_PacketDataTreeCtrl.Expand(PacketDataRoot1, TVE_EXPAND);
+	m_PacketDataTreeCtrl.Expand(PacketDataRoot2, TVE_EXPAND);
+	m_PacketDataTreeCtrl.Expand(PacketDataRoot3, TVE_EXPAND);
+	m_PacketDataTreeCtrl.Expand(PacketDataRoot4, TVE_EXPAND);
+	m_PacketDataTreeCtrl.Expand(PacketDataRoot5, TVE_EXPAND);
 
 	m_PacketDataTreeCtrl.Invalidate();
 	m_PacketDataTreeCtrl.UpdateWindow();
@@ -1666,12 +1665,12 @@ UINT CMFCApplication1Dlg::FileOpenThreadFunction(LPVOID _mothod) {
 			} else if (column_cnt == 6) {
 				INFO = (CString)str.c_str();
 			} else if (column_cnt > 6) {
-				if (str != "-----------------------------------------------") {
+				if (str != "END") {
 					DUMP += (CString)str.c_str();
 				}
 			}
 
-			if (str == "-----------------------------------------------") {
+			if (str == "END") {
 				PROTO.Replace(L" ", L"");
 
 				DUMP.Replace(L" ", L"");
