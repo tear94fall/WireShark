@@ -58,6 +58,22 @@ public:
 		CListCtrl* pList;
 	};
 
+	ip_header* ip_hdr;
+	udp_header* udp_hdr;
+	tcp_header* tcp_hdr;
+	icmp_header* icmp_hdr;
+	arp_header* arp_hdr = NULL;
+	u_int ip_len;
+	ether_header* eth_hdr;
+	const pcap_pkthdr* m_header;
+	const u_char* m_pkt_data;
+	CString CurrentTimeStr;
+	CString source_ip;
+	CString destionation_ip;
+	CString Protocol;
+	CString Length;
+	std::string packet_dump_data_string;  
+
 	int end_pos = 0, start_pos = 0;
 	long file_length = 0;
 	char* file_buffer = NULL;
@@ -115,6 +131,7 @@ public:
 	void OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult);
 	void OnNMDblclkList2(NMHDR* pNMHDR, LRESULT* pResult);
 	void OnHdnItemclick(NMHDR* pNMHDR, LRESULT* Result);
+	void FileWiterFunction(char* file_name);
 
 	static int CALLBACK SortFuncStr(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 	static int CALLBACK SortFuncNum(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
