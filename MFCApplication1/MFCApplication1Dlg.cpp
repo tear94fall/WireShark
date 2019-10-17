@@ -326,6 +326,10 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 	pDlg->Protocol;
 	pDlg->Length = (CString)(std::to_string(header->caplen).c_str());
 
+	if (pDlg->CurrentTimeStr.IsEmpty() || pDlg->source_ip.IsEmpty() || pDlg->destionation_ip.IsEmpty() || pDlg->Length.IsEmpty()) {
+		return;
+	}
+
 	std::string packet_dump_data_string;
 	for (int i = 1; (i < header->caplen + 1); i++) {
 		char* temp = NULL;
@@ -475,10 +479,10 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 	}
 	
 	pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
-	pDlg->FileWiterFunction(pDlg->file_name_write);
+	pDlg->FileWriterFunction(pDlg->file_name_write);
 }
 
-void CMFCApplication1Dlg::FileWiterFunction(char * file_name) {
+void CMFCApplication1Dlg::FileWriterFunction(char * file_name) {
 	if (ntohs(eth_hdr->frame_type) == 0x0806 || ntohs(eth_hdr->frame_type) == 0x0800) {
 		unsigned char c;
 		int packet_size = m_header->caplen;
@@ -1222,8 +1226,8 @@ void CMFCApplication1Dlg::SetDataToHDXEditor(CString Packet_dump_data) {
 			CString PacketAscii2;
 
 			for (int i = 0; i < AsciiAllHex.GetLength(); i += 2) {
-				PacketAscii1 = ChangeHexToAscii(AsciiAllHex.Mid(i, 1));
-				PacketAscii2 = ChangeHexToAscii(AsciiAllHex.Mid(i + 1, 1));
+				PacketAscii1 = HexToDec(AsciiAllHex.Mid(i, 1));
+				PacketAscii2 = HexToDec(AsciiAllHex.Mid(i + 1, 1));
 
 				int ten = _ttoi(PacketAscii1) * 16;
 				int one = _ttoi(PacketAscii2);
@@ -1281,38 +1285,6 @@ CString CMFCApplication1Dlg::Calculate2HexNumber(CString num1, CString num2) {
 
 CString CMFCApplication1Dlg::MakeIPAddressV6(CString Aclass, CString Bclass, CString Cclass, CString Dclass, CString Eclass, CString Fclass) {
 	return Aclass + L":" + Bclass + L":" + Cclass + L":" + Dclass + L":" + Eclass + L":" + Fclass;
-}
-
-CString CMFCApplication1Dlg::ChangeHexToAscii(CString HexData) {
-	if (HexData == L"a") {
-		HexData = L"10";
-	} else if (HexData == L"b") {
-		HexData = L"11";
-	} else if (HexData == L"c") {
-		HexData = L"12";
-	} else if (HexData == L"d") {
-		HexData = L"13";
-	} else if (HexData == L"e") {
-		HexData = L"14";
-	} else if (HexData == L"f") {
-		HexData = L"15";
-	}
-
-	if (HexData == L"a") {
-		HexData = L"10";
-	} else if (HexData == L"b") {
-		HexData = L"11";
-	} else if (HexData == L"c") {
-		HexData = L"12";
-	} else if (HexData == L"d") {
-		HexData = L"13";
-	} else if (HexData == L"e") {
-		HexData = L"14";
-	} else if (HexData == L"f") {
-		HexData = L"15";
-	}
-
-	return HexData;
 }
 
 void CMFCApplication1Dlg::OnBnClickedFilterApplyButton() {
@@ -1384,7 +1356,7 @@ CString CMFCApplication1Dlg::ArpHardwareType(CString HardwareTypeNumber) {
 // 필터 적용시에 패킷 정보를 파일에서 읽어들이는 쓰레드 함수
 UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 	CMFCApplication1Dlg* pDlg = (CMFCApplication1Dlg*)AfxGetApp()->m_pMainWnd;
-	int start_pos = 0;
+	long long start_pos = 0;
 
 	CString NO, TIME, SIP, DIP, PROTO, LENGTH, INFO, DUMP;
 	std::ifstream is;
@@ -1393,7 +1365,7 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 	while (1) {
 		is.open(pDlg->file_name_write);
 		is.seekg(0, is.end);
-		int end_pos = is.tellg();
+		long long end_pos = is.tellg();
 
 		is.seekg(start_pos, is.beg);
 
@@ -1427,46 +1399,46 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 
 				if (str == "END") {
 					PROTO.Replace(L" ", L"");
-
 					DUMP.Replace(L" ", L"");
 					DUMP.Replace(L"\n", L"");
 
-					std::vector<CString> vec;
-					vec.push_back(TIME);
-					vec.push_back(SIP);
-					vec.push_back(DIP);
-					vec.push_back(PROTO);
-					vec.push_back(LENGTH);
-					vec.push_back(NO);
-					vec.push_back(DUMP);
+					std::vector<CString> prop_vec;
+					std::vector<CString>::iterator prop_iter;
+					prop_vec.push_back(TIME);
+					prop_vec.push_back(SIP);
+					prop_vec.push_back(DIP);
+					prop_vec.push_back(PROTO);
+					prop_vec.push_back(LENGTH);
+					prop_vec.push_back(NO);
+					prop_vec.push_back(DUMP);
 
 					int column_count = pDlg->m_PacketCapturedListCtrl.GetItemCount();
 
 					CString column_count_str;
 					column_count_str.Format(_T("%d"), column_count + 1);
 
-					if (column_count == 0) {
-						column_count_str.Format(_T("%d"), column_count + 1);
-						pDlg->SetDataToPacketData(column_count_str, TIME, SIP, DIP, PROTO, LENGTH, NULL, DUMP);
-						pDlg->SetDataToHDXEditor(DUMP);
-					}
-
-					if (column_count < _ttoi(NO)) {
-						pDlg->m_PacketCapturedListCtrl.InsertItem(column_count, column_count_str);
-						for (int j = 1; j < 8; j++) {
-							pDlg->m_PacketCapturedListCtrl.SetItem(column_count, j, LVIF_TEXT, vec[j - 1], NULL, NULL, NULL, NULL);
+					if (!(PROTO != L"TCP" && PROTO != L"UDP" && PROTO != L"ARP" && PROTO != L"ICMP")) {
+						if (column_count == 0) {
+							column_count_str.Format(_T("%d"), column_count + 1);
+							pDlg->SetDataToPacketData(column_count_str, TIME, SIP, DIP, PROTO, LENGTH, NULL, DUMP);
+							pDlg->SetDataToHDXEditor(DUMP);
 						}
-						int nCount = pDlg->m_PacketCapturedListCtrl.GetItemCount();
-						pDlg->m_PacketCapturedListCtrl.EnsureVisible(nCount - 1, FALSE);
+
+						if (column_count < _ttoi(NO)) {
+							pDlg->m_PacketCapturedListCtrl.InsertItem(column_count, column_count_str);
+							for (int j = 1; j < 8; j++) {
+								pDlg->m_PacketCapturedListCtrl.SetItem(column_count, j, LVIF_TEXT, prop_vec[j - 1], NULL, NULL, NULL, NULL);
+							}
+							int nCount = pDlg->m_PacketCapturedListCtrl.GetItemCount();
+							pDlg->m_PacketCapturedListCtrl.EnsureVisible(nCount - 1, FALSE);
+						}
 					}
 
-					TIME = L"";
-					SIP = L"";
-					DIP = L"";
-					PROTO = L"";
-					LENGTH = L"";
-					INFO = L"";
+					for (prop_iter = prop_vec.begin(); prop_iter != prop_vec.end(); prop_iter++) {
+						(*prop_iter) = L"";
+					}
 					DUMP = L"";
+
 					column_cnt = 0;
 				} else {
 					column_cnt++;
@@ -1480,10 +1452,7 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 }
 
 BOOL CMFCApplication1Dlg::CheckFilter(CString Filter, std::vector<CString> vec){
-	/*
-	필터 값이 유효한 경우는 기본적으로 프로토콜, 포트, 아이피번호가 일치할때 3가지 경우의수
-	문제는 섞여 있는경우
-	*/
+	// 필터 작동
 	BOOL result = FALSE;
 	Filter = Filter.MakeUpper();
 
@@ -1537,9 +1506,9 @@ UINT CMFCApplication1Dlg::FileOpenThreadFunction(LPVOID _mothod) {
 
 	CString NO, TIME, SIP, DIP, PROTO, LENGTH, INFO, DUMP;
 	char file_name[100];
+	char cstr[10];
 	CT2CA pszConvertedAnsiString(pDlg->file_name_read);
 	std::string file_name_str(pszConvertedAnsiString);
-	char cstr[10];
 	strcpy(file_name, file_name_str.c_str());
 	std::string str = "FILEOPEN?";
 
@@ -1574,11 +1543,27 @@ UINT CMFCApplication1Dlg::FileOpenThreadFunction(LPVOID _mothod) {
 
 			if (str == "END") {
 				PROTO.Replace(L" ", L"");
-
 				DUMP.Replace(L" ", L"");
 				DUMP.Replace(L"\n", L"");
 
+				std::vector<CString> prop_vec;
+				std::vector<CString>::iterator prop_iter;
+				prop_vec.push_back(TIME);
+				prop_vec.push_back(SIP);
+				prop_vec.push_back(DIP);
+				prop_vec.push_back(PROTO);
+				prop_vec.push_back(LENGTH);
+				prop_vec.push_back(NO);
+				prop_vec.push_back(DUMP);
+
+
 				int column_count = pDlg->m_PacketCapturedListCtrl.GetItemCount();
+
+				for (prop_iter = prop_vec.begin(); prop_iter != prop_vec.end(); prop_iter++) {
+					if ((*prop_iter).IsEmpty() || (PROTO != L"TCP" && PROTO != L"UDP" && PROTO != L"ARP" && PROTO != L"ICMP")) {
+						return 0;
+					}
+				}
 
 				CString column_count_str;
 				column_count_str.Format(_T("%d"), column_count + 1);
@@ -1591,43 +1576,25 @@ UINT CMFCApplication1Dlg::FileOpenThreadFunction(LPVOID _mothod) {
 					pDlg->SetDataToHDXEditor(DUMP);
 				}
 
-				std::vector<CString> vec;
-				vec.push_back(TIME);
-				vec.push_back(SIP);
-				vec.push_back(DIP);
-				vec.push_back(PROTO);
-				vec.push_back(LENGTH);
-				vec.push_back(INFO);
-				vec.push_back(DUMP);
-
 				for (int i = 1; i < 8; i++) {
-					pDlg->m_PacketCapturedListCtrl.SetItem(column_count, i, LVIF_TEXT, vec[i-1], NULL, NULL, NULL, NULL);
+					pDlg->m_PacketCapturedListCtrl.SetItem(column_count, i, LVIF_TEXT, prop_vec[i-1], NULL, NULL, NULL, NULL);
 				}
 
 				int nCount = pDlg->m_PacketCapturedListCtrl.GetItemCount();
 				pDlg->m_PacketCapturedListCtrl.EnsureVisible(nCount - 1, FALSE);
 
-				if (PROTO == L"TCP") {
-					pDlg->tcp_pkt_cnt++;
-				} else if (PROTO == L"UDP") {
-					pDlg->udp_pkt_cnt++;
-				} else if (PROTO == L"ICMP") {
-					pDlg->icmp_pkt_cnt++;
-				} else if (PROTO == L"ARP") {
-					pDlg->arp_pkt_cnt++;
-				}
+				PROTO == L"TCP" ? pDlg->tcp_pkt_cnt++ : pDlg->tcp_pkt_cnt ;
+				PROTO == L"UDP" ? pDlg->udp_pkt_cnt++ : pDlg->udp_pkt_cnt;
+				PROTO == L"ICMP" ? pDlg->icmp_pkt_cnt++ : pDlg->icmp_pkt_cnt;
+				PROTO == L"ARP" ? pDlg->arp_pkt_cnt++ : pDlg->arp_pkt_cnt;
 
 				pDlg->packet_cnt++;
 				pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
 
-				TIME = L"";
-				SIP = L"";
-				DIP = L"";
-				PROTO = L"";
-				LENGTH = L"";
-				INFO = L"";
-				DUMP = L"";
-				vec.clear();
+				for (prop_iter = prop_vec.begin(); prop_iter != prop_vec.end(); prop_iter++) {
+					(*prop_iter).Empty();
+				}
+
 				column_cnt = 0;
 			} else {
 				column_cnt++;
@@ -1648,28 +1615,17 @@ void CMFCApplication1Dlg::OnClose() {
 	if (MessageBox(_T("프로그램을 종료 하시겠습니까?"), _T("프로그램 종료"), MB_YESNO | MB_ICONQUESTION) == IDYES) {
 		DWORD dwResult;
 
-		if (m_PacketCaptrueThread != NULL) {
-			m_PacketCaptrueThread->SuspendThread();
-			m_PacketCaptureThreadWorkType = STOP;
-			::GetExitCodeThread(m_PacketCaptrueThread->m_hThread, &dwResult);
-			delete m_PacketCaptrueThread;
-			m_PacketCaptrueThread = NULL;
-		}
+		CWinThread *ThreadArray[3] = { m_PacketCaptrueThread, m_FileReadThread, m_FileOpenThread };
+		ThreadWorking ThreadStatus[3] = { m_PacketCaptureThreadWorkType,m_FileReadThreadWorkType,m_FileOpenThreadWorkType };
 
-		if (m_FileReadThread != NULL) {
-			m_FileReadThread->SuspendThread();
-			m_FileReadThreadWorkType = STOP;
-			::GetExitCodeThread(m_FileReadThread->m_hThread, &dwResult);
-			delete m_FileReadThread;
-			m_FileReadThread = NULL;
-		}
-
-		if (m_FileOpenThread != NULL) {
-			m_FileOpenThread->SuspendThread();
-			m_FileOpenThreadWorkType = STOP;
-			::GetExitCodeThread(m_FileOpenThread->m_hThread, &dwResult);
-			delete m_FileOpenThread;
-			m_FileOpenThread = NULL;
+		for (int i = 0; i < 3; i++) {
+			if (*(ThreadArray[i]) != NULL) {
+				ThreadArray[i]->SuspendThread();
+				ThreadStatus[i] = STOP;
+				::GetExitCodeThread(ThreadArray[i]->m_hThread, &dwResult);
+				delete ThreadArray[i];
+				ThreadArray[i] = NULL;
+			}
 		}
 
 		if (!is_file_save) {

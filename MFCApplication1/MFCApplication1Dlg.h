@@ -131,7 +131,7 @@ public:
 	void OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult);
 	void OnNMDblclkList2(NMHDR* pNMHDR, LRESULT* pResult);
 	void OnHdnItemclick(NMHDR* pNMHDR, LRESULT* Result);
-	void FileWiterFunction(char* file_name);
+	void FileWriterFunction(char* file_name);
 
 	static int CALLBACK SortFuncStr(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 	static int CALLBACK SortFuncNum(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
@@ -148,7 +148,6 @@ public:
 	CString Calculate4HexNumber(CString num1, CString num2, CString num3, CString num4);
 	CString Calculate2HexNumber(CString num1, CString num2);
 	CString MakeIPAddressV6(CString Aclass, CString Bclass, CString Cclass, CString Dclass, CString Eclass, CString Fclass);
-	CString ChangeHexToAscii(CString HexData);
 	CString ArpOpcde(CString OpcodeNumber);
 	CString ArpHardwareType(CString HardwareTypeNumber);
 
