@@ -1422,15 +1422,21 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 							column_count_str.Format(_T("%d"), column_count + 1);
 							pDlg->SetDataToPacketData(column_count_str, TIME, SIP, DIP, PROTO, LENGTH, NULL, DUMP);
 							pDlg->SetDataToHDXEditor(DUMP);
-						}
+						} 
 
 						if (column_count < _ttoi(NO)) {
-							pDlg->m_PacketCapturedListCtrl.InsertItem(column_count, column_count_str);
-							for (int j = 1; j < 8; j++) {
-								pDlg->m_PacketCapturedListCtrl.SetItem(column_count, j, LVIF_TEXT, prop_vec[j - 1], NULL, NULL, NULL, NULL);
+							// 필터 적용
+							if (pDlg->CheckFilter(pDlg->Filter, prop_vec)) {
+
+
+
+								pDlg->m_PacketCapturedListCtrl.InsertItem(column_count, column_count_str);
+									for (int j = 1; j < 8; j++) {
+										pDlg->m_PacketCapturedListCtrl.SetItem(column_count, j, LVIF_TEXT, prop_vec[j - 1], NULL, NULL, NULL, NULL);
+									}
+								int nCount = pDlg->m_PacketCapturedListCtrl.GetItemCount();
+									pDlg->m_PacketCapturedListCtrl.EnsureVisible(nCount - 1, FALSE);
 							}
-							int nCount = pDlg->m_PacketCapturedListCtrl.GetItemCount();
-							pDlg->m_PacketCapturedListCtrl.EnsureVisible(nCount - 1, FALSE);
 						}
 					}
 
@@ -1449,18 +1455,6 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 		start_pos = i;
 	}
 	return 0;
-}
-
-BOOL CMFCApplication1Dlg::CheckFilter(CString Filter, std::vector<CString> vec){
-	// 필터 작동
-	BOOL result = FALSE;
-	Filter = Filter.MakeUpper();
-
-	if (Filter == vec[3]) {
-		result = TRUE;
-	}
-
-	return result;
 }
 
 void CMFCApplication1Dlg::OpenPacketDataFile() {
@@ -1636,4 +1630,123 @@ void CMFCApplication1Dlg::OnClose() {
 	} else {
 		// 프로그램을 종료 하지 않음
 	}
+}
+
+
+
+// 필터 체크하는 함수
+BOOL CMFCApplication1Dlg::CheckFilter(CString Filter, std::vector<CString> vec) {
+	// Filter는 입력된 필터 값
+	// vec은 캡쳐된 패킷의 정보
+	BOOL result = FALSE;
+
+	Filter = Filter.TrimLeft();
+	Filter = Filter.TrimRight();
+
+	const char *filter_file = "filter.dat";
+
+	CString read_line;
+	std::string in_line;
+	std::ifstream in(filter_file);
+	if (!in.is_open()) {
+		return FALSE;
+	}
+	while (getline(in, in_line)) {
+		read_line = (CString)in_line.c_str();
+		read_line.Replace(L" ", L"");
+
+		if (read_line.Compare(Filter) == 0) {
+			result = TRUE;
+			break;
+		}
+	}
+	in.close();
+
+
+	int op_cnt = GetCountStr(Filter, L"OR");
+
+	printf("%d\n", op_cnt);
+
+	std::vector<int> index_vec;
+
+	index_vec = GetCountStrIdx(Filter, L"OR");
+
+
+	std::vector<CString> split_vec;
+	split_vec = SplitStr(Filter, L"OR");
+	split_vec.clear();
+
+
+
+
+
+	return result;
+}
+
+
+
+int GetCountStr(CString target_str, CString target_find_str) {
+	target_str = target_str.MakeUpper();
+	target_str = target_str.TrimLeft();
+	target_str = target_str.TrimRight();
+
+	int op = 0;
+	int op_cnt = 0;
+
+	op = target_str.Find(target_find_str);
+	while (op != -1) {
+		op_cnt++;
+		op = target_str.Find(target_find_str, op + 1);
+	}
+
+	return op_cnt;
+}
+
+std::vector<int> GetCountStrIdx(CString target_str, CString target_find_str) {
+	std::vector<int> result_vec;
+
+	target_str = target_str.MakeUpper();
+	target_str = target_str.TrimLeft();
+	target_str = target_str.TrimRight();
+
+	int op = 0;
+
+	op = target_str.Find(target_find_str);
+	while (op != -1) {
+		result_vec.push_back(op);
+		op = target_str.Find(target_find_str, op + 1);
+	}
+
+	return result_vec;
+}
+
+
+std::vector<CString> SplitStr(CString target_str, CString target_find_str) {
+	std::vector<CString> result_vec;
+	int op_cnt = GetCountStr(target_str, target_find_str);
+	std::vector<int> index_vec = GetCountStrIdx(target_str, target_find_str);
+
+	int start_pos = 0;
+	int end_pos = 0;
+
+	if (!index_vec.empty()) {
+		end_pos = index_vec[0];
+	}
+
+	for (int i = 0; i < op_cnt; i++) {
+		CString tempStr = target_str.Mid(start_pos, end_pos - start_pos);
+		tempStr = tempStr.TrimLeft();
+		tempStr = tempStr.TrimRight();
+		result_vec.push_back(tempStr);
+		start_pos = end_pos + target_find_str.GetLength();
+		if (i == op_cnt - 1) {
+			end_pos = target_str.GetLength();
+			result_vec.push_back(target_str.Mid(start_pos, end_pos - start_pos));
+		} else {
+			end_pos = index_vec[i + 1];
+		}
+	}
+
+
+	return result_vec;
 }
