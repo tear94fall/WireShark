@@ -152,6 +152,7 @@ public:
 	CString ArpHardwareType(CString HardwareTypeNumber);
 
 	BOOL CheckFilter(CString Filter, std::vector<CString> vec);
+	BOOL RemoveMouseMessage(void);
 };
 
 

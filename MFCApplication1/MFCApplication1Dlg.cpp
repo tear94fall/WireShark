@@ -221,6 +221,7 @@ void CMFCApplication1Dlg::OnBnClickedCaptureStartButton() {
 		ClearPacketCnt();
 		m_PacketCapturedListCtrl.DeleteAllItems();
 
+		std::ofstream out(file_name_write, std::ios::trunc);
 		m_PacketCaptrueThread = AfxBeginThread(PacketCaptureThreadFunction, this);
 		CButton* pButton;
 		pButton = (CButton*)GetDlgItem(IDC_BUTTON1);
@@ -577,7 +578,12 @@ void CMFCApplication1Dlg::OnBnClickedCaptureQuitButton() {
 			m_PacketDumpListCtrl.DeleteAllItems();
 
 			if (!is_file_save) {
-				std::remove(file_name_write);
+				std::ifstream in(file_name_write);
+				std::string s;
+				if (in.is_open()) {
+					in >> s;
+					std::remove(file_name_write);
+				}
 			}
 			is_file_save = false;
 		}
@@ -1329,6 +1335,8 @@ void CMFCApplication1Dlg::OnBnClickedFilterApplyButton() {
 			}
 		}
 	}
+
+	RemoveMouseMessage();
 }
 
 CString CMFCApplication1Dlg::ArpOpcde(CString OpcodeNumber) {
@@ -1423,7 +1431,7 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 					column_count_str.Format(_T("%d"), column_count + 1);
 
 					if (!(PROTO != L"TCP" && PROTO != L"UDP" && PROTO != L"ARP" && PROTO != L"ICMP")) {
-						if (column_count < _ttoi(NO)) {
+						if (column_count < _ttoi(NO) && column_count < pDlg->packet_cnt) {
 							// 필터 적용
 							if (pDlg->CheckFilter(pDlg->Filter, prop_vec)) {
 								if (column_count == 0) {
@@ -1642,6 +1650,11 @@ BOOL CMFCApplication1Dlg::CheckFilter(CString Filter, std::vector<CString> vec) 
 	// vec은 캡쳐된 패킷의 정보
 	BOOL result = FALSE;
 
+	if (Filter == L"") {
+		result = TRUE;
+		return result;
+	}
+
 	CString PROTOCOL = vec[3];
 	PROTOCOL.Replace(L" ", L"");
 
@@ -1755,4 +1768,10 @@ std::vector<CString> SplitStr(CString target_str, CString target_find_str) {
 
 
 	return result_vec;
+}
+
+BOOL CMFCApplication1Dlg::RemoveMouseMessage(void) {
+	MSG msg;
+	while (PeekMessage(&msg, NULL, WM_LBUTTONDOWN, WM_MBUTTONDBLCLK, PM_REMOVE));
+	return TRUE;
 }
