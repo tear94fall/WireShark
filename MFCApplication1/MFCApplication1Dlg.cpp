@@ -134,7 +134,7 @@ BOOL CMFCApplication1Dlg::OnInitDialog() {
 	CButton* pButton3 = (CButton*)GetDlgItem(IDC_BUTTON3);
 	pButton3->EnableWindow(FALSE);
 
-	m_FilterEditCtrl.SetWindowTextW(L"Enter Filter....");
+	m_FilterEditCtrl.SetWindowTextW(DefaultFilterValue);
 
 	CRect rectangle;
 	m_PacketCapturedListCtrl.GetWindowRect(&rectangle);
@@ -580,7 +580,7 @@ void CMFCApplication1Dlg::OnBnClickedCaptureQuitButton() {
 			m_PacketDumpListCtrl.DeleteAllItems();
 
 			if (!is_file_save) {
-				std::ifstream in(file_name_write);
+				std::ifstream in(file_name_write, std::ios::out);
 				std::string s;
 				if (in.is_open()) {
 					in >> s;
@@ -588,6 +588,9 @@ void CMFCApplication1Dlg::OnBnClickedCaptureQuitButton() {
 				}
 			}
 			is_file_save = false;
+			
+			m_FilterEditCtrl.Clear();
+			m_FilterEditCtrl.SetWindowTextW(DefaultFilterValue);
 		}
 	} else if (answer == IDNO) {	// 아니오
 	}
@@ -1521,7 +1524,7 @@ UINT CMFCApplication1Dlg::FileOpenThreadFunction(LPVOID _mothod) {
 	strcpy(file_name, file_name_str.c_str());
 	std::string str = "FILEOPEN?";
 
-	std::ifstream is(file_name);
+	std::ifstream is(file_name, std::ios::out);
 
 	int cnt = 0;
 	int i = 0;
@@ -1655,7 +1658,7 @@ BOOL CMFCApplication1Dlg::CheckFilter(CString Filter, std::vector<CString> vec) 
 	// vec은 캡쳐된 패킷의 정보
 	BOOL result = FALSE;
 
-	if (Filter == L"") {
+	if (Filter == L"" || Filter == DefaultFilterValue) {
 		result = TRUE;
 		return result;
 	}
