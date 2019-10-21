@@ -217,6 +217,8 @@ void CMFCApplication1Dlg::OnBnClickedCaptureStartButton() {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	SetDlgItemText(IDC_STATIC_NET, L"Interface: " + m_strSelectedNetworkInterface);
 
+	IsFilterApply = FALSE;
+
 	if (m_PacketCaptrueThread == NULL) {
 		ClearPacketCnt();
 		m_PacketCapturedListCtrl.DeleteAllItems();
@@ -1375,6 +1377,8 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 	std::ifstream is;
 	int i = 0;
 
+	int prev_column_index = 0;
+
 	while (1) {
 		is.open(pDlg->file_name_write);
 		is.seekg(0, is.end);
@@ -1431,7 +1435,8 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 					column_count_str.Format(_T("%d"), column_count + 1);
 
 					if (!(PROTO != L"TCP" && PROTO != L"UDP" && PROTO != L"ARP" && PROTO != L"ICMP")) {
-						if (column_count < _ttoi(NO) && column_count < pDlg->packet_cnt) {
+						if (prev_column_index < _ttoi(NO)) {
+							prev_column_index = _ttoi(NO);
 							// 필터 적용
 							if (pDlg->CheckFilter(pDlg->Filter, prop_vec)) {
 								if (column_count == 0) {
@@ -1661,6 +1666,18 @@ BOOL CMFCApplication1Dlg::CheckFilter(CString Filter, std::vector<CString> vec) 
 	Filter = Filter.MakeUpper();
 	Filter = Filter.TrimLeft();
 	Filter = Filter.TrimRight();
+
+	int FilterLength = Filter.GetLength();
+
+	if (FilterLength == 3 || FilterLength == 4) {
+		if (Filter == PROTOCOL) {
+			result = TRUE;	
+		} else {
+			result = FALSE;
+		}
+
+		return result;
+	}
 
 	const char* filter_file = "filter.dat";
 

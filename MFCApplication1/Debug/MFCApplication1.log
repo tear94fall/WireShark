@@ -1,8 +1,8 @@
 ﻿  MFCApplication1Dlg.cpp
-C:\Users\tear9\source\repos\PacketSniffer\MFCApplication1\MFCApplication1Dlg.cpp(153,45): warning C4244:  '=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\tear9\source\repos\PacketSniffer\MFCApplication1\MFCApplication1Dlg.cpp(166,37): warning C4244:  '=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\tear9\source\repos\PacketSniffer\MFCApplication1\MFCApplication1Dlg.cpp(335,21): warning C4018:  '<': signed 또는 unsigned가 일치하지 않습니다.
-C:\Users\tear9\source\repos\PacketSniffer\MFCApplication1\MFCApplication1Dlg.cpp(944,83): warning C4552:  '+': 식의 결과가 사용되지 않습니다.
-C:\Users\tear9\source\repos\PacketSniffer\MFCApplication1\MFCApplication1Dlg.cpp(1389,13): warning C4244:  '=': '__int64'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\tear9\source\repos\PacketSniffer\MFCApplication1\MFCApplication1Dlg.cpp(1513,7): warning C4101:  'cstr' :참조되지 않은 지역 변수입니다.
-LINK : fatal error LNK1168: C:\Users\tear9\source\repos\PacketSniffer\Debug\MFCApplication1.exe을(를) 쓰기용으로 열 수 없습니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(153,45): warning C4244:  '=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(166,37): warning C4244:  '=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(337,21): warning C4018:  '<': signed 또는 unsigned가 일치하지 않습니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(946,83): warning C4552:  '+': 식의 결과가 사용되지 않습니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(1393,13): warning C4244:  '=': '__int64'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(1518,7): warning C4101:  'cstr' :참조되지 않은 지역 변수입니다.
+  MFCApplication1.vcxproj -> C:\Users\limjoonsub\source\repos\MFCApplication1\Debug\MFCApplication1.exe
