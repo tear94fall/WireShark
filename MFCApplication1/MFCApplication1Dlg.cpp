@@ -116,7 +116,6 @@ BOOL CMFCApplication1Dlg::OnInitDialog() {
 	SetIcon(m_hIcon, TRUE);			// 큰 아이콘을 설정합니다.
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
-
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
 	std::remove(file_name_write);
 
@@ -482,14 +481,32 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 	}
 
 	pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
+
 	pDlg->FileWriterFunction(pDlg->file_name_write);
+	
+	if (pDlg->packet_cnt % pDlg->packet_count_per_file == 0) {
+		CString file_name = L"temp (";
+		CString file_ext = L").dat";
+		int number = pDlg->packet_cnt / pDlg->packet_count_per_file;
+		CString number_cstr = (CString)std::to_string(number).c_str();
+		file_name.Append(number_cstr);
+		file_name.Append(file_ext);
+		pDlg->file_name_cstr = file_name;
+		pDlg->m_PacketCapturedListCtrl.DeleteAllItems();
+	}
 }
 
 void CMFCApplication1Dlg::FileWriterFunction(char* file_name) {
 	if (ntohs(eth_hdr->frame_type) == 0x0806 || ntohs(eth_hdr->frame_type) == 0x0800) {
 		unsigned char c;
 		int packet_size = m_header->caplen;
-		std::ofstream out(file_name, std::ios::app);
+
+		CT2CA ConvertCStringToString(file_name_cstr);
+		std::string file_name_temp(ConvertCStringToString);
+
+		std::ofstream out(file_name_temp.c_str(), std::ios::app);
+
+
 
 		CT2CA pszConvertedAnsiString(GetIPAddr(ip_hdr->saddr));
 		std::string s(pszConvertedAnsiString);
@@ -530,6 +547,8 @@ void CMFCApplication1Dlg::FileWriterFunction(char* file_name) {
 			}
 		}
 		out << "END\n";
+
+		out.close();
 	}
 }
 
@@ -1719,6 +1738,38 @@ BOOL CMFCApplication1Dlg::CheckFilter(CString Filter, std::vector<CString> vec) 
 			break;
 		}
 	}
+
+	/*
+	최소   
+	port == 1    -   9
+	port == 65536    -  13
+	port ==  1 or ip == 0.0.0.0   - 26
+	port == 65536 and ip == 123.123.123.123  - 39
+
+
+	ip == 0.0.0.0    - 13
+	ip == 123.123.123.123  - 21
+	ip == 0.0.0.0 or port == 1   - 26
+	ip == 123.123.123.123 and port == 65536  - 39
+	*/
+
+	CString SplitIP = Filter.Mid(0, 6);
+	CString SplitPort = Filter.Mid(0, 8);
+	if (SplitIP == L"IP == ") {
+		if (Filter.GetLength() >= 13 && Filter.GetLength()<=21) {
+			SplitIP = Filter.Mid(6, Filter.GetLength()-6);
+		} else if (Filter.GetLength() > 21 && Filter.GetLength() <= 39) {
+		}
+
+
+
+	} else if (SplitPort == L"PORT == ") {
+
+	}
+
+	
+
+
 	return result;
 }
 

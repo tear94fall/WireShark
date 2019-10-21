@@ -80,7 +80,9 @@ public:
 	char* file_buffer = NULL;
 	CString file_name_read;
 	char* file_name_write = "temp.dat";
+	CString file_name_cstr = L"temp.dat";
 	bool is_file_save = false;
+	int packet_count_per_file = 500;
 
 	bool m_bThreadStart = false;
 	CWinThread* m_PacketCaptrueThread = NULL;
