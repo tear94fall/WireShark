@@ -60,6 +60,7 @@ void CMFCApplication1Dlg::DoDataExchange(CDataExchange* pDX) {
 	DDX_Control(pDX, IDC_EDIT1, m_FilterEditCtrl);
 }
 
+
 BEGIN_MESSAGE_MAP(CMFCApplication1Dlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
@@ -415,13 +416,35 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 		} else if (ntohs(pDlg->eth_hdr->frame_type) == 0x0806) {
 			pDlg->Protocol = L"ARP";
 			pDlg->arp_hdr = (struct arp_header*)(pkt_data + 14);
-
+			
 			int column_count = pDlg->m_PacketCapturedListCtrl.GetItemCount();
 
 			CString column_count_str;
 			column_count_str.Format(_T("%d"), column_count + 1);
 			pDlg->m_PacketCapturedListCtrl.InsertItem(column_count, column_count_str);
 
+			char soure_ip_addr[4];
+			char target_ip_addr[4];
+
+			pDlg->source_ip = "";
+			pDlg->destionation_ip = "";
+
+			// ip 주소
+			for (int i = 0; i < 3; i++) {
+				sprintf(soure_ip_addr, "%02d.", pDlg->arp_hdr->spa[i]);
+				pDlg->source_ip += soure_ip_addr;
+
+				sprintf(target_ip_addr, "%02d.", pDlg->arp_hdr->tpa[i]);
+				pDlg->destionation_ip += target_ip_addr;
+			}
+
+			sprintf(soure_ip_addr, "%02d", pDlg->arp_hdr->spa[3]);
+			pDlg->source_ip += soure_ip_addr;
+
+			sprintf(target_ip_addr, "%02d", pDlg->arp_hdr->tpa[3]);
+			pDlg->destionation_ip += target_ip_addr;
+
+			// hw 주소
 			char soure_hw_addr[4];
 			char target_hw_addr[4];
 
@@ -463,13 +486,13 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 		if (ntohs(pDlg->eth_hdr->frame_type) == 0x0800 || ntohs(pDlg->eth_hdr->frame_type) == 0x0806) {
 			pDlg->packet_cnt += 1;
 			if (pDlg->ip_hdr->proto == IPPROTO_TCP) {
-				pDlg->tcp_pkt_cnt++;
-			} else if (pDlg->ip_hdr->proto == IPPROTO_UDP) {
-				pDlg->udp_pkt_cnt++;
+				pDlg->tcp_pkt_cnt += 1;
+			} else if (pDlg->ip_hdr->proto == IPPROTO_UDP && ntohs(pDlg->eth_hdr->frame_type) != 0x0806) {
+				pDlg->udp_pkt_cnt += 1;
 			} else if (pDlg->ip_hdr->proto == IPPROTO_ICMP) {
-				pDlg->icmp_pkt_cnt++;
+				pDlg->icmp_pkt_cnt += 1;
 			} else if (ntohs(pDlg->eth_hdr->frame_type) == 0x0806) {
-				pDlg->arp_pkt_cnt++;
+				pDlg->arp_pkt_cnt += 1;
 			}
 		}
 	}
@@ -527,6 +550,13 @@ void CMFCApplication1Dlg::FileWriterFunction(char* file_name) {
 			}
 		} else if (ntohs(eth_hdr->frame_type) == 0x0806) {
 			protocol = "ARP";
+			CT2CA pszConvertedAnsiString(source_ip);
+			std::string s(pszConvertedAnsiString);
+			sip = s;
+
+			CT2CA pszConvertedAnsiString2(destionation_ip);
+			std::string s2(pszConvertedAnsiString);
+			dip = s2;
 		}
 
 		out << packet_cnt << "\n";
@@ -1327,38 +1357,24 @@ void CMFCApplication1Dlg::OnBnClickedFilterApplyButton() {
 	UpdateData(TRUE);
 	GetDlgItemText(IDC_EDIT1, Filter);
 
-	// 필터가 빈칸이 아닐때만 작업진행
-	if (true) {
-		IsFilterApply = TRUE;
+	IsFilterApply = TRUE;
 
-		if (m_FileReadThread == NULL) {
-			//ClearPacketCnt();
-			m_PacketCapturedListCtrl.DeleteAllItems();
-			m_PacketDataTreeCtrl.DeleteAllItems();
-			m_PacketDumpListCtrl.DeleteAllItems();
+	if (m_FileReadThread != NULL) {
+		DWORD dwResult;
 
-			m_FileReadThread = AfxBeginThread(FileReadThreadFunction, this);
-			m_FileReadThreadWorkType = RUNNING;
-		} else {
-			DWORD dwResult;
-
-			m_FileReadThread->SuspendThread();
-			m_FileReadThreadWorkType = STOP;
-			::GetExitCodeThread(m_FileReadThread->m_hThread, &dwResult);
-			delete m_FileReadThread;
-			m_FileReadThread = NULL;
-
-			//ClearPacketCnt();
-			m_PacketCapturedListCtrl.DeleteAllItems();
-			m_PacketDataTreeCtrl.DeleteAllItems();
-			m_PacketDumpListCtrl.DeleteAllItems();
-
-			if (m_FileReadThread == NULL) {
-				m_FileReadThread = AfxBeginThread(FileReadThreadFunction, this);
-				m_FileReadThreadWorkType = RUNNING;
-			}
-		}
+		m_FileReadThread->SuspendThread();
+		::GetExitCodeThread(m_FileReadThread->m_hThread, &dwResult);
+		delete m_FileReadThread;
+		m_FileReadThread = NULL;
 	}
+
+	m_FileReadThread = AfxBeginThread(FileReadThreadFunction, this);
+	m_FileReadThreadWorkType = RUNNING;
+
+	m_PacketCapturedListCtrl.DeleteAllItems();
+	m_PacketDataTreeCtrl.DeleteAllItems();
+	m_PacketDumpListCtrl.DeleteAllItems();
+	
 
 	RemoveMouseMessage();
 }
@@ -1400,6 +1416,7 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 	int i = 0;
 
 	int prev_column_index = 0;
+	int first_packet_count = 0;
 
 	while (1) {
 		is.open(pDlg->file_name_write);
@@ -1461,7 +1478,8 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 							prev_column_index = _ttoi(NO);
 							// 필터 적용
 							if (pDlg->CheckFilter(pDlg->Filter, prop_vec)) {
-								if (column_count == 0) {
+								if (column_count == 0 && first_packet_count==0) {
+									first_packet_count = 1;
 									column_count_str.Format(_T("%d"), column_count + 1);
 									pDlg->SetDataToPacketData(column_count_str, TIME, SIP, DIP, PROTO, LENGTH, NULL, DUMP);
 									pDlg->SetDataToHDXEditor(DUMP);
@@ -1544,6 +1562,7 @@ UINT CMFCApplication1Dlg::FileOpenThreadFunction(LPVOID _mothod) {
 	std::string str = "FILEOPEN?";
 
 	std::ifstream is(file_name, std::ios::out);
+	int first_packet_count = 0;
 
 	int cnt = 0;
 	int i = 0;
@@ -1601,7 +1620,8 @@ UINT CMFCApplication1Dlg::FileOpenThreadFunction(LPVOID _mothod) {
 				pDlg->m_PacketCapturedListCtrl.InsertItem(column_count, column_count_str);
 
 				/* 첫 패킷이면 데이터 세팅*/
-				if (column_count == 0) {
+				if (column_count == 0 && first_packet_count == 0) {
+					first_packet_count += 1;
 					column_count_str.Format(_T("%d"), column_count + 1);
 					pDlg->SetDataToPacketData(column_count_str, TIME, SIP, DIP, PROTO, LENGTH, NULL, DUMP);
 					pDlg->SetDataToHDXEditor(DUMP);
@@ -1744,18 +1764,18 @@ BOOL CMFCApplication1Dlg::CheckFilter(CString Filter, std::vector<CString> vec) 
 	for(split_iter = split_vec.begin(); split_iter != split_vec.end(); split_iter++) {
 		if (*split_iter == PROTOCOL) {
 			result = TRUE;
-			break;
+			return result;
 		}
 	}
 
 	/*
-	최소   
+	포트번호로 시작
 	port == 1    -   9
 	port == 65536    -  13
 	port ==  1 or ip == 0.0.0.0   - 26
 	port == 65536 and ip == 123.123.123.123  - 39
 
-
+	아이피로 시작
 	ip == 0.0.0.0    - 13
 	ip == 123.123.123.123  - 21
 	ip == 0.0.0.0 or port == 1   - 26
@@ -1765,9 +1785,13 @@ BOOL CMFCApplication1Dlg::CheckFilter(CString Filter, std::vector<CString> vec) 
 	std::vector<CString> FilterSingleVec;
 	std::vector<CString> FilterOrVec;
 	std::vector<CString> FilterAndVec;
+	std::vector<CString> FilterOrAndVec;
+	std::vector<CString> FilterAndAndVec;
 
 	CString SplitIP = Filter.Mid(0, 6);
 	CString SplitPort = Filter.Mid(0, 8);
+	CString SplitBracket = Filter.Mid(0, 1);
+	CString SplitProtocol;
 
 	int OrIndex = Filter.Find(L" OR ");
 	int AndIndex = Filter.Find(L" AND ");
@@ -1822,6 +1846,89 @@ BOOL CMFCApplication1Dlg::CheckFilter(CString Filter, std::vector<CString> vec) 
 		} else {
 			result = FALSE;
 		}
+	} else if (SplitBracket==L"(") {
+		/*
+		(ip == 0.0.0.0 or port == 1) and tcp  - 36
+		(ip == 123.123.123.123 and port == 65536) and icmp  - 50
+
+		(port == 1 or ip == 0.0.0.0) and tcp  - 36
+		(port == 65536 and ip == 123.123.123.123) and icmp   - 50
+		*/
+		int EndBracketIndex = Filter.Find(L")");
+
+		if (FilterLength >= 36 && FilterLength <= 50) {
+			if (SplitIP == L"(IP ==") {
+				CString BracketBlock = Filter.Mid(0, EndBracketIndex);
+				CString ProtocolBlock = Filter.Mid(EndBracketIndex + 1, Filter.GetLength());
+	
+				SplitProtocol = ProtocolBlock.Mid(5, ProtocolBlock.GetLength());
+
+				BracketBlock.Replace(L"(", L"");
+				BracketBlock.Replace(L")", L"");
+
+				int BrracketBlockLength = BracketBlock.GetLength();
+				int BracketOrIndex = BracketBlock.Find(L" OR ");
+				int BracketAndIndex = BracketBlock.Find(L" AND ");
+
+				if (BracketOrIndex != -1 && BracketAndIndex == -1) {
+					SplitIP = BracketBlock.Mid(0, BracketOrIndex);
+					SplitPort = BracketBlock.Mid(BracketOrIndex + 4, BrracketBlockLength - BracketOrIndex - 4);
+
+					SplitPort = SplitPort.Mid(8, SplitPort.GetLength() - 8);
+					SplitIP = SplitIP.Mid(6, SplitIP.GetLength() - 6);
+
+					FilterOrAndVec.push_back(SplitIP);
+					FilterOrAndVec.push_back(SplitPort);
+					FilterOrAndVec.push_back(SplitProtocol);
+				} else if (BracketOrIndex == -1 && BracketAndIndex != -1) {
+					SplitIP = BracketBlock.Mid(0, BracketAndIndex);
+					SplitPort = BracketBlock.Mid(BracketAndIndex + 5, FilterLength - BracketAndIndex - 5);
+
+					SplitIP = SplitIP.Mid(6, SplitIP.GetLength() - 6);
+					SplitPort = SplitPort.Mid(8, SplitPort.GetLength() - 8);
+					FilterAndAndVec.push_back(SplitIP);
+					FilterAndAndVec.push_back(SplitPort);
+					FilterAndAndVec.push_back(SplitProtocol);
+				}
+			} else if (SplitPort == L"(PORT ==") {
+				CString BracketBlock = Filter.Mid(0, EndBracketIndex);
+				CString ProtocolBlock = Filter.Mid(EndBracketIndex + 1, Filter.GetLength());
+	
+				SplitProtocol = ProtocolBlock.Mid(5, ProtocolBlock.GetLength());
+
+				BracketBlock.Replace(L"(", L"");
+				BracketBlock.Replace(L")", L"");
+
+				int BrracketBlockLength = BracketBlock.GetLength();
+				int BracketOrIndex = BracketBlock.Find(L" OR ");
+				int BracketAndIndex = BracketBlock.Find(L" AND ");
+
+				if (BracketOrIndex != -1 && BracketAndIndex == -1) {
+					SplitPort = BracketBlock.Mid(0, BracketOrIndex);
+					SplitIP = BracketBlock.Mid(BracketOrIndex + 4, BrracketBlockLength - BracketOrIndex - 4);
+
+					SplitPort = SplitPort.Mid(8, SplitPort.GetLength() - 8);
+					SplitIP = SplitIP.Mid(6, SplitIP.GetLength() - 6);
+
+					FilterOrAndVec.push_back(SplitIP);
+					FilterOrAndVec.push_back(SplitPort);
+					FilterOrAndVec.push_back(SplitProtocol);
+				} else if (BracketOrIndex == -1 && BracketAndIndex != -1) {
+					SplitPort = BracketBlock.Mid(0, BracketAndIndex);
+					SplitIP = BracketBlock.Mid(BracketAndIndex + 5, FilterLength - BracketAndIndex - 5);
+
+					SplitIP = SplitIP.Mid(6, SplitIP.GetLength() - 6);
+					SplitPort = SplitPort.Mid(8, SplitPort.GetLength() - 8);
+					FilterAndAndVec.push_back(SplitIP);
+					FilterAndAndVec.push_back(SplitPort);
+					FilterAndAndVec.push_back(SplitProtocol);
+				}
+			}
+		}
+
+
+	} else {
+		result = FALSE;
 	}
 
 	if (!FilterSingleVec.empty()) {
@@ -1847,6 +1954,34 @@ BOOL CMFCApplication1Dlg::CheckFilter(CString Filter, std::vector<CString> vec) 
 			result = TRUE;
 		} else {
 			result = FALSE;
+		}
+	} else if (!FilterOrAndVec.empty()) {
+		if (SIP == SplitIP || DIP == SplitIP || SPORT == SplitPort || DPORT == SplitPort) {
+			if (PROTOCOL == SplitProtocol) {
+				result = TRUE;
+			}
+		} else {
+			result = FALSE;
+		}
+	} else if (!FilterAndAndVec.empty()) {
+		if (SIP == SplitIP && SPORT == SplitPort) {
+			result = TRUE;
+		} else if (SIP == SplitIP && DPORT == SplitPort) {
+			result = TRUE;
+		} else if (DIP == SplitIP && SPORT == SplitPort) {
+			result = TRUE;
+		} else if (DIP == SplitIP && DPORT == SplitPort) {
+			result = TRUE;
+		} else {
+			result = FALSE;
+		}
+
+		if (result) {
+			if (PROTOCOL == SplitProtocol) {
+				result = TRUE;
+			} else {
+				result = FALSE;
+			}
 		}
 	}
 
