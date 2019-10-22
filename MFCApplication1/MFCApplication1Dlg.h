@@ -156,6 +156,7 @@ public:
 
 	BOOL CheckFilter(CString Filter, std::vector<CString> vec);
 	BOOL RemoveMouseMessage(void);
+	afx_msg void OnBnClickedCheck2();
 };
 
 

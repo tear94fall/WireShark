@@ -77,6 +77,7 @@ BEGIN_MESSAGE_MAP(CMFCApplication1Dlg, CDialogEx)
 	//	ON_NOTIFY(NM_CUSTOMDRAW, IDC_LIST1, &CMFCApplication1Dlg::OnNMCustomdrawList1)
 	//	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST1, &CMFCApplication1Dlg::OnLvnItemchangedList1)
 	ON_WM_CLOSE()
+	ON_BN_CLICKED(IDC_CHECK2, &CMFCApplication1Dlg::OnBnClickedCheck2)
 END_MESSAGE_MAP()
 
 
@@ -125,11 +126,11 @@ BOOL CMFCApplication1Dlg::OnInitDialog() {
 	m_strSelectedNetworkInterface = netInterfaceDlg.InterfaceDescription;
 	SetDlgItemText(IDC_STATIC_NET, L"Interface: " + m_strSelectedNetworkInterface);
 
-	CButton* pButton = (CButton*)GetDlgItem(IDC_BUTTON2);
-	pButton->EnableWindow(FALSE);
+	//CButton* pButton = (CButton*)GetDlgItem(IDC_BUTTON2);
+	//pButton->EnableWindow(FALSE);
 
-	CButton* pButton3 = (CButton*)GetDlgItem(IDC_BUTTON3);
-	pButton3->EnableWindow(FALSE);
+	//CButton* pButton3 = (CButton*)GetDlgItem(IDC_BUTTON3);
+	//pButton3->EnableWindow(FALSE);
 
 	m_FilterEditCtrl.SetWindowTextW(DefaultFilterValue);
 
@@ -217,20 +218,21 @@ void CMFCApplication1Dlg::OnBnClickedCaptureStartButton() {
 	IsFilterApply = FALSE;
 
 	if (m_PacketCaptrueThread == NULL) {
+		GetDlgItem(IDC_CHECK2)->EnableWindow(FALSE);
 		ClearPacketCnt();
 		m_PacketCapturedListCtrl.DeleteAllItems();
 
 		std::ofstream out(file_name_write, std::ios::trunc);
 		m_PacketCaptrueThread = AfxBeginThread(PacketCaptureThreadFunction, this);
-		CButton* pButton;
-		pButton = (CButton*)GetDlgItem(IDC_BUTTON1);
-		pButton->EnableWindow(FALSE);
+		//CButton* pButton;
+		//pButton = (CButton*)GetDlgItem(IDC_BUTTON1);
+		//pButton->EnableWindow(FALSE);
 
-		pButton = (CButton*)GetDlgItem(IDC_BUTTON2);
-		pButton->EnableWindow(TRUE);
+		//pButton = (CButton*)GetDlgItem(IDC_BUTTON2);
+		//pButton->EnableWindow(TRUE);
 
-		pButton = (CButton*)GetDlgItem(IDC_BUTTON3);
-		pButton->EnableWindow(TRUE);
+		//pButton = (CButton*)GetDlgItem(IDC_BUTTON3);
+		//pButton->EnableWindow(TRUE);
 
 		if (m_PacketCaptrueThread == NULL) {
 			AfxMessageBox(_T("캡처 시작을 할 수 없습니다."));
@@ -241,8 +243,7 @@ void CMFCApplication1Dlg::OnBnClickedCaptureStartButton() {
 		}
 		m_PacketCaptureThreadWorkType = RUNNING;
 	} else {
-		if (m_PacketCaptureThreadWorkType == RUNNING || m_PacketCaptureThreadWorkType == PAUSE) {
-		}
+		MessageBox(_T("이미 캡처가 시작되었습니다."), _T("오류"), MB_OK | MB_ICONWARNING);
 	}
 }
 
@@ -579,7 +580,16 @@ void CMFCApplication1Dlg::FileWriterFunction(char* file_name) {
 
 void CMFCApplication1Dlg::OnBnClickedCaptureQuitButton() {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
-	int answer = MessageBox(_T("캡처를 종료합니다."), _T("캡처 종료"), MB_YESNO | MB_ICONQUESTION);
+
+
+	int answer;
+	if (m_PacketCaptrueThread != NULL) {
+		answer = MessageBox(_T("캡처를 종료합니다."), _T("캡처 종료"), MB_YESNO | MB_ICONQUESTION);
+	} else {
+		MessageBox(_T("캡처가 시작되지 않았습니다."), _T("오류"), MB_ICONWARNING);
+		return;
+	}
+	GetDlgItem(IDC_CHECK2)->EnableWindow(TRUE);
 
 	if (answer == IDYES) {	// 예
 		if (m_PacketCaptrueThread == NULL) {
@@ -609,13 +619,13 @@ void CMFCApplication1Dlg::OnBnClickedCaptureQuitButton() {
 				m_FileOpenThread = NULL;
 			}
 
-			CButton* pButton;
-			pButton = (CButton*)GetDlgItem(IDC_BUTTON1);
-			pButton->EnableWindow(TRUE);
-			pButton = (CButton*)GetDlgItem(IDC_BUTTON2);
-			pButton->EnableWindow(FALSE);
-			pButton = (CButton*)GetDlgItem(IDC_BUTTON3);
-			pButton->EnableWindow(FALSE);
+			//CButton* pButton;
+			//pButton = (CButton*)GetDlgItem(IDC_BUTTON1);
+			//pButton->EnableWindow(TRUE);
+			//pButton = (CButton*)GetDlgItem(IDC_BUTTON2);
+			//pButton->EnableWindow(FALSE);
+			//pButton = (CButton*)GetDlgItem(IDC_BUTTON3);
+			//pButton->EnableWindow(FALSE);
 
 			ClearPacketCnt();
 			ChangeStaticText(packet_cnt, tcp_pkt_cnt, udp_pkt_cnt, arp_pkt_cnt, icmp_pkt_cnt);
@@ -661,6 +671,7 @@ void CMFCApplication1Dlg::ClearPacketCnt() {
 void CMFCApplication1Dlg::OnBnClickedCapturePauseButton() {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	if (m_PacketCaptrueThread == NULL) {
+		MessageBox(_T("캡처가 시작되지 않았습니다."), _T("오류"), MB_ICONWARNING);
 	} else {
 		if (m_PacketCaptureThreadWorkType == RUNNING) {
 			pause_button.SetWindowText(L"Resume");
@@ -1354,22 +1365,25 @@ void CMFCApplication1Dlg::OnBnClickedFilterApplyButton() {
 
 	IsFilterApply = TRUE;
 
-	if (m_FileReadThread != NULL) {
-		DWORD dwResult;
+	if (m_PacketCaptrueThread != NULL) {
+		if (m_FileReadThread != NULL) {
+			DWORD dwResult;
 
-		m_FileReadThread->SuspendThread();
-		::GetExitCodeThread(m_FileReadThread->m_hThread, &dwResult);
-		delete m_FileReadThread;
-		m_FileReadThread = NULL;
+			m_FileReadThread->SuspendThread();
+			::GetExitCodeThread(m_FileReadThread->m_hThread, &dwResult);
+			delete m_FileReadThread;
+			m_FileReadThread = NULL;
+		}
+
+		m_FileReadThread = AfxBeginThread(FileReadThreadFunction, this);
+		m_FileReadThreadWorkType = RUNNING;
+
+		m_PacketCapturedListCtrl.DeleteAllItems();
+		m_PacketDataTreeCtrl.DeleteAllItems();
+		m_PacketDumpListCtrl.DeleteAllItems();
+	} else {
+		MessageBox(_T("캡쳐된 패킷이 없습니다."), _T("오류"), MB_ICONWARNING);
 	}
-
-	m_FileReadThread = AfxBeginThread(FileReadThreadFunction, this);
-	m_FileReadThreadWorkType = RUNNING;
-
-	m_PacketCapturedListCtrl.DeleteAllItems();
-	m_PacketDataTreeCtrl.DeleteAllItems();
-	m_PacketDumpListCtrl.DeleteAllItems();
-	
 
 	RemoveMouseMessage();
 }
@@ -1509,6 +1523,11 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 
 void CMFCApplication1Dlg::OpenPacketDataFile() {
 	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	if (!IsDlgButtonChecked(IDC_CHECK2)) {
+		MessageBox(_T("파일 읽기모드가 아닙니다."), _T("파일 읽기 오류"), MB_ICONWARNING);
+		return;
+	}
+
 	TCHAR szFilter[] = _T("All Files(*.*)|*.*||");
 	CFileDialog dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY, szFilter);
 	dlg.DoModal();
@@ -2052,4 +2071,30 @@ BOOL CMFCApplication1Dlg::RemoveMouseMessage(void) {
 	MSG msg;
 	while (PeekMessage(&msg, NULL, WM_LBUTTONDOWN, WM_MBUTTONDBLCLK, PM_REMOVE));
 	return TRUE;
+}
+
+void CMFCApplication1Dlg::OnBnClickedCheck2() {
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	BOOL chk = IsDlgButtonChecked(IDC_CHECK2);
+	CButton* pButton;
+
+	m_PacketCapturedListCtrl.DeleteAllItems();
+
+	int button_array[4] = { IDC_BUTTON1, IDC_BUTTON2, IDC_BUTTON3, IDC_BUTTON4 };
+
+	if (m_FileReadThread != NULL || m_PacketCaptrueThread != NULL) {
+
+	} else {
+		if (chk) {
+			for (int i = 0; i < 4; i++) {
+				pButton = (CButton*)GetDlgItem(button_array[i]);
+				pButton->EnableWindow(FALSE);
+			}
+		} else {
+			for (int i = 0; i < 4; i++) {
+				pButton = (CButton*)GetDlgItem(button_array[i]);
+				pButton->EnableWindow(TRUE);
+			}
+		}
+	}
 }
