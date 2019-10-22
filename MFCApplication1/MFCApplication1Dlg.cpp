@@ -122,9 +122,6 @@ BOOL CMFCApplication1Dlg::OnInitDialog() {
 
 	SetWindowText(_T("Wire Dolphin"));
 
-	// File 체크 비활성
-	GetDlgItem(IDC_CHECK2)->EnableWindow(FALSE);
-
 	m_strSelectedNetworkInterface = netInterfaceDlg.InterfaceDescription;
 	SetDlgItemText(IDC_STATIC_NET, L"Interface: " + m_strSelectedNetworkInterface);
 
@@ -497,7 +494,7 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 		}
 	}
 
-	if (pDlg->m_PacketCapturedListCtrl.GetItemCount() == 1) {
+	if (pDlg->m_PacketCapturedListCtrl.GetItemCount() == 1 && pDlg->IsFilterApply == FALSE) {
 		CString column_count_str = L"1";
 		pDlg->SetDataToPacketData(column_count_str, CString(pDlg->GetCurrentTimeStr().c_str()), pDlg->source_ip, pDlg->destionation_ip, pDlg->Protocol, (CString)(std::to_string(header->caplen).c_str()), NULL, packet_dump_data_cstr);
 		pDlg->SetDataToHDXEditor(packet_dump_data_cstr);
@@ -529,8 +526,6 @@ void CMFCApplication1Dlg::FileWriterFunction(char* file_name) {
 
 		std::ofstream out(file_name_temp.c_str(), std::ios::app);
 
-
-
 		CT2CA pszConvertedAnsiString(GetIPAddr(ip_hdr->saddr));
 		std::string s(pszConvertedAnsiString);
 		std::string sip = s;
@@ -555,7 +550,7 @@ void CMFCApplication1Dlg::FileWriterFunction(char* file_name) {
 			sip = s;
 
 			CT2CA pszConvertedAnsiString2(destionation_ip);
-			std::string s2(pszConvertedAnsiString);
+			std::string s2(pszConvertedAnsiString2);
 			dip = s2;
 		}
 
@@ -1530,8 +1525,6 @@ void CMFCApplication1Dlg::OpenPacketDataFile() {
 	}
 	SetDlgItemText(IDC_STATIC_NET, L"Selected: " + strPathName);
 
-	CheckDlgButton(IDC_CHECK2, TRUE);
-
 	if (m_FileOpenThread == NULL) {
 		m_FileOpenThread = AfxBeginThread(FileOpenThreadFunction, this);
 		m_FileOpenThreadWorkType = RUNNING;
@@ -1654,7 +1647,6 @@ UINT CMFCApplication1Dlg::FileOpenThreadFunction(LPVOID _mothod) {
 		is.close();
 	}
 
-	pDlg->CheckDlgButton(IDC_CHECK2, TRUE);
 	pDlg->m_FileOpenThreadWorkType = STOP;
 	pDlg->m_FileOpenThread = NULL;
 
