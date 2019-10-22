@@ -4,6 +4,12 @@
 
 `TCP, UDP, ARP, ICMP`
 
+* now you can use filter  
+  **port == 80**  
+	**port == 80 or ip == 127.0.0.1**  
+	**ip == 127.0.0.1**  
+	**ip == 192.168.0.1 and port == 65536**  
+
 * Interface Select Wnd
 <img src="/Image/SelectNetInfWnd.PNG" width="500" height="250">
 
