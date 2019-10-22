@@ -484,16 +484,16 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 
 	pDlg->FileWriterFunction(pDlg->file_name_write);
 	
-	if (pDlg->packet_cnt % pDlg->packet_count_per_file == 0) {
-		CString file_name = L"temp (";
-		CString file_ext = L").dat";
-		int number = pDlg->packet_cnt / pDlg->packet_count_per_file;
-		CString number_cstr = (CString)std::to_string(number).c_str();
-		file_name.Append(number_cstr);
-		file_name.Append(file_ext);
-		pDlg->file_name_cstr = file_name;
-		pDlg->m_PacketCapturedListCtrl.DeleteAllItems();
-	}
+	//if (pDlg->packet_cnt % pDlg->packet_count_per_file == 0) {
+	//	CString file_name = L"temp (";
+	//	CString file_ext = L").dat";
+	//	int number = pDlg->packet_cnt / pDlg->packet_count_per_file;
+	//	CString number_cstr = (CString)std::to_string(number).c_str();
+	//	file_name.Append(number_cstr);
+	//	file_name.Append(file_ext);
+	//	pDlg->file_name_cstr = file_name;
+	//	pDlg->m_PacketCapturedListCtrl.DeleteAllItems();
+	//}
 }
 
 void CMFCApplication1Dlg::FileWriterFunction(char* file_name) {
@@ -1681,9 +1681,18 @@ BOOL CMFCApplication1Dlg::CheckFilter(CString Filter, std::vector<CString> vec) 
 		result = TRUE;
 		return result;
 	}
-
+	CString SIP = vec[1];
+	CString DIP = vec[2];
+	CString PKT_DUMP = vec[6];
 	CString PROTOCOL = vec[3];
+
+	SIP.Replace(L" ", L"");
+	DIP.Replace(L" ", L"");
+	PKT_DUMP.Replace(L" ", L"");
 	PROTOCOL.Replace(L" ", L"");
+
+	CString SPORT = Calculate4HexNumber(PKT_DUMP.Mid(68, 1), PKT_DUMP.Mid(69, 1), PKT_DUMP.Mid(70, 1), PKT_DUMP.Mid(71, 1));
+	CString DPORT = Calculate4HexNumber(PKT_DUMP.Mid(72, 1), PKT_DUMP.Mid(73, 1), PKT_DUMP.Mid(74, 1), PKT_DUMP.Mid(75, 1));
 
 	Filter = Filter.MakeUpper();
 	Filter = Filter.TrimLeft();
@@ -1753,22 +1762,93 @@ BOOL CMFCApplication1Dlg::CheckFilter(CString Filter, std::vector<CString> vec) 
 	ip == 123.123.123.123 and port == 65536  - 39
 	*/
 
+	std::vector<CString> FilterSingleVec;
+	std::vector<CString> FilterOrVec;
+	std::vector<CString> FilterAndVec;
+
 	CString SplitIP = Filter.Mid(0, 6);
 	CString SplitPort = Filter.Mid(0, 8);
+
+	int OrIndex = Filter.Find(L" OR ");
+	int AndIndex = Filter.Find(L" AND ");
+
 	if (SplitIP == L"IP == ") {
-		if (Filter.GetLength() >= 13 && Filter.GetLength()<=21) {
-			SplitIP = Filter.Mid(6, Filter.GetLength()-6);
-		} else if (Filter.GetLength() > 21 && Filter.GetLength() <= 39) {
+		if (FilterLength >= 13 && FilterLength <=21) {
+			SplitIP = Filter.Mid(6, FilterLength -6);
+			FilterSingleVec.push_back(SplitIP);
+		} else if (FilterLength >= 26 && FilterLength <= 39) {
+			if (OrIndex !=-1&& AndIndex ==-1) {
+				SplitIP = Filter.Mid(0, OrIndex);
+				SplitPort = Filter.Mid(OrIndex + 4, FilterLength - OrIndex - 4);
+
+				SplitIP = SplitIP.Mid(6, SplitIP.GetLength()-6);
+				SplitPort = SplitPort.Mid(8, SplitPort.GetLength() - 8);
+				FilterOrVec.push_back(SplitIP);
+				FilterOrVec.push_back(SplitPort);
+			} else if (OrIndex == -1 && AndIndex != -1) {
+				SplitIP = Filter.Mid(0, AndIndex);
+				SplitPort = Filter.Mid(AndIndex + 5, FilterLength - AndIndex - 5);
+
+				SplitIP = SplitIP.Mid(6, SplitIP.GetLength() - 6);
+				SplitPort = SplitPort.Mid(8, SplitPort.GetLength() - 8);
+				FilterAndVec.push_back(SplitIP);
+				FilterAndVec.push_back(SplitPort);
+			}
+		} else {
+			result = FALSE;
 		}
-
-
-
 	} else if (SplitPort == L"PORT == ") {
+		if (FilterLength >= 9 && FilterLength <= 13) {
+			SplitPort = Filter.Mid(8, FilterLength - 8);
+			FilterSingleVec.push_back(SplitPort);
+		} else if (FilterLength >= 26 && FilterLength <= 39) {
+			if (OrIndex != -1 && AndIndex == -1) {
+				SplitPort = Filter.Mid(0, OrIndex);
+				SplitIP = Filter.Mid(OrIndex + 4, FilterLength - OrIndex - 4);
 
+				SplitPort = SplitPort.Mid(8, SplitPort.GetLength() - 8);
+				SplitIP = SplitIP.Mid(6, SplitIP.GetLength() - 6);
+				FilterOrVec.push_back(SplitIP);
+				FilterOrVec.push_back(SplitPort);
+			} else if (OrIndex == -1 && AndIndex != -1) {
+				SplitPort = Filter.Mid(0, AndIndex);
+				SplitIP = Filter.Mid(AndIndex + 5, FilterLength - AndIndex - 5);
+
+				SplitPort = SplitPort.Mid(8, SplitPort.GetLength() - 8);
+				SplitIP = SplitIP.Mid(6, SplitIP.GetLength() - 6);
+				FilterAndVec.push_back(SplitIP);
+				FilterAndVec.push_back(SplitPort);
+			}
+		} else {
+			result = FALSE;
+		}
 	}
 
-	
-
+	if (!FilterSingleVec.empty()) {
+		if (SIP == SplitIP || DIP == SplitIP || SPORT == SplitPort || DPORT == SplitPort) {
+			result = TRUE;
+		} else {
+			result = FALSE;
+		}
+	} else if (!FilterOrVec.empty()) {
+		if (SIP == SplitIP || DIP == SplitIP || SPORT == SplitPort || DPORT == SplitPort) {
+			result = TRUE;
+		} else {
+			result = FALSE;
+		}
+	} else if (!FilterAndVec.empty()) {
+		if (SIP == SplitIP && SPORT == SplitPort) {
+			result = TRUE;
+		} else if (SIP == SplitIP && DPORT == SplitPort) {
+			result = TRUE;
+		} else if (DIP == SplitIP && SPORT == SplitPort) {
+			result = TRUE;
+		} else if (DIP == SplitIP && DPORT == SplitPort) {
+			result = TRUE;
+		} else {
+			result = FALSE;
+		}
+	}
 
 	return result;
 }
