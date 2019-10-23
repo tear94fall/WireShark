@@ -109,11 +109,13 @@ public:
 
 	CString Filter;
 	bool IsFilterApply = false;
+	int PrevClickColumnNumber = -1;
 
 	CListCtrl m_PacketCapturedListCtrl;
 	CListCtrl m_PacketDumpListCtrl;
 	CTreeCtrl m_PacketDataTreeCtrl;
 
+	CBrush m_FilterEditCtrlBrush;
 	CEdit m_FilterEditCtrl;
 	CButton pause_button;
 
@@ -124,6 +126,7 @@ public:
 	afx_msg void OnBnClickedCapturePauseButton();
 	afx_msg void OnBnClickedFilterApplyButton();
 	afx_msg void OnClose();
+	afx_msg void OnBnClickedCheck2();
 
 	void ChangeStaticText(int all_pkt_cnt, int tcp_pkt_cnt, int udp_pkt_cnt, int arp_pkt_cnt, int icmp_pkt_cnt);
 	void ClearPacketCnt();
@@ -156,9 +159,7 @@ public:
 
 	BOOL CheckFilter(CString Filter, std::vector<CString> vec);
 	BOOL RemoveMouseMessage(void);
-	afx_msg void OnBnClickedCheck2();
 };
-
 
 int GetCountStr(CString target_str, CString target_find_str);
 std::vector<int> GetCountStrIdx(CString target_str, CString target_find_str);

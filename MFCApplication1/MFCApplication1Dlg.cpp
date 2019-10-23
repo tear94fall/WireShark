@@ -119,6 +119,10 @@ BOOL CMFCApplication1Dlg::OnInitDialog() {
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
+	m_FilterEditCtrlBrush.CreateSolidBrush(RGB(175, 255, 175));
+
+	m_PacketCapturedListCtrl.SetExtendedStyle(LVS_EX_FULLROWSELECT|LVS_EX_DOUBLEBUFFER|LVS_EX_GRIDLINES);
+
 	std::remove(file_name_write);
 
 	SetWindowText(_T("Wire Dolphin"));
@@ -751,11 +755,14 @@ void CMFCApplication1Dlg::OnNMDblclkList2(NMHDR* pNMHDR, LRESULT* pResult) {
 		CString Info = m_PacketCapturedListCtrl.GetItemText(pNMItemActivate->iItem, 6);
 		CString Packet_Dump_Data = m_PacketCapturedListCtrl.GetItemText(pNMItemActivate->iItem, 7);
 
-		m_PacketDataTreeCtrl.DeleteAllItems();
-		m_PacketDumpListCtrl.DeleteAllItems();
+		if (PrevClickColumnNumber != _ttoi(FrameNumber)) {
+			m_PacketDataTreeCtrl.DeleteAllItems();
+			m_PacketDumpListCtrl.DeleteAllItems();
 
-		SetDataToPacketData(FrameNumber, Time, Source, Destination, Protocol, Length, Info, Packet_Dump_Data);
-		SetDataToHDXEditor(Packet_Dump_Data);
+			SetDataToPacketData(FrameNumber, Time, Source, Destination, Protocol, Length, Info, Packet_Dump_Data);
+			SetDataToHDXEditor(Packet_Dump_Data);
+			PrevClickColumnNumber = _ttoi(FrameNumber);
+		}
 	}
 }
 
