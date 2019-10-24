@@ -9,7 +9,15 @@
 	**port == 80 or ip == 127.0.0.1**  
 	**ip == 127.0.0.1**  
 	**ip == 192.168.0.1 and port == 65536**  
-
+	**(ip == 192.168.0.1 and port == 65536) and tcp**  
+	**(port == 65536 and ip == 192.168.0.1) and udp**  
+	**length == 60**  
+	**length >= 60**  
+	**length <= 60**  
+	**length > 60**  
+	**length < 60**  
+	
+	
 * Interface Select Wnd
 <img src="/Image/SelectNetInfWnd.PNG" width="500" height="250">
 
