@@ -137,6 +137,7 @@ public:
 	afx_msg void OnBnClickedFilterApplyButton();
 	afx_msg void OnClose();
 	afx_msg void OnBnClickedCheck2();
+	afx_msg void OnHdnItemclickList2(NMHDR* pNMHDR, LRESULT* pResult);
 
 	void ChangeStaticText(int all_pkt_cnt, int tcp_pkt_cnt, int udp_pkt_cnt, int arp_pkt_cnt, int icmp_pkt_cnt);
 	void ClearPacketCnt();
