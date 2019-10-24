@@ -18,6 +18,7 @@
 #include <afxwin.h>
 #include <iostream>
 #include <fstream>
+#include <mutex>
 
 void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_char* pkt_data);
 
@@ -75,6 +76,8 @@ public:
 	CString DefaultFilterValue = L"Enter Filter....";
 	std::string packet_dump_data_string;  
 
+	pcap_t* target_adhandle;
+
 	int end_pos = 0, start_pos = 0;
 	long file_length = 0;
 	char* file_buffer = NULL;
@@ -96,6 +99,13 @@ public:
 	CWinThread* m_FileOpenThread = NULL;
 	ThreadWorking m_FileOpenThreadWorkType = STOP;
 	static UINT FileOpenThreadFunction(LPVOID _mothod);
+
+	BOOL isFileWriteEnd = FALSE;
+	std::mutex mutex;
+
+	BOOL is_PktCapThreadStart = FALSE;
+	BOOL is_FileReadThreadStart = FALSE;
+	BOOL is_FileOpenThreadStart = FALSE;
 
 	int packet_cnt = 0;
 	int tcp_pkt_cnt = 0;
@@ -138,6 +148,7 @@ public:
 	void OnNMDblclkList2(NMHDR* pNMHDR, LRESULT* pResult);
 	void OnHdnItemclick(NMHDR* pNMHDR, LRESULT* Result);
 	void FileWriterFunction(char* file_name);
+	void Wait(DWORD dwMillisecond);
 
 	static int CALLBACK SortFuncStr(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 	static int CALLBACK SortFuncNum(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);

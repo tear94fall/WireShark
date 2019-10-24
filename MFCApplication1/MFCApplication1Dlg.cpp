@@ -219,24 +219,17 @@ void CMFCApplication1Dlg::OnBnClickedCaptureStartButton() {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	SetDlgItemText(IDC_STATIC_NET, L"Interface: " + m_strSelectedNetworkInterface);
 
-	IsFilterApply = FALSE;
+	if (m_PacketCaptrueThread == NULL&& is_PktCapThreadStart ==FALSE) {
 
-	if (m_PacketCaptrueThread == NULL) {
+		IsFilterApply = FALSE;
+		is_PktCapThreadStart = TRUE;
+
 		GetDlgItem(IDC_CHECK2)->EnableWindow(FALSE);
 		ClearPacketCnt();
 		m_PacketCapturedListCtrl.DeleteAllItems();
 
 		std::ofstream out(file_name_write, std::ios::trunc);
 		m_PacketCaptrueThread = AfxBeginThread(PacketCaptureThreadFunction, this);
-		//CButton* pButton;
-		//pButton = (CButton*)GetDlgItem(IDC_BUTTON1);
-		//pButton->EnableWindow(FALSE);
-
-		//pButton = (CButton*)GetDlgItem(IDC_BUTTON2);
-		//pButton->EnableWindow(TRUE);
-
-		//pButton = (CButton*)GetDlgItem(IDC_BUTTON3);
-		//pButton->EnableWindow(TRUE);
 
 		if (m_PacketCaptrueThread == NULL) {
 			AfxMessageBox(_T("캡처 시작을 할 수 없습니다."));
@@ -308,15 +301,26 @@ UINT CMFCApplication1Dlg::PacketCaptureThreadFunction(LPVOID _mothod) {
 		pcap_close(adhandle);
 		return -4;
 	}
-
+	pDlg->target_adhandle = adhandle;
 	pcap_freealldevs(all_net_device);
 	pcap_loop(adhandle, 0, packet_handler, NULL);
+
+	pDlg->m_PacketCapturedListCtrl.DeleteAllItems();
+	pDlg->m_PacketDataTreeCtrl.DeleteAllItems();
+	pDlg->m_PacketDumpListCtrl.DeleteAllItems();
+
+	AfxMessageBox(L"캡처가 종료되었습니다.");
 
 	return 0;
 }
 
 void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_char* pkt_data) {
 	CMFCApplication1Dlg* pDlg = (CMFCApplication1Dlg*)AfxGetApp()->m_pMainWnd;
+	// 루프 함수 종료
+	if (!pDlg->is_PktCapThreadStart) {
+		pcap_breakloop(pDlg->target_adhandle);
+	}
+
 	pDlg->m_header = header;
 	pDlg->m_pkt_data = pkt_data;
 	pDlg->eth_hdr = (ether_header*)pkt_data;
@@ -558,7 +562,8 @@ void CMFCApplication1Dlg::FileWriterFunction(char* file_name) {
 			std::string s2(pszConvertedAnsiString2);
 			dip = s2;
 		}
-
+		isFileWriteEnd = FALSE;
+		mutex.lock();
 		out << packet_cnt << "\n";
 		out << GetCurrentTimeStr() << "\n";
 		out << sip << " \n";
@@ -566,6 +571,7 @@ void CMFCApplication1Dlg::FileWriterFunction(char* file_name) {
 		out << protocol << " \n";
 		out << m_header->caplen << " \n";
 		out << "Info" << " \n";
+
 
 		for (int i = 0; i < packet_size; i++) {
 			c = m_pkt_data[i];
@@ -578,7 +584,9 @@ void CMFCApplication1Dlg::FileWriterFunction(char* file_name) {
 		}
 		out << "END\n";
 
+		isFileWriteEnd = TRUE;
 		out.close();
+		mutex.unlock();
 	}
 }
 
@@ -600,12 +608,20 @@ void CMFCApplication1Dlg::OnBnClickedCaptureQuitButton() {
 
 		} else {
 			DWORD dwResult;
-
-			m_PacketCaptrueThread->SuspendThread();
-			m_PacketCaptureThreadWorkType = STOP;
-			::GetExitCodeThread(m_PacketCaptrueThread->m_hThread, &dwResult);
-			delete m_PacketCaptrueThread;
+			is_PktCapThreadStart = FALSE;
+			is_FileReadThreadStart = FALSE;
+			is_FileOpenThreadStart = FALSE;
+			
 			m_PacketCaptrueThread = NULL;
+			m_FileReadThread = NULL;
+			m_FileOpenThread = NULL;
+			/*if (m_PacketCaptrueThread != NULL) {
+				m_PacketCaptrueThread->SuspendThread();
+				m_PacketCaptureThreadWorkType = STOP;
+				::GetExitCodeThread(m_PacketCaptrueThread->m_hThread, &dwResult);
+				delete m_PacketCaptrueThread;
+				m_PacketCaptrueThread = NULL;
+			}
 
 			if (m_FileReadThread != NULL) {
 				m_FileReadThread->SuspendThread();
@@ -621,7 +637,7 @@ void CMFCApplication1Dlg::OnBnClickedCaptureQuitButton() {
 				::GetExitCodeThread(m_FileOpenThread->m_hThread, &dwResult);
 				delete m_FileOpenThread;
 				m_FileOpenThread = NULL;
-			}
+			}*/
 
 			//CButton* pButton;
 			//pButton = (CButton*)GetDlgItem(IDC_BUTTON1);
@@ -792,6 +808,7 @@ void CMFCApplication1Dlg::OnHdnItemclick(NMHDR* pNMHDR, LRESULT* pResult) {
 	} else {
 		m_PacketCapturedListCtrl.SortItems(&SortFuncStr, (LPARAM)& sortparams);
 	}
+
 
 	*pResult = 0;
 }
@@ -1367,21 +1384,31 @@ void CMFCApplication1Dlg::OnBnClickedFilterApplyButton() {
 		return;
 	}
 
+	is_FileReadThreadStart = FALSE;
+	Wait(300);
+	m_FileReadThread = NULL;
+
 	UpdateData(TRUE);
 	GetDlgItemText(IDC_EDIT1, Filter);
 
 	IsFilterApply = TRUE;
 
 	if (m_PacketCaptrueThread != NULL) {
-		if (m_FileReadThread != NULL) {
-			DWORD dwResult;
+		//if (m_FileReadThread != NULL) {
+		//	DWORD dwResult;
 
-			m_FileReadThread->SuspendThread();
-			::GetExitCodeThread(m_FileReadThread->m_hThread, &dwResult);
-			delete m_FileReadThread;
-			m_FileReadThread = NULL;
-		}
+		//	m_FileReadThread->SuspendThread();
+		//	//::GetExitCodeThread(m_FileReadThread->m_hThread, &dwResult);
 
+		//	m_FileReadThread->PostThreadMessageW(WM_QUIT, 0, 0);
+
+		//	//m_FileReadThread->ExitInstance();
+
+		//	delete m_FileReadThread;
+		//	m_FileReadThread = NULL;
+		//}
+
+		is_FileReadThreadStart = TRUE;
 		m_FileReadThread = AfxBeginThread(FileReadThreadFunction, this);
 		m_FileReadThreadWorkType = RUNNING;
 
@@ -1391,6 +1418,13 @@ void CMFCApplication1Dlg::OnBnClickedFilterApplyButton() {
 	} else {
 		MessageBox(_T("캡쳐된 패킷이 없습니다."), _T("오류"), MB_ICONWARNING);
 	}
+
+	CButton* pButton; 
+	pButton = (CButton*)GetDlgItem(IDC_BUTTON4);
+	pButton->EnableWindow(FALSE);
+	Wait(100);
+
+	pButton->EnableWindow(TRUE);
 
 	RemoveMouseMessage();
 }
@@ -1434,7 +1468,7 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 	int prev_column_index = 0;
 	int first_packet_count = 0;
 
-	while (1) {
+	while (pDlg->is_FileReadThreadStart) {
 		is.open(pDlg->file_name_write);
 		is.seekg(0, is.end);
 		long long end_pos = is.tellg();
@@ -1442,83 +1476,102 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 		is.seekg(start_pos, is.beg);
 
 		std::string str;
-		int column_cnt = 0;
+		std::string prev_dump;
+		long long column_cnt = 0;
 
 		if (start_pos < end_pos) {
 			for (i = start_pos; i < end_pos; ) {
-				std::getline(is, str);
+				if (pDlg->isFileWriteEnd) {
+					std::getline(is, str);
 
-				i++;
-				if (column_cnt == 0) {
-					NO = (CString)str.c_str();
-				} else if (column_cnt == 1) {
-					TIME = (CString)str.c_str();
-				} else if (column_cnt == 2) {
-					SIP = (CString)str.c_str();
-				} else if (column_cnt == 3) {
-					DIP = (CString)str.c_str();
-				} else if (column_cnt == 4) {
-					PROTO = (CString)str.c_str();
-				} else if (column_cnt == 5) {
-					LENGTH = (CString)str.c_str();
-				} else if (column_cnt == 6) {
-					INFO = (CString)str.c_str();
-				} else if (column_cnt > 6) {
-					if (str != "END") {
-						DUMP += (CString)str.c_str();
-					}
-				}
+					i++;
 
-				if (str == "END") {
-					PROTO.Replace(L" ", L"");
-					DUMP.Replace(L" ", L"");
-					DUMP.Replace(L"\n", L"");
-
-					std::vector<CString> prop_vec;
-					std::vector<CString>::iterator prop_iter;
-					prop_vec.push_back(TIME);
-					prop_vec.push_back(SIP);
-					prop_vec.push_back(DIP);
-					prop_vec.push_back(PROTO);
-					prop_vec.push_back(LENGTH);
-					prop_vec.push_back(NO);
-					prop_vec.push_back(DUMP);
-
-					int column_count = pDlg->m_PacketCapturedListCtrl.GetItemCount();
-
-					CString column_count_str;
-					column_count_str.Format(_T("%d"), column_count + 1);
-
-					if (!(PROTO != L"TCP" && PROTO != L"UDP" && PROTO != L"ARP" && PROTO != L"ICMP")) {
-						if (prev_column_index < _ttoi(NO)) {
-							prev_column_index = _ttoi(NO);
-							// 필터 적용
-							if (pDlg->CheckFilter(pDlg->Filter, prop_vec)) {
-								if (column_count == 0 && first_packet_count==0) {
-									first_packet_count = 1;
-									column_count_str.Format(_T("%d"), column_count + 1);
-									pDlg->SetDataToPacketData(column_count_str, TIME, SIP, DIP, PROTO, LENGTH, NULL, DUMP);
-									pDlg->SetDataToHDXEditor(DUMP);
-								}
-
-								pDlg->m_PacketCapturedListCtrl.InsertItem(column_count, column_count_str);
-								for (int j = 1; j < 8; j++) {
-									pDlg->m_PacketCapturedListCtrl.SetItem(column_count, j, LVIF_TEXT, prop_vec[j - 1], NULL, NULL, NULL, NULL);
-								}
-								int nCount = pDlg->m_PacketCapturedListCtrl.GetItemCount();
-								pDlg->m_PacketCapturedListCtrl.EnsureVisible(nCount - 1, FALSE);
-							}
+					if (column_cnt == 0) {
+						NO = (CString)str.c_str();
+						NO.Replace(L" ", L"");
+						column_cnt++;
+					} else if (column_cnt == 1) {
+						TIME = (CString)str.c_str();
+						TIME.Replace(L" ", L"");
+						column_cnt++;
+					} else if (column_cnt == 2) {
+						SIP = (CString)str.c_str();
+						SIP.Replace(L" ", L"");
+						column_cnt++;
+					} else if (column_cnt == 3) {
+						DIP = (CString)str.c_str();
+						DIP.Replace(L" ", L"");
+						column_cnt++;
+					} else if (column_cnt == 4) {
+						PROTO = (CString)str.c_str();
+						PROTO.Replace(L" ", L"");
+						column_cnt++;
+					} else if (column_cnt == 5) {
+						LENGTH = (CString)str.c_str();
+						LENGTH.Replace(L" ", L"");
+						column_cnt++;
+					} else if (column_cnt == 6) {
+						INFO = (CString)str.c_str();
+						column_cnt++;
+					} else if (column_cnt > 6) {
+						if (str != "END") {
+							prev_dump = str;
+							CString temp = (CString)str.c_str();
+							temp.Replace(L" ", L"");
+							temp.Replace(L"\n", L"");
+							DUMP.Append(temp);
+							column_cnt++;
 						}
 					}
 
-					for (prop_iter = prop_vec.begin(); prop_iter != prop_vec.end(); prop_iter++) {
-						(*prop_iter) = L"";
-					}
-					DUMP = L"";
+					if (str == "END") {
+						PROTO.Replace(L" ", L"");
 
-					column_cnt = 0;
-				} else {
-					column_cnt++;
+						std::vector<CString> prop_vec;
+						std::vector<CString>::iterator prop_iter;
+						prop_vec.push_back(TIME);
+						prop_vec.push_back(SIP);
+						prop_vec.push_back(DIP);
+						prop_vec.push_back(PROTO);
+						prop_vec.push_back(LENGTH);
+						prop_vec.push_back(NO);
+						prop_vec.push_back(DUMP);
+
+						int column_count = pDlg->m_PacketCapturedListCtrl.GetItemCount();
+
+						CString column_count_str;
+						column_count_str.Format(_T("%d"), column_count + 1);
+
+						if (!(PROTO != L"TCP" && PROTO != L"UDP" && PROTO != L"ARP" && PROTO != L"ICMP")) {
+							if (prev_column_index < _ttoi(NO)) {
+								prev_column_index = _ttoi(NO);
+								// 필터 적용
+								if (pDlg->CheckFilter(pDlg->Filter, prop_vec)) {
+									if (column_count == 0 && first_packet_count == 0) {
+										first_packet_count = 1;
+										column_count_str.Format(_T("%d"), column_count + 1);
+										pDlg->SetDataToPacketData(column_count_str, TIME, SIP, DIP, PROTO, LENGTH, NULL, DUMP);
+										pDlg->SetDataToHDXEditor(DUMP);
+									}
+
+									pDlg->m_PacketCapturedListCtrl.InsertItem(column_count, column_count_str);
+									for (int j = 1; j < 8; j++) {
+										pDlg->m_PacketCapturedListCtrl.SetItem(column_count, j, LVIF_TEXT, prop_vec[j - 1], NULL, NULL, NULL, NULL);
+									}
+									int nCount = pDlg->m_PacketCapturedListCtrl.GetItemCount();
+									pDlg->m_PacketCapturedListCtrl.EnsureVisible(nCount - 1, FALSE);
+								}
+							}
+						}
+
+						for (prop_iter = prop_vec.begin(); prop_iter != prop_vec.end(); prop_iter++) {
+							(*prop_iter) = L"";
+						}
+						DUMP = L"";
+
+						column_cnt = 0;
+					} else {
+					}
 				}
 			}
 		}
@@ -1721,8 +1774,9 @@ BOOL CMFCApplication1Dlg::CheckFilter(CString Filter, std::vector<CString> vec) 
 	}
 	CString SIP = vec[1];
 	CString DIP = vec[2];
-	CString PKT_DUMP = vec[6];
 	CString PROTOCOL = vec[3];
+	CString LENGTH = vec[4];
+	CString PKT_DUMP = vec[6];
 
 	SIP.Replace(L" ", L"");
 	DIP.Replace(L" ", L"");
@@ -1735,6 +1789,52 @@ BOOL CMFCApplication1Dlg::CheckFilter(CString Filter, std::vector<CString> vec) 
 	Filter = Filter.MakeUpper();
 	Filter = Filter.TrimLeft();
 	Filter = Filter.TrimRight();
+
+	// Length == 3
+	// Length >= 3
+	// Length <= 3
+	// Length > 3
+	// Length < 3
+	
+	if (Filter.Mid(0, 6)==L"LENGTH") {
+		CString Operate = Filter.Mid(6, 3);
+		Operate.TrimLeft();
+		Operate.TrimRight();
+
+		CString VALUE = Filter.Mid(9, Filter.GetLength()-9);
+		VALUE.TrimLeft();
+		VALUE.TrimRight();
+
+		int value = _ttoi(VALUE);
+		int length = _ttoi(LENGTH);
+
+		if (Operate == L"==") {
+			if (length == value) {
+				result = TRUE;
+			}
+		} else if (Operate == L">=") {
+			if (length >= value) {
+				result = TRUE;
+			}
+		} else if (Operate == L"<=") {
+			if (length <= value) {
+				result = TRUE;
+			}
+		} else if (Operate == L">") {
+			if (length > value) {
+				result = TRUE;
+			}
+		} else if (Operate == "<") {
+			if (length < value) {
+				result = TRUE;
+			}
+		}
+
+		if (result) {
+			return result;
+		}
+	}
+
 
 	int FilterLength = Filter.GetLength();
 
@@ -2082,26 +2182,33 @@ BOOL CMFCApplication1Dlg::RemoveMouseMessage(void) {
 
 void CMFCApplication1Dlg::OnBnClickedCheck2() {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
-	BOOL chk = IsDlgButtonChecked(IDC_CHECK2);
+	BOOL checker = !IsDlgButtonChecked(IDC_CHECK2);
 	CButton* pButton;
 
 	m_PacketCapturedListCtrl.DeleteAllItems();
 
 	int button_array[4] = { IDC_BUTTON1, IDC_BUTTON2, IDC_BUTTON3, IDC_BUTTON4 };
 
-	if (m_FileReadThread != NULL || m_PacketCaptrueThread != NULL) {
+	if (m_FileReadThread == NULL || m_PacketCaptrueThread == NULL) {
+		for (int i = 0; i < 4; i++) {
+			pButton = (CButton*)GetDlgItem(button_array[i]);
+			pButton->EnableWindow(checker);
+			GetDlgItem(IDC_EDIT1)->EnableWindow(checker);
+		}
+		m_FilterEditCtrl.SetWindowTextW(DefaultFilterValue);
+	}
+}
 
-	} else {
-		if (chk) {
-			for (int i = 0; i < 4; i++) {
-				pButton = (CButton*)GetDlgItem(button_array[i]);
-				pButton->EnableWindow(FALSE);
-			}
-		} else {
-			for (int i = 0; i < 4; i++) {
-				pButton = (CButton*)GetDlgItem(button_array[i]);
-				pButton->EnableWindow(TRUE);
-			}
+void CMFCApplication1Dlg::Wait(DWORD dwMillisecond) {
+	MSG msg;
+	DWORD dwStart;
+	dwStart = GetTickCount();
+
+	while (GetTickCount() - dwStart < dwMillisecond) {
+		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
 		}
 	}
 }
+
