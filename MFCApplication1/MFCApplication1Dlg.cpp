@@ -76,6 +76,7 @@ BEGIN_MESSAGE_MAP(CMFCApplication1Dlg, CDialogEx)
 	ON_WM_CLOSE()
 	ON_BN_CLICKED(IDC_CHECK2, &CMFCApplication1Dlg::OnBnClickedCheck2)
 	ON_NOTIFY(HDN_ITEMCLICK, 0, &CMFCApplication1Dlg::OnHdnItemclickList2)
+	ON_COMMAND(ID_FILE_SETCURSORLAST, &CMFCApplication1Dlg::SetCursorPosition)
 END_MESSAGE_MAP()
 
 
@@ -228,7 +229,7 @@ void CMFCApplication1Dlg::OnBnClickedCaptureStartButton() {
 		}
 
 		if (m_PacketCaptrueThread != NULL) {
-			m_PacketCaptrueThread->m_bAutoDelete = FALSE;
+			m_PacketCaptrueThread->m_bAutoDelete = TRUE;
 		}
 		m_PacketCaptureThreadWorkType = RUNNING;
 	} else {
@@ -309,6 +310,10 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 
 	if (!pDlg->is_PktCapThreadStart) {
 		pcap_breakloop(pDlg->target_adhandle);
+		pDlg->m_PacketCapturedListCtrl.DeleteAllItems();
+		pDlg->m_PacketDataTreeCtrl.DeleteAllItems();
+		pDlg->m_PacketDumpListCtrl.DeleteAllItems();
+		return;
 	}
 
 	pDlg->m_header = header;
@@ -476,8 +481,10 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 		int column_count = pDlg->m_PacketCapturedListCtrl.GetItemCount() - 1;
 		pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 7, LVIF_TEXT, packet_dump_data_cstr, NULL, NULL, NULL, NULL);
 
-		int nCount = pDlg->m_PacketCapturedListCtrl.GetItemCount();
-		pDlg->m_PacketCapturedListCtrl.EnsureVisible(nCount - 1, FALSE);
+		if (pDlg->CursorPositionLast) {
+			int nCount = pDlg->m_PacketCapturedListCtrl.GetItemCount();
+			pDlg->m_PacketCapturedListCtrl.EnsureVisible(nCount - 1, FALSE);
+		}
 	} else {
 		if (ntohs(pDlg->eth_hdr->frame_type) == 0x0800 || ntohs(pDlg->eth_hdr->frame_type) == 0x0806) {
 			pDlg->packet_cnt += 1;
@@ -523,8 +530,6 @@ void CMFCApplication1Dlg::FileWriterFunction(char* file_name) {
 		CT2CA ConvertCStringToString(file_name_cstr);
 		std::string file_name_temp(ConvertCStringToString);
 
-		std::ofstream out(file_name_temp.c_str(), std::ios::app);
-
 		CT2CA pszConvertedAnsiString(GetIPAddr(ip_hdr->saddr));
 		std::string s(pszConvertedAnsiString);
 		std::string sip = s;
@@ -554,6 +559,7 @@ void CMFCApplication1Dlg::FileWriterFunction(char* file_name) {
 		}
 		isFileWriteEnd = FALSE;
 		mutex.lock();
+		std::ofstream out(file_name_temp.c_str(), std::ios::app | std::ios::out);
 		out << packet_cnt << "\n";
 		out << GetCurrentTimeStr() << "\n";
 		out << sip << " \n";
@@ -583,7 +589,6 @@ void CMFCApplication1Dlg::FileWriterFunction(char* file_name) {
 void CMFCApplication1Dlg::OnBnClickedCaptureQuitButton() {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 
-
 	int answer;
 	if (m_PacketCaptrueThread != NULL) {
 		answer = MessageBox(_T("캡처를 종료합니다."), _T("캡처 종료"), MB_YESNO | MB_ICONQUESTION);
@@ -601,7 +606,7 @@ void CMFCApplication1Dlg::OnBnClickedCaptureQuitButton() {
 			is_PktCapThreadStart = FALSE;
 			is_FileReadThreadStart = FALSE;
 			is_FileOpenThreadStart = FALSE;
-			
+
 			m_PacketCaptrueThread = NULL;
 			m_FileReadThread = NULL;
 			m_FileOpenThread = NULL;
@@ -686,6 +691,9 @@ void CMFCApplication1Dlg::OnBnClickedCapturePauseButton() {
 		if (m_PacketCaptureThreadWorkType == RUNNING) {
 			pause_button.SetWindowText(L"Resume");
 			m_PacketCaptrueThread->SuspendThread();
+			if (m_PacketCaptrueThread == NULL) {
+				m_PacketCaptrueThread;
+			}
 			m_PacketCaptureThreadWorkType = PAUSE;
 		} else {
 			pause_button.SetWindowText(L"Pause");
@@ -1369,37 +1377,31 @@ CString CMFCApplication1Dlg::MakeIPAddressV6(CString Aclass, CString Bclass, CSt
 
 void CMFCApplication1Dlg::OnBnClickedFilterApplyButton() {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
-	if (_access(file_name_write, 0)!=0) {
+	if (m_PacketCaptrueThread==NULL) {
 		MessageBox(_T("캡쳐된 패킷이 없습니다."), _T("오류"), MB_ICONWARNING);
 		return;
 	}
-
-	is_FileReadThreadStart = FALSE;
-
-	Wait(500);
-	m_FileReadThread = NULL;
 
 	UpdateData(TRUE);
 	GetDlgItemText(IDC_EDIT1, Filter);
 
 	IsFilterApply = TRUE;
-
-	if (m_PacketCaptrueThread != NULL) {
+	 
+	if (m_FileReadThread == NULL) {
 		is_FileReadThreadStart = TRUE;
+		is_UpdateFilter = TRUE;
 		m_FileReadThread = AfxBeginThread(FileReadThreadFunction, this);
 		m_FileReadThreadWorkType = RUNNING;
-
 		m_PacketCapturedListCtrl.DeleteAllItems();
 		m_PacketDataTreeCtrl.DeleteAllItems();
 		m_PacketDumpListCtrl.DeleteAllItems();
 	} else {
-		MessageBox(_T("캡쳐된 패킷이 없습니다."), _T("오류"), MB_ICONWARNING);
+		is_UpdateFilter = FALSE;
 	}
 
-	CButton* pButton; 
+	CButton* pButton;
 	pButton = (CButton*)GetDlgItem(IDC_BUTTON4);
 	pButton->EnableWindow(FALSE);
-	Wait(100);
 
 	pButton->EnableWindow(TRUE);
 
@@ -1442,7 +1444,6 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 	pDlg->m_PacketDataTreeCtrl.DeleteAllItems();
 	pDlg->m_PacketDumpListCtrl.DeleteAllItems();
 
-
 	CString NO, TIME, SIP, DIP, PROTO, LENGTH, INFO, DUMP;
 	std::ifstream is;
 	int i = 0;
@@ -1451,8 +1452,9 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 	int first_packet_count = 0;
 
 	while (pDlg->is_FileReadThreadStart) {
+		skip:
 		pDlg->mutex.lock();
-		is.open(pDlg->file_name_write);
+		is.open(pDlg->file_name_write, std::ios::in);
 		is.seekg(0, is.end);
 		long long end_pos = is.tellg();
 
@@ -1463,6 +1465,21 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 		std::string prev_dump;
 		long long column_cnt = 0;
 
+		if (!pDlg->is_UpdateFilter) {
+			pDlg->m_PacketCapturedListCtrl.DeleteAllItems();
+			pDlg->m_PacketDataTreeCtrl.DeleteAllItems();
+			pDlg->m_PacketDumpListCtrl.DeleteAllItems();
+			pDlg->is_UpdateFilter = TRUE;
+
+			i = 0;
+			prev_column_index = 0;
+			first_packet_count = 0;
+			start_pos = 0;
+			is.close();
+
+			goto skip;
+		}
+
 		if (start_pos < end_pos) {
 			for (i = start_pos; i < end_pos; ) {
 				if (pDlg->isFileWriteEnd) {
@@ -1471,112 +1488,121 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 					pDlg->mutex.unlock();
 					i++;
 
-					if (column_cnt == 0) {
-						NO = (CString)str.c_str();
-						NO.Replace(L" ", L"");
-						column_cnt++;
-					} else if (column_cnt == 1) {
-						TIME = (CString)str.c_str();
-						TIME.Replace(L" ", L"");
-						column_cnt++;
-					} else if (column_cnt == 2) {
-						SIP = (CString)str.c_str();
-						SIP.Replace(L" ", L"");
-						column_cnt++;
-					} else if (column_cnt == 3) {
-						DIP = (CString)str.c_str();
-						DIP.Replace(L" ", L"");
-						column_cnt++;
-					} else if (column_cnt == 4) {
-						PROTO = (CString)str.c_str();
-						PROTO.Replace(L" ", L"");
-						column_cnt++;
-					} else if (column_cnt == 5) {
-						LENGTH = (CString)str.c_str();
-						LENGTH.Replace(L" ", L"");
-						column_cnt++;
-					} else if (column_cnt == 6) {
-						INFO = (CString)str.c_str();
-						column_cnt++;
-					} else if (column_cnt > 6) {
-						if (str != "END") {
-							prev_dump = str;
-							CString temp = (CString)str.c_str();
-							temp.Replace(L" ", L"");
-							temp.Replace(L"\n", L"");
-							DUMP.Append(temp);
+					if (str != "") {
+						if (column_cnt == 0) {
+							NO = (CString)str.c_str();
+							NO.Replace(L" ", L"");
 							column_cnt++;
+						} else if (column_cnt == 1) {
+							TIME = (CString)str.c_str();
+							TIME.Replace(L" ", L"");
+							column_cnt++;
+						} else if (column_cnt == 2) {
+							SIP = (CString)str.c_str();
+							SIP.Replace(L" ", L"");
+							column_cnt++;
+						} else if (column_cnt == 3) {
+							DIP = (CString)str.c_str();
+							DIP.Replace(L" ", L"");
+							column_cnt++;
+						} else if (column_cnt == 4) {
+							PROTO = (CString)str.c_str();
+							PROTO.Replace(L" ", L"");
+							column_cnt++;
+						} else if (column_cnt == 5) {
+							LENGTH = (CString)str.c_str();
+							LENGTH.Replace(L" ", L"");
+							column_cnt++;
+						} else if (column_cnt == 6) {
+							INFO = (CString)str.c_str();
+							column_cnt++;
+						} else if (column_cnt > 6) {
+							if (str != "END") {
+								prev_dump = str;
+								CString temp = (CString)str.c_str();
+								temp.Replace(L" ", L"");
+								temp.Replace(L"\n", L"");
+								DUMP.Append(temp);
+								column_cnt++;
+							}
 						}
-					}
 
-					if (_ttoi(LENGTH) > 10000) {
-						int x = DUMP.GetLength();
-					}
+						if (str == "END") {
+							PROTO.Replace(L" ", L"");
 
-					if (str == "END") {
-						PROTO.Replace(L" ", L"");
+							std::vector<CString> prop_vec;
+							std::vector<CString>::iterator prop_iter;
+							prop_vec.push_back(TIME);
+							prop_vec.push_back(SIP);
+							prop_vec.push_back(DIP);
+							prop_vec.push_back(PROTO);
+							prop_vec.push_back(LENGTH);
+							prop_vec.push_back(NO);
+							prop_vec.push_back(DUMP);
 
-						std::vector<CString> prop_vec;
-						std::vector<CString>::iterator prop_iter;
-						prop_vec.push_back(TIME);
-						prop_vec.push_back(SIP);
-						prop_vec.push_back(DIP);
-						prop_vec.push_back(PROTO);
-						prop_vec.push_back(LENGTH);
-						prop_vec.push_back(NO);
-						prop_vec.push_back(DUMP); 
+							int column_count = pDlg->m_PacketCapturedListCtrl.GetItemCount();
 
-						int column_count = pDlg->m_PacketCapturedListCtrl.GetItemCount();
+							CString column_count_str;
+							column_count_str.Format(_T("%d"), column_count + 1);
 
-						CString column_count_str;
-						column_count_str.Format(_T("%d"), column_count + 1);
-
-						if (!(PROTO != L"TCP" && PROTO != L"UDP" && PROTO != L"ARP" && PROTO != L"ICMP")) {
-							if (prev_column_index < _ttoi(NO)) {
-								if ((pDlg->Filter == L"" || pDlg->Filter==pDlg->DefaultFilterValue) && column_count == prev_column_index) {
-									prev_column_index = _ttoi(NO);
-									if (column_count == 0 && first_packet_count == 0) {
-										first_packet_count = 1;
-										column_count_str.Format(_T("%d"), column_count + 1);
-										pDlg->SetDataToPacketData(column_count_str, TIME, SIP, DIP, PROTO, LENGTH, NULL, DUMP);
-										pDlg->SetDataToHDXEditor(DUMP);
-									}
-									pDlg->m_PacketCapturedListCtrl.InsertItem(column_count, column_count_str);
-									for (int j = 1; j < 8; j++) {
-										pDlg->m_PacketCapturedListCtrl.SetItem(column_count, j, LVIF_TEXT, prop_vec[j - 1], NULL, NULL, NULL, NULL);
-									}
-									int nCount = pDlg->m_PacketCapturedListCtrl.GetItemCount();
-									pDlg->m_PacketCapturedListCtrl.EnsureVisible(nCount - 1, FALSE);
-								} else {
-									prev_column_index = _ttoi(NO);
-									// 필터 적용
-									if (pDlg->CheckFilter(pDlg->Filter, prop_vec)) {
+							if ((TIME != L"" || 
+								  SIP != L"" ||
+								  DIP != L"" ||
+								  LENGTH != L""||
+								  DUMP!=L"")) {
+								if (prev_column_index < _ttoi(NO)) {
+									if ((pDlg->Filter == L"" || pDlg->Filter == pDlg->DefaultFilterValue) && column_count == prev_column_index) {
+										prev_column_index = _ttoi(NO);
 										if (column_count == 0 && first_packet_count == 0) {
 											first_packet_count = 1;
 											column_count_str.Format(_T("%d"), column_count + 1);
 											pDlg->SetDataToPacketData(column_count_str, TIME, SIP, DIP, PROTO, LENGTH, NULL, DUMP);
 											pDlg->SetDataToHDXEditor(DUMP);
 										}
-
-										pDlg->m_PacketCapturedListCtrl.InsertItem(column_count, column_count_str);
 										for (int j = 1; j < 8; j++) {
+											if (j == 1) {
+												pDlg->m_PacketCapturedListCtrl.InsertItem(column_count, column_count_str);
+											}
 											pDlg->m_PacketCapturedListCtrl.SetItem(column_count, j, LVIF_TEXT, prop_vec[j - 1], NULL, NULL, NULL, NULL);
 										}
-										int nCount = pDlg->m_PacketCapturedListCtrl.GetItemCount();
-										pDlg->m_PacketCapturedListCtrl.EnsureVisible(nCount - 1, FALSE);
+										if (pDlg->CursorPositionLast) {
+											int nCount = pDlg->m_PacketCapturedListCtrl.GetItemCount();
+											pDlg->m_PacketCapturedListCtrl.EnsureVisible(nCount - 1, FALSE);
+										}
+									} else {
+										prev_column_index = _ttoi(NO);
+										// 필터 적용
+										if (pDlg->CheckFilter(pDlg->Filter, prop_vec)) {
+											if (column_count == 0 && first_packet_count == 0) {
+												first_packet_count = 1;
+												column_count_str.Format(_T("%d"), column_count + 1);
+												pDlg->SetDataToPacketData(column_count_str, TIME, SIP, DIP, PROTO, LENGTH, NULL, DUMP);
+												pDlg->SetDataToHDXEditor(DUMP);
+											}
+
+											for (int j = 1; j < 8; j++) {
+												if (j == 1) {
+													pDlg->m_PacketCapturedListCtrl.InsertItem(column_count, column_count_str);
+												}
+												pDlg->m_PacketCapturedListCtrl.SetItem(column_count, j, LVIF_TEXT, prop_vec[j - 1], NULL, NULL, NULL, NULL);
+											}
+											if (pDlg->CursorPositionLast) {
+												int nCount = pDlg->m_PacketCapturedListCtrl.GetItemCount();
+												pDlg->m_PacketCapturedListCtrl.EnsureVisible(nCount - 1, FALSE);
+											}
+										}
 									}
 								}
 							}
-						}
-					
 
-						for (prop_iter = prop_vec.begin(); prop_iter != prop_vec.end(); prop_iter++) {
-							(*prop_iter) = L"";
-						}
-						DUMP = L"";
+							for (prop_iter = prop_vec.begin(); prop_iter != prop_vec.end(); prop_iter++) {
+								(*prop_iter) = L"";
+							}
+							DUMP = L"";
 
-						column_cnt = 0;
-					} else {
+							column_cnt = 0;
+						} else {
+						}
 					}
 				}
 			}
@@ -1584,6 +1610,7 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 		is.close();
 		start_pos = i;
 	}
+
 	return 0;
 }
 
@@ -1709,8 +1736,10 @@ UINT CMFCApplication1Dlg::FileOpenThreadFunction(LPVOID _mothod) {
 					pDlg->m_PacketCapturedListCtrl.SetItem(column_count, i, LVIF_TEXT, prop_vec[i - 1], NULL, NULL, NULL, NULL);
 				}
 
-				int nCount = pDlg->m_PacketCapturedListCtrl.GetItemCount();
-				pDlg->m_PacketCapturedListCtrl.EnsureVisible(nCount - 1, FALSE);
+				if (pDlg->CursorPositionLast) {
+					int nCount = pDlg->m_PacketCapturedListCtrl.GetItemCount();
+					pDlg->m_PacketCapturedListCtrl.EnsureVisible(nCount - 1, FALSE);
+				}
 
 				PROTO == L"TCP" ? pDlg->tcp_pkt_cnt++ : pDlg->tcp_pkt_cnt;
 				PROTO == L"UDP" ? pDlg->udp_pkt_cnt++ : pDlg->udp_pkt_cnt;
@@ -2215,5 +2244,14 @@ void CMFCApplication1Dlg::Wait(DWORD dwMillisecond) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
+	}
+}
+
+
+void CMFCApplication1Dlg::SetCursorPosition() {
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	CString Question = CursorPositionLast ? L"화면을 이동하시지 않겠습니까?" : L"화면을 마지막 패킷으로 이동하시겠습니까?";
+	if (MessageBox(Question, _T("커서 위치"), MB_YESNO | MB_ICONQUESTION) == IDYES) {
+		CursorPositionLast = !CursorPositionLast;
 	}
 }

@@ -101,7 +101,11 @@ public:
 	static UINT FileOpenThreadFunction(LPVOID _mothod);
 
 	BOOL isFileWriteEnd = FALSE;
+
 	std::mutex mutex;
+	BOOL is_UpdateFilter = FALSE;
+
+	BOOL CursorPositionLast = TRUE;
 
 	BOOL is_PktCapThreadStart = FALSE;
 	BOOL is_FileReadThreadStart = FALSE;
@@ -171,6 +175,7 @@ public:
 
 	BOOL CheckFilter(CString Filter, std::vector<CString> vec);
 	BOOL RemoveMouseMessage(void);
+	afx_msg void SetCursorPosition();
 };
 
 int GetCountStr(CString target_str, CString target_find_str);

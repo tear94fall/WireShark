@@ -29,13 +29,14 @@
 #define ID_VIEW                         32775
 #define ID_FILE_1                       32776
 #define ID_FILE_QUIT                    32777
+#define ID_FILE_SETCURSORLAST           32778
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        140
-#define _APS_NEXT_COMMAND_VALUE         32778
+#define _APS_NEXT_RESOURCE_VALUE        142
+#define _APS_NEXT_COMMAND_VALUE         32779
 #define _APS_NEXT_CONTROL_VALUE         1041
 #define _APS_NEXT_SYMED_VALUE           105
 #endif
