@@ -142,6 +142,7 @@ public:
 	afx_msg void OnClose();
 	afx_msg void OnBnClickedCheck2();
 	afx_msg void OnHdnItemclickList2(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void SetCursorPosition();
 
 	void ChangeStaticText(int all_pkt_cnt, int tcp_pkt_cnt, int udp_pkt_cnt, int arp_pkt_cnt, int icmp_pkt_cnt);
 	void ClearPacketCnt();
@@ -175,7 +176,8 @@ public:
 
 	BOOL CheckFilter(CString Filter, std::vector<CString> vec);
 	BOOL RemoveMouseMessage(void);
-	afx_msg void SetCursorPosition();
+	BOOL FilterValidCheckFunction(CString Filter);
+	BOOL IsNumeric(CString value);
 };
 
 int GetCountStr(CString target_str, CString target_find_str);

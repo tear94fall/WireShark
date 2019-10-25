@@ -1,9 +1,11 @@
-﻿  MFCApplication1Dlg.cpp
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(148,45): warning C4244:  '=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(161,37): warning C4244:  '=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(338,21): warning C4018:  '<': signed 또는 unsigned가 일치하지 않습니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(605,10): warning C4101:  'dwResult' :참조되지 않은 지역 변수입니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(1026,83): warning C4552:  '+': 식의 결과가 사용되지 않습니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(1484,13): warning C4244:  '=': '__int64'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(1663,7): warning C4101:  'cstr' :참조되지 않은 지역 변수입니다.
+﻿  MFCApplication1.cpp
+  MFCApplication1Dlg.cpp
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(146,45): warning C4244:  '=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(159,37): warning C4244:  '=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(349,21): warning C4018:  '<': signed 또는 unsigned가 일치하지 않습니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(616,10): warning C4101:  'dwResult' :참조되지 않은 지역 변수입니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(1006,83): warning C4552:  '+': 식의 결과가 사용되지 않습니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(1458,13): warning C4244:  '=': '__int64'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  코드를 생성하고 있습니다...
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(1637,7): warning C4101:  'cstr' :참조되지 않은 지역 변수입니다.
   MFCApplication1.vcxproj -> C:\Users\limjoonsub\source\repos\MFCApplication1\Debug\MFCApplication1.exe

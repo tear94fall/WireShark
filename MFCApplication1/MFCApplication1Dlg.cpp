@@ -118,8 +118,6 @@ BOOL CMFCApplication1Dlg::OnInitDialog() {
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
-	m_FilterEditCtrlBrush.CreateSolidBrush(RGB(175, 255, 175));
-
 	m_PacketCapturedListCtrl.SetExtendedStyle(LVS_EX_FULLROWSELECT|LVS_EX_DOUBLEBUFFER|LVS_EX_GRIDLINES);
 
 	std::remove(file_name_write);
@@ -247,14 +245,21 @@ UINT CMFCApplication1Dlg::PacketCaptureThreadFunction(LPVOID _mothod) {
 	pcap_t* adhandle;
 	char errbuf[PCAP_ERRBUF_SIZE];
 
+	BOOL ERR_OCUR = FALSE;
+	CString ERR_MSG;
+
 	const char* filter = "tcp or udp or arp or icmp";
 	struct bpf_program fcode;
 	bpf_u_int32 NetMask;
 
 	if (pcap_findalldevs(&all_net_device, errbuf) == -1) {
 		AfxMessageBox(CString(errbuf));
-		fprintf(stderr, "Error in pcap_findalldevs: %s\n", errbuf);
-		exit(1);
+		fprintf(stderr, "Error in pcap_findalldevs: %s", errbuf);
+
+		ERR_OCUR = FALSE;
+		ERR_MSG = errbuf;
+		pDlg->MessageBox(ERR_MSG, L"Error");
+		return -1;
 	}
 
 	for (net_device = all_net_device; net_device; net_device = net_device->next) {
@@ -262,38 +267,44 @@ UINT CMFCApplication1Dlg::PacketCaptureThreadFunction(LPVOID _mothod) {
 	}
 
 	if (i == 0) {
-		printf("\nNo interfaces found! Make sure WinPcap is installed.\n");
-		return -1;
+		ERR_OCUR = TRUE;
+		ERR_MSG = L"No interfaces found! Make sure WinPcap is installed.";
 	}
 
 	inum = pDlg->netInterfaceDlg.m_nSelectedIndex + 1;
 
 	if (inum < 1 || inum > i) {
-		printf("\nInterface number out of range.\n");
 		pcap_freealldevs(all_net_device);
-		return -1;
+		ERR_OCUR = TRUE;
+		ERR_MSG = L"Interface number out of range.";
 	}
 
 	for (net_device = all_net_device, i = 0; i < inum - 1; net_device = net_device->next, i++);
 
 	if ((adhandle = pcap_open_live(net_device->name, 65536, 1, 1000, errbuf)) == NULL) {
-		fprintf(stderr, "\nUnable to open the adapter. %s is not supported by WinPcap\n", net_device->name);
 		pcap_freealldevs(all_net_device);
-		return -1;
+		ERR_OCUR = TRUE;
+		ERR_MSG = L"Unable to open the adapter. %s is not supported by WinPcap";
 	}
 
 	NetMask = 0xffffff;
 	if (pcap_compile(adhandle, &fcode, filter, 1, NetMask) < 0) {
-		fprintf(stderr, "\nError compiling filter: wrong syntax.\n");
 		pcap_close(adhandle);
-		return -3;
+		ERR_OCUR = TRUE;
+		ERR_MSG = L"Error compiling filter: wrong syntax.";
 	}
 
 	if (pcap_setfilter(adhandle, &fcode) < 0) {
-		fprintf(stderr, "\nError setting the filter\n");
 		pcap_close(adhandle);
-		return -4;
+		ERR_OCUR = TRUE;
+		ERR_MSG = L"Error compiling filter: wrong syntax.";
 	}
+
+	if (ERR_OCUR) {
+		pDlg->MessageBox(ERR_MSG, L"Error");
+		return -1;
+	}
+
 	pDlg->target_adhandle = adhandle;
 	pcap_freealldevs(all_net_device);
 	pcap_loop(adhandle, 0, packet_handler, NULL);
@@ -610,37 +621,6 @@ void CMFCApplication1Dlg::OnBnClickedCaptureQuitButton() {
 			m_PacketCaptrueThread = NULL;
 			m_FileReadThread = NULL;
 			m_FileOpenThread = NULL;
-			/*if (m_PacketCaptrueThread != NULL) {
-				m_PacketCaptrueThread->SuspendThread();
-				m_PacketCaptureThreadWorkType = STOP;
-				::GetExitCodeThread(m_PacketCaptrueThread->m_hThread, &dwResult);
-				delete m_PacketCaptrueThread;
-				m_PacketCaptrueThread = NULL;
-			}
-
-			if (m_FileReadThread != NULL) {
-				m_FileReadThread->SuspendThread();
-				m_FileReadThreadWorkType = STOP;
-				::GetExitCodeThread(m_FileReadThread->m_hThread, &dwResult);
-				delete m_FileReadThread;
-				m_FileReadThread = NULL;
-			}
-
-			if (m_FileOpenThread != NULL) {
-				m_FileOpenThread->SuspendThread();
-				m_FileOpenThreadWorkType = STOP;
-				::GetExitCodeThread(m_FileOpenThread->m_hThread, &dwResult);
-				delete m_FileOpenThread;
-				m_FileOpenThread = NULL;
-			}*/
-
-			//CButton* pButton;
-			//pButton = (CButton*)GetDlgItem(IDC_BUTTON1);
-			//pButton->EnableWindow(TRUE);
-			//pButton = (CButton*)GetDlgItem(IDC_BUTTON2);
-			//pButton->EnableWindow(FALSE);
-			//pButton = (CButton*)GetDlgItem(IDC_BUTTON3);
-			//pButton->EnableWindow(FALSE);
 
 			ClearPacketCnt();
 			ChangeStaticText(packet_cnt, tcp_pkt_cnt, udp_pkt_cnt, arp_pkt_cnt, icmp_pkt_cnt);
@@ -1386,7 +1366,7 @@ void CMFCApplication1Dlg::OnBnClickedFilterApplyButton() {
 	GetDlgItemText(IDC_EDIT1, Filter);
 
 	IsFilterApply = TRUE;
-	 
+
 	if (m_FileReadThread == NULL) {
 		is_FileReadThreadStart = TRUE;
 		is_UpdateFilter = TRUE;
@@ -1398,12 +1378,6 @@ void CMFCApplication1Dlg::OnBnClickedFilterApplyButton() {
 	} else {
 		is_UpdateFilter = FALSE;
 	}
-
-	CButton* pButton;
-	pButton = (CButton*)GetDlgItem(IDC_BUTTON4);
-	pButton->EnableWindow(FALSE);
-
-	pButton->EnableWindow(TRUE);
 
 	RemoveMouseMessage();
 }
@@ -1803,6 +1777,9 @@ BOOL CMFCApplication1Dlg::CheckFilter(CString Filter, std::vector<CString> vec) 
 	// vec은 캡쳐된 패킷의 정보
 	BOOL result = FALSE;
 
+	Filter = Filter.TrimLeft();
+	Filter = Filter.TrimRight();
+
 	if (Filter == L"" || Filter == DefaultFilterValue) {
 		result = TRUE;
 		return result;
@@ -1822,9 +1799,6 @@ BOOL CMFCApplication1Dlg::CheckFilter(CString Filter, std::vector<CString> vec) 
 	CString DPORT = Calculate4HexNumber(PKT_DUMP.Mid(72, 1), PKT_DUMP.Mid(73, 1), PKT_DUMP.Mid(74, 1), PKT_DUMP.Mid(75, 1));
 
 	Filter = Filter.MakeUpper();
-	Filter = Filter.TrimLeft();
-	Filter = Filter.TrimRight();
-
 	// Length == 3
 	// Length >= 3
 	// Length <= 3
@@ -1882,24 +1856,6 @@ BOOL CMFCApplication1Dlg::CheckFilter(CString Filter, std::vector<CString> vec) 
 
 		return result;
 	}
-
-	const char* filter_file = "filter.dat";
-
-	CString read_line;
-	std::string in_line;
-	std::ifstream in(filter_file);
-	if (!in.is_open()) {
-		return FALSE;
-	}
-	while (getline(in, in_line)) {
-		read_line = (CString)in_line.c_str();
-		read_line = read_line.TrimLeft();
-		read_line = read_line.TrimRight();
-		if (read_line.Compare(Filter) == 0) {
-			break;
-		}
-	}
-	in.close();
 
 	CString SplitOPor = L"OR";
 	CString SplitOPand = L"AND";
@@ -2253,5 +2209,29 @@ void CMFCApplication1Dlg::SetCursorPosition() {
 	CString Question = CursorPositionLast ? L"화면을 이동하시지 않겠습니까?" : L"화면을 마지막 패킷으로 이동하시겠습니까?";
 	if (MessageBox(Question, _T("커서 위치"), MB_YESNO | MB_ICONQUESTION) == IDYES) {
 		CursorPositionLast = !CursorPositionLast;
+	}
+}
+
+
+BOOL CMFCApplication1Dlg::FilterValidCheckFunction(CString Filter) {
+	CString filter_copy = Filter;
+	BOOL result = FALSE;
+	
+	// 필터 유효값 확인
+
+	return result;
+}
+
+BOOL CMFCApplication1Dlg::IsNumeric(CString value) {
+	const int length_of_str = value.GetLength();
+	if (length_of_str == 0) {
+		return FALSE;
+	} else {
+		for (int i = 0; i < length_of_str; i++) {
+			if (!isdigit(value.Mid(i, 1).GetAt(0))) {
+				return FALSE;
+			}
+		}
+		return TRUE;
 	}
 }
