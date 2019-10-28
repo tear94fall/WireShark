@@ -4,6 +4,7 @@
 
 namespace Filter {
 	namespace FilterFunction {
+		extern CString SuccessFilter;
 		extern CString Filter;
 		extern bool IsFilterApply;
 		extern CString DefaultFilterValue;

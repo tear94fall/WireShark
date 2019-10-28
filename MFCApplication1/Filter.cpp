@@ -3,6 +3,7 @@
 #include "Filter.hpp"
 
 CString Filter::FilterFunction::Filter = L"";
+CString Filter::FilterFunction::SuccessFilter = L"";
 bool  Filter::FilterFunction::IsFilterApply = false;
 CString Filter::FilterFunction::DefaultFilterValue = L"Enter Filter....";
 
@@ -404,7 +405,6 @@ std::vector<CString> Filter::FilterFunction::SplitStr(CString target_str, CStrin
 
 BOOL  Filter::FilterFunction::FilterValidCheckFunction(CString Filter) {
 	BOOL result = FALSE;
-
 	CString temp_filter = Filter;
 	CString default_filter = Filter::FilterFunction::DefaultFilterValue;
 	int FilterLength = Filter.GetLength();
@@ -417,7 +417,6 @@ BOOL  Filter::FilterFunction::FilterValidCheckFunction(CString Filter) {
 		result = TRUE;
 		return result;
 	}
-	
 	/*
 	length == 6
 	length < 6
@@ -440,13 +439,40 @@ BOOL  Filter::FilterFunction::FilterValidCheckFunction(CString Filter) {
 			return result;
 		}
 	}
-
-	if (FilterLength == 3 || FilterLength == 4) {
+	int tmep_FilterLength = temp_filter.GetLength();
+	if (tmep_FilterLength == 3 || tmep_FilterLength == 4) {
 		if (temp_filter == L"TCP" || temp_filter == L"UDP" || temp_filter == L"ARP" || temp_filter == "ICMP") {
 			result = TRUE;
 			return result;
 		}
+	} else if (tmep_FilterLength == 10 || tmep_FilterLength == 11) {
+		CT2CA str_temp_filter(temp_filter);
+		std::string str_temp_filter_regex(str_temp_filter);
+		std::regex target_regex("(?:(?:TCP|UDP|ARP|ICMP?) OR ){1}(?:TCP|UDP|ARP|ICMP?)");
+		if (std::regex_match(str_temp_filter_regex, target_regex)) {
+			result = TRUE;
+			return result;
+		}
+	} else if (tmep_FilterLength == 17 || tmep_FilterLength == 18) {
+		CT2CA str_temp_filter(temp_filter);
+		std::string str_temp_filter_regex(str_temp_filter);
+		std::regex target_regex("(?:(?:TCP|UDP|ARP|ICMP?) OR ){2}(?:TCP|UDP|ARP|ICMP?)");
+		if (std::regex_match(str_temp_filter_regex, target_regex)) {
+			result = TRUE;
+			return result;
+		}
+	} else if (tmep_FilterLength == 25) {
+		CT2CA str_temp_filter(temp_filter);
+		std::string str_temp_filter_regex(str_temp_filter);
+		std::regex target_regex("\(?:(?:TCP|UDP|ARP|ICMP?) OR ){3}(?:TCP|UDP|ARP|ICMP?)");
+		if (std::regex_match(str_temp_filter_regex, target_regex)) {
+			result = TRUE;
+			return result;
+		}
 	}
+
+
+
 
 	if (temp_filter.Mid(0, 8) == L"PORT == "){
 		CString port_number = temp_filter.Mid(8, temp_filter.GetLength() - 8);
@@ -520,8 +546,8 @@ BOOL  Filter::FilterFunction::FilterValidCheckFunction(CString Filter) {
 			CT2CA pszConvertedAnsiString(IPaddr);
 			std::string ip_regex(pszConvertedAnsiString);
 			std::regex target_regex("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
-			if (!std::regex_match(ip_regex, target_regex)) {
-				result = FALSE;
+			if (std::regex_match(ip_regex, target_regex)) {
+				result = TRUE;
 				return result;
 			}
 		} else if (ORcnt == 1 && ANDcnt == 0) {

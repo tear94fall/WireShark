@@ -634,6 +634,7 @@ void CMFCApplication1Dlg::OnBnClickedCaptureQuitButton() {
 			
 			m_FilterEditCtrl.Clear();
 			m_FilterEditCtrl.SetWindowTextW(Filter::FilterFunction::DefaultFilterValue);
+			Filter::FilterFunction::SuccessFilter = Filter::FilterFunction::DefaultFilterValue;
 		}
 	} else if (answer == IDNO) {	// 아니오
 	}
@@ -1211,6 +1212,11 @@ void CMFCApplication1Dlg::OnBnClickedFilterApplyButton() {
 
 	if (!Filter::FilterFunction::FilterValidCheckFunction(Filter::FilterFunction::Filter)) {
 		MessageBox(_T("올바르지 못한 필터 입니다."), _T("오류"), MB_ICONWARNING);
+		if (Filter::FilterFunction::SuccessFilter == L"") {
+			Filter::FilterFunction::SuccessFilter = Filter::FilterFunction::DefaultFilterValue;
+		}
+
+		m_FilterEditCtrl.SetWindowTextW(Filter::FilterFunction::SuccessFilter);
 		return;
 	}
 
@@ -1228,6 +1234,8 @@ void CMFCApplication1Dlg::OnBnClickedFilterApplyButton() {
 	} else {
 		is_UpdateFilter = FALSE;
 	}
+
+	Filter::FilterFunction::SuccessFilter = Filter::FilterFunction::Filter;
 
 	RemoveMouseMessage();
 }

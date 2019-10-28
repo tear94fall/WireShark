@@ -1,7 +1,8 @@
 ﻿  Filter.cpp
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\Filter.cpp(478,28): warning C4129:  '.': 문자 이스케이프 시퀀스를 인식할 수 없습니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\Filter.cpp(501,28): warning C4129:  '.': 문자 이스케이프 시퀀스를 인식할 수 없습니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\Filter.cpp(522,28): warning C4129:  '.': 문자 이스케이프 시퀀스를 인식할 수 없습니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\Filter.cpp(532,28): warning C4129:  '.': 문자 이스케이프 시퀀스를 인식할 수 없습니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\Filter.cpp(552,28): warning C4129:  '.': 문자 이스케이프 시퀀스를 인식할 수 없습니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\Filter.cpp(467,27): warning C4129:  '(': 문자 이스케이프 시퀀스를 인식할 수 없습니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\Filter.cpp(504,28): warning C4129:  '.': 문자 이스케이프 시퀀스를 인식할 수 없습니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\Filter.cpp(527,28): warning C4129:  '.': 문자 이스케이프 시퀀스를 인식할 수 없습니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\Filter.cpp(548,28): warning C4129:  '.': 문자 이스케이프 시퀀스를 인식할 수 없습니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\Filter.cpp(558,28): warning C4129:  '.': 문자 이스케이프 시퀀스를 인식할 수 없습니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\Filter.cpp(578,28): warning C4129:  '.': 문자 이스케이프 시퀀스를 인식할 수 없습니다.
   MFCApplication1.vcxproj -> C:\Users\limjoonsub\source\repos\MFCApplication1\Debug\MFCApplication1.exe
