@@ -5,20 +5,6 @@
 #pragma once
 #include "NetworkInterfaceDlg.h"
 #include "ProtocolHeader.hpp"
-#include <cstring>
-#include <string>
-#include <thread>
-#include <sstream>
-#include <pcap.h>
-#include <map>
-#include <vector>
-#include <iomanip>
-#include <string>
-#include <afxmt.h>
-#include <afxwin.h>
-#include <iostream>
-#include <fstream>
-#include <mutex>
 
 void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_char* pkt_data);
 
@@ -59,24 +45,24 @@ public:
 		CListCtrl* pList;
 	};
 
-	ip_header* ip_hdr;
-	udp_header* udp_hdr;
-	tcp_header* tcp_hdr;
-	icmp_header* icmp_hdr;
-	arp_header* arp_hdr = NULL;
+	Protocol::IP::ip_header* ip_hdr;
+	Protocol::UDP::udp_header* udp_hdr;
+	Protocol::TCP::tcp_header* tcp_hdr;
+	Protocol::ICMP::icmp_header* icmp_hdr;
+	Protocol::ARP::arp_header* arp_hdr = NULL;
+	Protocol::ETHERNET::ether_header* eth_hdr;
+
 	u_int ip_len;
-	ether_header* eth_hdr;
 	const pcap_pkthdr* m_header;
+	pcap_t* target_adhandle;
 	const u_char* m_pkt_data;
+
 	CString CurrentTimeStr;
 	CString source_ip;
 	CString destionation_ip;
 	CString Protocol;
 	CString Length;
-	CString DefaultFilterValue = L"Enter Filter....";
 	std::string packet_dump_data_string;  
-
-	pcap_t* target_adhandle;
 
 	int end_pos = 0, start_pos = 0;
 	long file_length = 0;
@@ -111,25 +97,17 @@ public:
 	BOOL is_FileReadThreadStart = FALSE;
 	BOOL is_FileOpenThreadStart = FALSE;
 
-	int packet_cnt = 0;
-	int tcp_pkt_cnt = 0;
-	int udp_pkt_cnt = 0;
-	int arp_pkt_cnt = 0;
-	int icmp_pkt_cnt = 0;
 
 	NetworkInterfaceDlg netInterfaceDlg;
 	CString m_strSelectedNetworkInterface;
 	BOOL m_bAscending = false;
 
-	CString Filter;
-	bool IsFilterApply = false;
 	int PrevClickColumnNumber = -1;
 
 	CListCtrl m_PacketCapturedListCtrl;
 	CListCtrl m_PacketDumpListCtrl;
 	CTreeCtrl m_PacketDataTreeCtrl;
 
-	CBrush m_FilterEditCtrlBrush;
 	CEdit m_FilterEditCtrl;
 	CButton pause_button;
 
@@ -145,7 +123,6 @@ public:
 	afx_msg void SetCursorPosition();
 
 	void ChangeStaticText(int all_pkt_cnt, int tcp_pkt_cnt, int udp_pkt_cnt, int arp_pkt_cnt, int icmp_pkt_cnt);
-	void ClearPacketCnt();
 	void OpenPacketDataFile();
 	void FileSave();
 	void SetDataToPacketData(CString FrameNumber, CString Time, CString Source, CString Destination, CString Protocol, CString Length, CString Info, CString Packet_Dump_Data);
@@ -159,27 +136,5 @@ public:
 	static int CALLBACK SortFuncStr(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 	static int CALLBACK SortFuncNum(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
-	std::string GetCurrentTimeStr();
-
-	CString HexToDec(CString _number);
-	CString HexToBinary(CString _number);
-	CString GetTCPFlagToBin(CString _Flag);
-	CString GetTCPFlagToStr(CString _Flag);
-	CString GetTCPFlagToLongStr(CString _Flag);
-	CString GetIPAddr(ip_address ip_addr);
-	CString GetFlagSetNotSet(CString _Flag);
-	CString Calculate4HexNumber(CString num1, CString num2, CString num3, CString num4);
-	CString Calculate2HexNumber(CString num1, CString num2);
-	CString MakeIPAddressV6(CString Aclass, CString Bclass, CString Cclass, CString Dclass, CString Eclass, CString Fclass);
-	CString ArpOpcde(CString OpcodeNumber);
-	CString ArpHardwareType(CString HardwareTypeNumber);
-
-	BOOL CheckFilter(CString Filter, std::vector<CString> vec);
 	BOOL RemoveMouseMessage(void);
-	BOOL FilterValidCheckFunction(CString Filter);
-	BOOL IsNumeric(CString value);
 };
-
-int GetCountStr(CString target_str, CString target_find_str);
-std::vector<int> GetCountStrIdx(CString target_str, CString target_find_str);
-std::vector<CString> SplitStr(CString target_str, CString target_find_str);

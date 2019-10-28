@@ -12,4 +12,23 @@
 #include <afxcontrolbars.h>
 #include <afxcontrolbars.h>
 
+#include <pcap.h>
+#include <cstring>
+#include <string>
+#include <thread>
+#include <sstream>
+#include <map>
+#include <vector>
+#include <iomanip>
+#include <string>
+#include <afxmt.h>
+#include <afxwin.h>
+#include <iostream>
+#include <fstream>
+#include <mutex>
+#include <regex>
+
+#include "Filter.hpp"
+#include "Data.hpp"
+
 #endif //PCH_H

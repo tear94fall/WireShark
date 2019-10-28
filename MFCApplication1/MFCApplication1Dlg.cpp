@@ -118,23 +118,18 @@ BOOL CMFCApplication1Dlg::OnInitDialog() {
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
-	m_PacketCapturedListCtrl.SetExtendedStyle(LVS_EX_FULLROWSELECT|LVS_EX_DOUBLEBUFFER|LVS_EX_GRIDLINES);
-
 	std::remove(file_name_write);
 
 	SetWindowText(_T("Wire Dolphin"));
-
 	m_strSelectedNetworkInterface = netInterfaceDlg.InterfaceDescription;
 	SetDlgItemText(IDC_STATIC_NET, L"Interface: " + m_strSelectedNetworkInterface);
 
-	m_FilterEditCtrl.SetWindowTextW(DefaultFilterValue);
+	m_FilterEditCtrl.SetWindowTextW(Filter::FilterFunction::DefaultFilterValue);
 
 	CRect rectangle;
 	m_PacketCapturedListCtrl.GetWindowRect(&rectangle);
-	m_PacketCapturedListCtrl.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
+	m_PacketCapturedListCtrl.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT| LVS_EX_GRIDLINES);
 	LV_COLUMN add_column;
-
-	// 컬럼 속성을 지정한다. 텍스트 형식을 사용하고 폭을 명시하겠다고 설정한다.
 	add_column.mask = LVCF_TEXT | LVCF_WIDTH;
 
 	const int packet_list_column_count = 9;
@@ -160,7 +155,7 @@ BOOL CMFCApplication1Dlg::OnInitDialog() {
 		m_PacketDumpListCtrl.InsertColumn(i, &add_column);
 	}
 
-	ChangeStaticText(packet_cnt, tcp_pkt_cnt, udp_pkt_cnt, arp_pkt_cnt, icmp_pkt_cnt);
+	ChangeStaticText(Data::DataFunction::packet_cnt, Data::DataFunction::tcp_pkt_cnt, Data::DataFunction::udp_pkt_cnt, Data::DataFunction::arp_pkt_cnt, Data::DataFunction::icmp_pkt_cnt);
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -212,11 +207,11 @@ void CMFCApplication1Dlg::OnBnClickedCaptureStartButton() {
 
 	if (m_PacketCaptrueThread == NULL&& !is_PktCapThreadStart) {
 
-		IsFilterApply = FALSE;
+		Filter::FilterFunction::IsFilterApply = FALSE;
 		is_PktCapThreadStart = TRUE;
 
 		GetDlgItem(IDC_CHECK2)->EnableWindow(FALSE);
-		ClearPacketCnt();
+		Data::DataFunction::ClearPacketCnt();
 		m_PacketCapturedListCtrl.DeleteAllItems();
 
 		std::ofstream out(file_name_write, std::ios::trunc);
@@ -234,7 +229,6 @@ void CMFCApplication1Dlg::OnBnClickedCaptureStartButton() {
 		MessageBox(_T("이미 캡처가 시작되었습니다."), _T("오류"), MB_OK | MB_ICONWARNING);
 	}
 }
-
 
 UINT CMFCApplication1Dlg::PacketCaptureThreadFunction(LPVOID _mothod) {
 	CMFCApplication1Dlg* pDlg = (CMFCApplication1Dlg*)AfxGetApp()->m_pMainWnd;
@@ -329,15 +323,15 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 
 	pDlg->m_header = header;
 	pDlg->m_pkt_data = pkt_data;
-	pDlg->eth_hdr = (ether_header*)pkt_data;
-	pDlg->ip_hdr = (ip_header*)(pkt_data + 14);
+	pDlg->eth_hdr = (Protocol::ETHERNET::ether_header*)pkt_data;
+	pDlg->ip_hdr = (Protocol::IP::ip_header*)(pkt_data + 14);
 	pDlg->ip_len = (pDlg->ip_hdr->ver_ihl & 0xf) * 4;
 
 	int size = sizeof(pkt_data);
 
-	pDlg->CurrentTimeStr = CString(pDlg->GetCurrentTimeStr().c_str());
-	pDlg->source_ip = pDlg->GetIPAddr(pDlg->ip_hdr->saddr);
-	pDlg->destionation_ip = pDlg->GetIPAddr(pDlg->ip_hdr->daddr);
+	pDlg->CurrentTimeStr = CString(Data::DataFunction::GetCurrentTimeStr().c_str());
+	pDlg->source_ip = Data::DataFunction::GetIPAddr(pDlg->ip_hdr->saddr);
+	pDlg->destionation_ip = Data::DataFunction::GetIPAddr(pDlg->ip_hdr->daddr);
 	pDlg->Protocol;
 	pDlg->Length = (CString)(std::to_string(header->caplen).c_str());
 
@@ -358,11 +352,11 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 
 	CString packet_dump_data_cstr(packet_dump_data_string.c_str());
 
-	if (!pDlg->IsFilterApply) {
+	if (!Filter::FilterFunction::IsFilterApply) {
 		if (ntohs(pDlg->eth_hdr->frame_type) == 0x0800) {
 			if (pDlg->ip_hdr->proto == IPPROTO_TCP) {
 				pDlg->Protocol = L"TCP";
-				pDlg->tcp_hdr = (tcp_header*)((u_char*)pDlg->ip_hdr + pDlg->ip_len);
+				pDlg->tcp_hdr = (Protocol::TCP::tcp_header*)((u_char*)pDlg->ip_hdr + pDlg->ip_len);
 
 				int column_count = pDlg->m_PacketCapturedListCtrl.GetItemCount();
 
@@ -377,13 +371,13 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 				pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 5, LVIF_TEXT, pDlg->Length, NULL, NULL, NULL, NULL);
 				pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 6, LVIF_TEXT, (CString)(std::to_string(htons(pDlg->tcp_hdr->sport)).c_str()) + " -> " + (CString)(std::to_string(ntohs(pDlg->tcp_hdr->dport)).c_str()), NULL, NULL, NULL, NULL);
 
-				++pDlg->tcp_pkt_cnt;
-				++pDlg->packet_cnt;
+				++Data::DataFunction::tcp_pkt_cnt;
+				++Data::DataFunction::packet_cnt;
 			} else if (pDlg->ip_hdr->proto == 4) {
 				printf("IP\n");
 			} else if (pDlg->ip_hdr->proto == IPPROTO_UDP) {
 				pDlg->Protocol = L"UDP";
-				pDlg->udp_hdr = (udp_header*)((u_char*)pDlg->ip_hdr + pDlg->ip_len);
+				pDlg->udp_hdr = (Protocol::UDP::udp_header*)((u_char*)pDlg->ip_hdr + pDlg->ip_len);
 
 				int column_count = pDlg->m_PacketCapturedListCtrl.GetItemCount();
 
@@ -398,11 +392,11 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 				pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 5, LVIF_TEXT, pDlg->Length, NULL, NULL, NULL, NULL);
 				pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 6, LVIF_TEXT, (CString)(std::to_string(htons(pDlg->udp_hdr->sport)).c_str()) + " -> " + (CString)(std::to_string(ntohs(pDlg->udp_hdr->dport)).c_str()), NULL, NULL, NULL, NULL);
 
-				++pDlg->udp_pkt_cnt;
-				++pDlg->packet_cnt;
+				++Data::DataFunction::udp_pkt_cnt;
+				++Data::DataFunction::packet_cnt;
 			} else if (pDlg->ip_hdr->proto == IPPROTO_ICMP) {
 				pDlg->Protocol = L"ICMP";
-				pDlg->icmp_hdr = (icmp_header*)(pDlg->ip_hdr + pDlg->ip_len);
+				pDlg->icmp_hdr = (Protocol::ICMP::icmp_header*)(pDlg->ip_hdr + pDlg->ip_len);
 
 				int column_count = pDlg->m_PacketCapturedListCtrl.GetItemCount();
 
@@ -418,8 +412,8 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 				pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 6, LVIF_TEXT, (CString)(std::to_string(pDlg->icmp_hdr->code).c_str()), NULL, NULL, NULL, NULL);
 
 
-				++pDlg->icmp_pkt_cnt;
-				++pDlg->packet_cnt;
+				++Data::DataFunction::icmp_pkt_cnt;
+				++Data::DataFunction::packet_cnt;
 			} else {
 				printf("Unknown Protocol\n");
 				unsigned char temp = pDlg->ip_hdr->proto;
@@ -427,7 +421,7 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 			}
 		} else if (ntohs(pDlg->eth_hdr->frame_type) == 0x0806) {
 			pDlg->Protocol = L"ARP";
-			pDlg->arp_hdr = (struct arp_header*)(pkt_data + 14);
+			pDlg->arp_hdr = (struct Protocol::ARP::arp_header*)(pkt_data + 14);
 			
 			int column_count = pDlg->m_PacketCapturedListCtrl.GetItemCount();
 
@@ -483,8 +477,8 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 			pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 5, LVIF_TEXT, pDlg->Length, NULL, NULL, NULL, NULL);
 			pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 6, LVIF_TEXT, sender_hw_addr + L" -> " + target_hw_adr, NULL, NULL, NULL, NULL);
 
-			++pDlg->arp_pkt_cnt;
-			++pDlg->packet_cnt;
+			++Data::DataFunction::arp_pkt_cnt;
+			++Data::DataFunction::packet_cnt;
 		} else {
 			return;
 		}
@@ -498,26 +492,26 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 		}
 	} else {
 		if (ntohs(pDlg->eth_hdr->frame_type) == 0x0800 || ntohs(pDlg->eth_hdr->frame_type) == 0x0806) {
-			pDlg->packet_cnt += 1;
+			Data::DataFunction::packet_cnt += 1;
 			if (pDlg->ip_hdr->proto == IPPROTO_TCP) {
-				pDlg->tcp_pkt_cnt += 1;
+				Data::DataFunction::tcp_pkt_cnt += 1;
 			} else if (pDlg->ip_hdr->proto == IPPROTO_UDP && ntohs(pDlg->eth_hdr->frame_type) != 0x0806) {
-				pDlg->udp_pkt_cnt += 1;
+				Data::DataFunction::udp_pkt_cnt += 1;
 			} else if (pDlg->ip_hdr->proto == IPPROTO_ICMP) {
-				pDlg->icmp_pkt_cnt += 1;
+				Data::DataFunction::icmp_pkt_cnt += 1;
 			} else if (ntohs(pDlg->eth_hdr->frame_type) == 0x0806) {
-				pDlg->arp_pkt_cnt += 1;
+				Data::DataFunction::arp_pkt_cnt += 1;
 			}
 		}
 	}
 
-	if (pDlg->m_PacketCapturedListCtrl.GetItemCount() == 1 && pDlg->IsFilterApply == FALSE) {
+	if (pDlg->m_PacketCapturedListCtrl.GetItemCount() == 1 && Filter::FilterFunction::IsFilterApply == FALSE) {
 		CString column_count_str = L"1";
-		pDlg->SetDataToPacketData(column_count_str, CString(pDlg->GetCurrentTimeStr().c_str()), pDlg->source_ip, pDlg->destionation_ip, pDlg->Protocol, (CString)(std::to_string(header->caplen).c_str()), NULL, packet_dump_data_cstr);
+		pDlg->SetDataToPacketData(column_count_str, CString(Data::DataFunction::GetCurrentTimeStr().c_str()), pDlg->source_ip, pDlg->destionation_ip, pDlg->Protocol, (CString)(std::to_string(header->caplen).c_str()), NULL, packet_dump_data_cstr);
 		pDlg->SetDataToHDXEditor(packet_dump_data_cstr);
 	}
 
-	pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
+	pDlg->ChangeStaticText(Data::DataFunction::packet_cnt, Data::DataFunction::tcp_pkt_cnt, Data::DataFunction::udp_pkt_cnt, Data::DataFunction::arp_pkt_cnt, Data::DataFunction::icmp_pkt_cnt);
 
 	pDlg->FileWriterFunction(pDlg->file_name_write);
 	
@@ -541,11 +535,11 @@ void CMFCApplication1Dlg::FileWriterFunction(char* file_name) {
 		CT2CA ConvertCStringToString(file_name_cstr);
 		std::string file_name_temp(ConvertCStringToString);
 
-		CT2CA pszConvertedAnsiString(GetIPAddr(ip_hdr->saddr));
+		CT2CA pszConvertedAnsiString(Data::DataFunction::GetIPAddr(ip_hdr->saddr));
 		std::string s(pszConvertedAnsiString);
 		std::string sip = s;
 
-		CT2CA pszConvertedAnsiString2(GetIPAddr(ip_hdr->daddr));
+		CT2CA pszConvertedAnsiString2(Data::DataFunction::GetIPAddr(ip_hdr->daddr));
 		std::string s2(pszConvertedAnsiString2);
 		std::string dip = s2;
 
@@ -571,8 +565,8 @@ void CMFCApplication1Dlg::FileWriterFunction(char* file_name) {
 		isFileWriteEnd = FALSE;
 		mutex.lock();
 		std::ofstream out(file_name_temp.c_str(), std::ios::app | std::ios::out);
-		out << packet_cnt << "\n";
-		out << GetCurrentTimeStr() << "\n";
+		out << Data::DataFunction::packet_cnt << "\n";
+		out << Data::DataFunction::GetCurrentTimeStr() << "\n";
 		out << sip << " \n";
 		out << dip << " \n";
 		out << protocol << " \n";
@@ -622,8 +616,8 @@ void CMFCApplication1Dlg::OnBnClickedCaptureQuitButton() {
 			m_FileReadThread = NULL;
 			m_FileOpenThread = NULL;
 
-			ClearPacketCnt();
-			ChangeStaticText(packet_cnt, tcp_pkt_cnt, udp_pkt_cnt, arp_pkt_cnt, icmp_pkt_cnt);
+			Data::DataFunction::ClearPacketCnt();
+			ChangeStaticText(Data::DataFunction::packet_cnt, Data::DataFunction::tcp_pkt_cnt, Data::DataFunction::udp_pkt_cnt, Data::DataFunction::arp_pkt_cnt, Data::DataFunction::icmp_pkt_cnt);
 			m_PacketCapturedListCtrl.DeleteAllItems();
 			m_PacketDataTreeCtrl.DeleteAllItems();
 			m_PacketDumpListCtrl.DeleteAllItems();
@@ -639,7 +633,7 @@ void CMFCApplication1Dlg::OnBnClickedCaptureQuitButton() {
 			is_file_save = false;
 			
 			m_FilterEditCtrl.Clear();
-			m_FilterEditCtrl.SetWindowTextW(DefaultFilterValue);
+			m_FilterEditCtrl.SetWindowTextW(Filter::FilterFunction::DefaultFilterValue);
 		}
 	} else if (answer == IDNO) {	// 아니오
 	}
@@ -653,14 +647,6 @@ void CMFCApplication1Dlg::ChangeStaticText(int all_pkt_cnt, int tcp_pkt_cnt, int
 				   L" ARP : " + (CString)(std::to_string(arp_pkt_cnt).c_str()) +
 				   L" ICMP : " + (CString)(std::to_string(icmp_pkt_cnt).c_str())
 	);
-}
-
-void CMFCApplication1Dlg::ClearPacketCnt() {
-	packet_cnt = 0;
-	tcp_pkt_cnt = 0;
-	udp_pkt_cnt = 0;
-	arp_pkt_cnt = 0;
-	icmp_pkt_cnt = 0;
 }
 
 void CMFCApplication1Dlg::OnBnClickedCapturePauseButton() {
@@ -681,32 +667,6 @@ void CMFCApplication1Dlg::OnBnClickedCapturePauseButton() {
 			m_PacketCaptureThreadWorkType = RUNNING;
 		}
 	}
-}
-
-
-std::string CMFCApplication1Dlg::GetCurrentTimeStr() {
-	time_t     tm_time;
-	struct tm* st_time;
-	char       buff[1024];
-
-	time(&tm_time);
-	st_time = localtime(&tm_time);
-	strftime(buff, 1024, "%Y-%m-%d %p %H:%M:%S", st_time);
-
-	std::string temp_buf = buff;
-
-	return temp_buf;
-}
-
-
-CString CMFCApplication1Dlg::GetIPAddr(ip_address ip_addr) {
-	CString temp_ip_addr;
-	temp_ip_addr += CString(std::to_string(int(ip_addr.byte1)).c_str()) + L".";
-	temp_ip_addr += CString(std::to_string(int(ip_addr.byte2)).c_str()) + L".";
-	temp_ip_addr += CString(std::to_string(int(ip_addr.byte3)).c_str()) + L".";
-	temp_ip_addr += CString(std::to_string(int(ip_addr.byte4)).c_str());
-
-	return temp_ip_addr;
 }
 
 void CMFCApplication1Dlg::OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult) {
@@ -846,90 +806,6 @@ BOOL CMFCApplication1Dlg::PreTranslateMessage(MSG* pMsg) {
 	return CDialogEx::PreTranslateMessage(pMsg);
 }
 
-CString CMFCApplication1Dlg::HexToDec(CString _number) {
-	wchar_t* end = NULL;
-	long value = wcstol(_number, &end, 16);
-
-	CString decStr;
-	decStr.Format(L"%d", value);
-
-	return decStr;
-}
-
-CString CMFCApplication1Dlg::HexToBinary(CString _number) {
-	CString result, temp1, temp2, temp3, temp4;
-
-	temp1 = CString((std::to_string(_ttoi(_number) % 2)).c_str());
-	_number = CString((std::to_string(_ttoi(_number) / 2)).c_str());
-	temp2 = CString((std::to_string(_ttoi(_number) % 2)).c_str());
-	_number = CString((std::to_string(_ttoi(_number) / 2)).c_str());
-	temp3 = CString((std::to_string(_ttoi(_number) % 2)).c_str());
-	temp4 = CString((std::to_string(_ttoi(_number) / 2)).c_str());
-
-	result = temp4 + temp3 + temp2 + temp1;
-
-	return result;
-}
-
-CString CMFCApplication1Dlg::GetTCPFlagToBin(CString _Flag) {
-	CString Result;
-	CString FirstByte = _Flag.Mid(0, 1);
-	CString SecondByte = _Flag.Mid(1, 1);
-	CString ThirdByte = _Flag.Mid(2, 1);
-
-	FirstByte = HexToDec(FirstByte);
-	SecondByte = HexToDec(SecondByte);
-	ThirdByte = HexToDec(ThirdByte);
-
-	FirstByte = HexToBinary(FirstByte);
-	SecondByte = HexToBinary(SecondByte);
-	ThirdByte = HexToBinary(ThirdByte);
-
-	Result = FirstByte + SecondByte + ThirdByte;
-
-	return Result;
-}
-
-CString CMFCApplication1Dlg::GetTCPFlagToStr(CString _Flag) {
-	CString Result = L"";
-
-	CString URG = _Flag.Mid(0, 1).Compare(L"1") == 0 ? L"URG" : L"NULL";
-	CString ACK = _Flag.Mid(1, 1).Compare(L"1") == 0 ? L"ACK" : L"NULL";
-	CString PSH = _Flag.Mid(2, 1).Compare(L"1") == 0 ? L"PSH" : L"NULL";
-	CString RST = _Flag.Mid(3, 1).Compare(L"1") == 0 ? L"RST" : L"NULL";
-	CString SYN = _Flag.Mid(4, 1).Compare(L"1") == 0 ? L"SYN" : L"NULL";
-	CString FIN = _Flag.Mid(5, 1).Compare(L"1") == 0 ? L"FIN" : L"NULL";
-
-	CString Flags[6] = { URG, ACK,PSH,RST,SYN,FIN };
-
-	for (int i = 0; i < 6; i++) {
-		if (Flags[i].Compare(L"NULL") != 0) {
-			Result.Append(Flags[i]);
-			Result.Append(L", ");
-		}
-	}
-
-	Result = Result.Mid(0, Result.GetLength() - 2);
-
-	return Result;
-}
-
-
-CString CMFCApplication1Dlg::GetTCPFlagToLongStr(CString _Flag) {
-	CString Result = L"";
-	CString FlagArray[6] = { L"U",L"A",L"P",L"R",L"S",L"F" };
-
-	for (int i = 0; i < _Flag.GetLength(); i++) {
-		if (_Flag.Mid(i, 1) == L"1" && i > 5) {
-			Result.Append(FlagArray[i - 6]);
-		} else {
-			Result.Append(L". ");
-		}
-	}
-
-	return Result;
-}
-
 void CMFCApplication1Dlg::SetDataToPacketData(CString FrameNumber, CString Time, CString Source, CString Destination, CString Protocol, CString Length, CString Info, CString Packet_Dump_Data) {
 	HTREEITEM  PacketDataRoot1 = NULL;
 	HTREEITEM  PacketDataRoot2 = NULL;
@@ -959,8 +835,8 @@ void CMFCApplication1Dlg::SetDataToPacketData(CString FrameNumber, CString Time,
 	CString PakcetDataLine1by5 = L"Frame Length: " + Length + L" bytes (" + CString(std::to_string(_ttoi(Length) * 8).c_str()) + L" bits)";
 	CString PakcetDataLine1by6 = L"Capture Length: " + Length + L" bytes (" + CString(std::to_string(_ttoi(Length) * 8).c_str()) + L" bits)";
 
-	CString Destination_addr = MakeIPAddressV6(Packet_Dump_Data.Mid(0, 2), Packet_Dump_Data.Mid(2, 2), Packet_Dump_Data.Mid(4, 2), Packet_Dump_Data.Mid(6, 2), Packet_Dump_Data.Mid(8, 2), Packet_Dump_Data.Mid(10, 2));
-	CString Source_addr = MakeIPAddressV6(Packet_Dump_Data.Mid(12, 2), Packet_Dump_Data.Mid(14, 2), Packet_Dump_Data.Mid(16, 2), Packet_Dump_Data.Mid(18, 2), Packet_Dump_Data.Mid(20, 2), Packet_Dump_Data.Mid(22, 2));
+	CString Destination_addr = Data::DataFunction::MakeIPAddressV6(Packet_Dump_Data.Mid(0, 2), Packet_Dump_Data.Mid(2, 2), Packet_Dump_Data.Mid(4, 2), Packet_Dump_Data.Mid(6, 2), Packet_Dump_Data.Mid(8, 2), Packet_Dump_Data.Mid(10, 2));
+	CString Source_addr = Data::DataFunction::MakeIPAddressV6(Packet_Dump_Data.Mid(12, 2), Packet_Dump_Data.Mid(14, 2), Packet_Dump_Data.Mid(16, 2), Packet_Dump_Data.Mid(18, 2), Packet_Dump_Data.Mid(20, 2), Packet_Dump_Data.Mid(22, 2));
 
 	PacketDataLine2 = L"Ethernet ⅠⅠ, Src: " + Source_addr + L", Dst: " + Destination_addr;
 	CString PakcetDataLine2by1 = L"Destination: " + Destination_addr;
@@ -985,15 +861,15 @@ void CMFCApplication1Dlg::SetDataToPacketData(CString FrameNumber, CString Time,
 	CString ipVersion = Packet_Dump_Data.Mid(28, 1);
 	CString headerLength = Packet_Dump_Data.Mid(29, 1);
 
-	CString totalLength = Calculate4HexNumber(Packet_Dump_Data.Mid(32, 1), Packet_Dump_Data.Mid(33, 1), Packet_Dump_Data.Mid(34, 1), Packet_Dump_Data.Mid(35, 1));
-	CString identification = Calculate4HexNumber(Packet_Dump_Data.Mid(36, 1), Packet_Dump_Data.Mid(37, 1), Packet_Dump_Data.Mid(38, 1), Packet_Dump_Data.Mid(39, 1));
+	CString totalLength = Data::DataFunction::Calculate4HexNumber(Packet_Dump_Data.Mid(32, 1), Packet_Dump_Data.Mid(33, 1), Packet_Dump_Data.Mid(34, 1), Packet_Dump_Data.Mid(35, 1));
+	CString identification = Data::DataFunction::Calculate4HexNumber(Packet_Dump_Data.Mid(36, 1), Packet_Dump_Data.Mid(37, 1), Packet_Dump_Data.Mid(38, 1), Packet_Dump_Data.Mid(39, 1));
 
-	CString timeToLive = Calculate2HexNumber(Packet_Dump_Data.Mid(44, 1), Packet_Dump_Data.Mid(45, 1));
-	CString ptotocol = Calculate2HexNumber(Packet_Dump_Data.Mid(46, 1), Packet_Dump_Data.Mid(47, 1));
+	CString timeToLive = Data::DataFunction::Calculate2HexNumber(Packet_Dump_Data.Mid(44, 1), Packet_Dump_Data.Mid(45, 1));
+	CString ptotocol = Data::DataFunction::Calculate2HexNumber(Packet_Dump_Data.Mid(46, 1), Packet_Dump_Data.Mid(47, 1));
 
 	PacketDataLine3 = L"Internet Protocol Version " + ipVersion + L", Src: " + Source + L", Dst: " + Destination;
-	CString ipVersionBinary = HexToBinary(HexToDec(ipVersion));
-	CString headerLengthBinary = HexToBinary(HexToDec(headerLength));
+	CString ipVersionBinary = Data::DataFunction::HexToBinary(Data::DataFunction::HexToDec(ipVersion));
+	CString headerLengthBinary = Data::DataFunction::HexToBinary(Data::DataFunction::HexToDec(headerLength));
 
 	CString PacketDataLine3by1 = ipVersionBinary + L"  . . . . = Version: " + ipVersion;
 	CString PacketDataLine3by2 = L". . . .  " + headerLengthBinary + " = Header Length: " + CString(std::to_string((_ttoi(headerLength) * 4)).c_str()) + L" bytes (" + headerLength + L")";
@@ -1007,8 +883,8 @@ void CMFCApplication1Dlg::SetDataToPacketData(CString FrameNumber, CString Time,
 	CString PacketDataLine3by10 = L"Source: " + Source;
 	CString PacketDataLine3by11 = L"Destination: " + Destination;
 
-	CString Line4SourcePort = Calculate4HexNumber(Packet_Dump_Data.Mid(68, 1), Packet_Dump_Data.Mid(69, 1), Packet_Dump_Data.Mid(70, 1), Packet_Dump_Data.Mid(71, 1));
-	CString Line4DestinationPort = Calculate4HexNumber(Packet_Dump_Data.Mid(72, 1), Packet_Dump_Data.Mid(73, 1), Packet_Dump_Data.Mid(74, 1), Packet_Dump_Data.Mid(75, 1));
+	CString Line4SourcePort = Data::DataFunction::Calculate4HexNumber(Packet_Dump_Data.Mid(68, 1), Packet_Dump_Data.Mid(69, 1), Packet_Dump_Data.Mid(70, 1), Packet_Dump_Data.Mid(71, 1));
+	CString Line4DestinationPort = Data::DataFunction::Calculate4HexNumber(Packet_Dump_Data.Mid(72, 1), Packet_Dump_Data.Mid(73, 1), Packet_Dump_Data.Mid(74, 1), Packet_Dump_Data.Mid(75, 1));
 
 	// Line 1
 	PacketDataRoot1 = m_PacketDataTreeCtrl.InsertItem(PacketDataLine1);
@@ -1050,13 +926,13 @@ void CMFCApplication1Dlg::SetDataToPacketData(CString FrameNumber, CString Time,
 		CString PacketDataLine4by2 = L"Destination Port: " + Line4DestinationPort;
 		CString PacketDataLine4by3 = L"Sequence number: " + Packet_Dump_Data.Mid(76, 8);
 		CString PacketDataLine4by4 = L"Acknowledge number: " + Packet_Dump_Data.Mid(84, 8);
-		CString PacketDataLine4by5 = HexToBinary(HexToDec(Packet_Dump_Data.Mid(92, 1))) + L" . . . . = Header Length: "
+		CString PacketDataLine4by5 = Data::DataFunction::HexToBinary(Data::DataFunction::HexToDec(Packet_Dump_Data.Mid(92, 1))) + L" . . . . = Header Length: "
 			+ CString(std::to_string(_ttoi(Packet_Dump_Data.Mid(92, 1)) * 4).c_str()) + " bytes ("
 			+ CString(std::to_string(_ttoi(Packet_Dump_Data.Mid(92, 1))).c_str()) + ")";
 
 		// Reserver+Flag;
 		// 6bits -> Reserved
-		CString BinaryTCPFlag = GetTCPFlagToBin(Packet_Dump_Data.Mid(93, 3));
+		CString BinaryTCPFlag = Data::DataFunction::GetTCPFlagToBin(Packet_Dump_Data.Mid(93, 3));
 
 		CString Reserved = BinaryTCPFlag.Mid(0, 3);
 		CString Nonce = BinaryTCPFlag.Mid(3, 1);
@@ -1080,9 +956,9 @@ void CMFCApplication1Dlg::SetDataToPacketData(CString FrameNumber, CString Time,
 		}
 
 		// TCP Flags:  . . . . . . .A . . .F 의 형식
-		CString TCPFlagLongStr = GetTCPFlagToLongStr(BinaryTCPFlag);
+		CString TCPFlagLongStr = Data::DataFunction::GetTCPFlagToLongStr(BinaryTCPFlag);
 
-		CString PacketDataLine4by6 = L"Flags: 0x" + Packet_Dump_Data.Mid(93, 3) + L"(" + GetTCPFlagToStr(TCPFlagBinaryOnly) + L")";
+		CString PacketDataLine4by6 = L"Flags: 0x" + Packet_Dump_Data.Mid(93, 3) + L"(" + Data::DataFunction::GetTCPFlagToStr(TCPFlagBinaryOnly) + L")";
 
 		CString PacketDataLine4by6by1 = Reserved;
 		CString PacketDataLine4by6by2 = Nonce;
@@ -1096,19 +972,19 @@ void CMFCApplication1Dlg::SetDataToPacketData(CString FrameNumber, CString Time,
 		CString PacketDataLine4by6by10 = Fin;
 		CString PacketDataLine4by6by11 = L"[TCP Flags: " + TCPFlagLongStr + "]";
 
-		PacketDataLine4by6by1 = Reserved + L".  . . . .  . . . . = Reserved: " + GetFlagSetNotSet(Reserved);		// Reserved
-		PacketDataLine4by6by2 = L". . ." + Nonce + L"  . . . .  . . . . = Nonce: " + GetFlagSetNotSet(Nonce);		// Nonce
-		PacketDataLine4by6by3 = L". . . .  " + CongestionWindowReduced + L". . .  . . . . = CongestionWindowReduced (CWR) : " + GetFlagSetNotSet(CongestionWindowReduced);		// CongestionWindowReduced
-		PacketDataLine4by6by4 = L". . . .  . " + ECN_Echo + L". .  . . . . = ECN-Echo : " + GetFlagSetNotSet(ECN_Echo);		// ECN_Echo
-		PacketDataLine4by6by5 = L". . . .  . . " + Urgent + L".  . . . . = Urgent : " + GetFlagSetNotSet(Urgent);		// Urgent
-		PacketDataLine4by6by6 = L". . . .  . . ." + Acknowledgment + L"  . . . . = Acknowledgment : " + GetFlagSetNotSet(Acknowledgment);		// Acknowledgment
-		PacketDataLine4by6by7 = L". . . .  . . . .  " + Push + L". . . = Push : " + GetFlagSetNotSet(Push);		// Push
-		PacketDataLine4by6by8 = L". . . .  . . . .  . " + Reset + L". . = Reset : " + GetFlagSetNotSet(Reset);		// Reset
-		PacketDataLine4by6by9 = L". . . .  . . . .  . . " + Syn + L". = Syn : " + GetFlagSetNotSet(Syn);		// Syn
-		PacketDataLine4by6by10 = L". . . .  . . . .  . . ." + Fin + L" = Fin : " + GetFlagSetNotSet(Fin);		// Fin
+		PacketDataLine4by6by1 = Reserved + L".  . . . .  . . . . = Reserved: " + Data::DataFunction::GetFlagSetNotSet(Reserved);		// Reserved
+		PacketDataLine4by6by2 = L". . ." + Nonce + L"  . . . .  . . . . = Nonce: " + Data::DataFunction::GetFlagSetNotSet(Nonce);		// Nonce
+		PacketDataLine4by6by3 = L". . . .  " + CongestionWindowReduced + L". . .  . . . . = CongestionWindowReduced (CWR) : " + Data::DataFunction::GetFlagSetNotSet(CongestionWindowReduced);		// CongestionWindowReduced
+		PacketDataLine4by6by4 = L". . . .  . " + ECN_Echo + L". .  . . . . = ECN-Echo : " + Data::DataFunction::GetFlagSetNotSet(ECN_Echo);		// ECN_Echo
+		PacketDataLine4by6by5 = L". . . .  . . " + Urgent + L".  . . . . = Urgent : " + Data::DataFunction::GetFlagSetNotSet(Urgent);		// Urgent
+		PacketDataLine4by6by6 = L". . . .  . . ." + Acknowledgment + L"  . . . . = Acknowledgment : " + Data::DataFunction::GetFlagSetNotSet(Acknowledgment);		// Acknowledgment
+		PacketDataLine4by6by7 = L". . . .  . . . .  " + Push + L". . . = Push : " + Data::DataFunction::GetFlagSetNotSet(Push);		// Push
+		PacketDataLine4by6by8 = L". . . .  . . . .  . " + Reset + L". . = Reset : " + Data::DataFunction::GetFlagSetNotSet(Reset);		// Reset
+		PacketDataLine4by6by9 = L". . . .  . . . .  . . " + Syn + L". = Syn : " + Data::DataFunction::GetFlagSetNotSet(Syn);		// Syn
+		PacketDataLine4by6by10 = L". . . .  . . . .  . . ." + Fin + L" = Fin : " + Data::DataFunction::GetFlagSetNotSet(Fin);		// Fin
 
-		CString windowSize = Calculate4HexNumber(Packet_Dump_Data.Mid(96, 1), Packet_Dump_Data.Mid(97, 1), Packet_Dump_Data.Mid(98, 1), Packet_Dump_Data.Mid(99, 1));
-		CString urgentPointer = Calculate4HexNumber(Packet_Dump_Data.Mid(104, 1), Packet_Dump_Data.Mid(105, 1), Packet_Dump_Data.Mid(106, 1), Packet_Dump_Data.Mid(107, 1));
+		CString windowSize = Data::DataFunction::Calculate4HexNumber(Packet_Dump_Data.Mid(96, 1), Packet_Dump_Data.Mid(97, 1), Packet_Dump_Data.Mid(98, 1), Packet_Dump_Data.Mid(99, 1));
+		CString urgentPointer = Data::DataFunction::Calculate4HexNumber(Packet_Dump_Data.Mid(104, 1), Packet_Dump_Data.Mid(105, 1), Packet_Dump_Data.Mid(106, 1), Packet_Dump_Data.Mid(107, 1));
 
 		CString PacketDataLine4by7 = L"Window size value: " + windowSize;
 		CString PacketDataLine4by8 = L"[Calculated window size: " + windowSize + L"]";
@@ -1141,7 +1017,7 @@ void CMFCApplication1Dlg::SetDataToPacketData(CString FrameNumber, CString Time,
 	} else if (Protocol == L"UDP") {
 		PacketDataLine4 = L"User Datagram protocol, Src Port: " + Line4SourcePort + L", Dst Port: " + Line4DestinationPort;
 
-		CString Length = Calculate4HexNumber(Packet_Dump_Data.Mid(76, 1), Packet_Dump_Data.Mid(77, 1), Packet_Dump_Data.Mid(78, 1), Packet_Dump_Data.Mid(79, 1));
+		CString Length = Data::DataFunction::Calculate4HexNumber(Packet_Dump_Data.Mid(76, 1), Packet_Dump_Data.Mid(77, 1), Packet_Dump_Data.Mid(78, 1), Packet_Dump_Data.Mid(79, 1));
 
 		CString PacketDataLine4by1 = L"Source Port: " + Line4SourcePort;
 		CString PacketDataLine4by2 = L"Destination Port: " + Line4DestinationPort;
@@ -1168,16 +1044,16 @@ void CMFCApplication1Dlg::SetDataToPacketData(CString FrameNumber, CString Time,
 	} else if (Protocol == L"ARP") {
 		PacketDataLine4 = L"Address Resolution Protocol";
 
-		CString HardwareTypeNumber = Calculate4HexNumber(Packet_Dump_Data.Mid(28, 1), Packet_Dump_Data.Mid(29, 1), Packet_Dump_Data.Mid(30, 1), Packet_Dump_Data.Mid(31, 1));
-		CString HardwareTypeStr = ArpHardwareType(HardwareTypeNumber);
+		CString HardwareTypeNumber = Data::DataFunction::Calculate4HexNumber(Packet_Dump_Data.Mid(28, 1), Packet_Dump_Data.Mid(29, 1), Packet_Dump_Data.Mid(30, 1), Packet_Dump_Data.Mid(31, 1));
+		CString HardwareTypeStr = Data::DataFunction::ArpHardwareType(HardwareTypeNumber);
 		CString ProtocolType = Packet_Dump_Data.Mid(32, 4);
-		CString HardwareSize = Calculate2HexNumber(Packet_Dump_Data.Mid(36, 1), Packet_Dump_Data.Mid(37, 1));
-		CString ProtocolSize = Calculate2HexNumber(Packet_Dump_Data.Mid(38, 1), Packet_Dump_Data.Mid(39, 1));
-		CString OpCodeNumber = Calculate4HexNumber(Packet_Dump_Data.Mid(40, 1), Packet_Dump_Data.Mid(41, 1), Packet_Dump_Data.Mid(42, 1), Packet_Dump_Data.Mid(43, 1));
-		CString OpCodeStr = ArpOpcde(OpCodeNumber);
-		CString SenderMacAddr = MakeIPAddressV6(Packet_Dump_Data.Mid(44, 2), Packet_Dump_Data.Mid(46, 2), Packet_Dump_Data.Mid(48, 2), Packet_Dump_Data.Mid(50, 2), Packet_Dump_Data.Mid(52, 2), Packet_Dump_Data.Mid(54, 2));
+		CString HardwareSize = Data::DataFunction::Calculate2HexNumber(Packet_Dump_Data.Mid(36, 1), Packet_Dump_Data.Mid(37, 1));
+		CString ProtocolSize = Data::DataFunction::Calculate2HexNumber(Packet_Dump_Data.Mid(38, 1), Packet_Dump_Data.Mid(39, 1));
+		CString OpCodeNumber = Data::DataFunction::Calculate4HexNumber(Packet_Dump_Data.Mid(40, 1), Packet_Dump_Data.Mid(41, 1), Packet_Dump_Data.Mid(42, 1), Packet_Dump_Data.Mid(43, 1));
+		CString OpCodeStr = Data::DataFunction::ArpOpcde(OpCodeNumber);
+		CString SenderMacAddr = Data::DataFunction::MakeIPAddressV6(Packet_Dump_Data.Mid(44, 2), Packet_Dump_Data.Mid(46, 2), Packet_Dump_Data.Mid(48, 2), Packet_Dump_Data.Mid(50, 2), Packet_Dump_Data.Mid(52, 2), Packet_Dump_Data.Mid(54, 2));
 		CString SenderIpAddr = Source;
-		CString TargetMacAddr = MakeIPAddressV6(Packet_Dump_Data.Mid(64, 2), Packet_Dump_Data.Mid(66, 2), Packet_Dump_Data.Mid(68, 2), Packet_Dump_Data.Mid(70, 2), Packet_Dump_Data.Mid(72, 2), Packet_Dump_Data.Mid(74, 2));;
+		CString TargetMacAddr = Data::DataFunction::MakeIPAddressV6(Packet_Dump_Data.Mid(64, 2), Packet_Dump_Data.Mid(66, 2), Packet_Dump_Data.Mid(68, 2), Packet_Dump_Data.Mid(70, 2), Packet_Dump_Data.Mid(72, 2), Packet_Dump_Data.Mid(74, 2));;
 		CString TargetIpAddr = Destination;
 
 		CString PacketDataLine4by1 = L"Hardware type: " + HardwareTypeStr + L" (" + HardwareTypeNumber + L")";
@@ -1204,20 +1080,20 @@ void CMFCApplication1Dlg::SetDataToPacketData(CString FrameNumber, CString Time,
 	} else if (Protocol == L"ICMP") {
 		PacketDataLine4 = L"Ineternet Control Message Protocol";
 
-		CString ICMPType = Calculate2HexNumber(Packet_Dump_Data.Mid(68, 1), Packet_Dump_Data.Mid(69, 1));
-		CString ICMPCode = Calculate2HexNumber(Packet_Dump_Data.Mid(70, 1), Packet_Dump_Data.Mid(71, 1));
+		CString ICMPType = Data::DataFunction::Calculate2HexNumber(Packet_Dump_Data.Mid(68, 1), Packet_Dump_Data.Mid(69, 1));
+		CString ICMPCode = Data::DataFunction::Calculate2HexNumber(Packet_Dump_Data.Mid(70, 1), Packet_Dump_Data.Mid(71, 1));
 		CString ICMPChecksum = Packet_Dump_Data.Mid(72, 4);
 
-		CString ICMPIdentifierBEDec = Calculate4HexNumber(Packet_Dump_Data.Mid(76, 1), Packet_Dump_Data.Mid(77, 1), Packet_Dump_Data.Mid(78, 1), Packet_Dump_Data.Mid(79, 1));
+		CString ICMPIdentifierBEDec = Data::DataFunction::Calculate4HexNumber(Packet_Dump_Data.Mid(76, 1), Packet_Dump_Data.Mid(77, 1), Packet_Dump_Data.Mid(78, 1), Packet_Dump_Data.Mid(79, 1));
 		CString ICMPIdentifierBEHex = Packet_Dump_Data.Mid(76, 4);
 
-		CString ICMPIdentifierLEDec = Calculate4HexNumber(Packet_Dump_Data.Mid(78, 1), Packet_Dump_Data.Mid(79, 1), Packet_Dump_Data.Mid(76, 1), Packet_Dump_Data.Mid(77, 1));
+		CString ICMPIdentifierLEDec = Data::DataFunction::Calculate4HexNumber(Packet_Dump_Data.Mid(78, 1), Packet_Dump_Data.Mid(79, 1), Packet_Dump_Data.Mid(76, 1), Packet_Dump_Data.Mid(77, 1));
 		CString ICMPIdentifierLEHex = Packet_Dump_Data.Mid(78, 2) + Packet_Dump_Data.Mid(76, 2);
 
-		CString ICMPSquenceNumberBEDec = Calculate4HexNumber(Packet_Dump_Data.Mid(80, 1), Packet_Dump_Data.Mid(81, 1), Packet_Dump_Data.Mid(82, 1), Packet_Dump_Data.Mid(83, 1));
+		CString ICMPSquenceNumberBEDec = Data::DataFunction::Calculate4HexNumber(Packet_Dump_Data.Mid(80, 1), Packet_Dump_Data.Mid(81, 1), Packet_Dump_Data.Mid(82, 1), Packet_Dump_Data.Mid(83, 1));
 		CString ICMPSquenceNumberBEHex = Packet_Dump_Data.Mid(80, 4);
 
-		CString ICMPSquenceNumberLEDec = Calculate4HexNumber(Packet_Dump_Data.Mid(82, 1), Packet_Dump_Data.Mid(83, 1), Packet_Dump_Data.Mid(80, 1), Packet_Dump_Data.Mid(81, 1));
+		CString ICMPSquenceNumberLEDec = Data::DataFunction::Calculate4HexNumber(Packet_Dump_Data.Mid(82, 1), Packet_Dump_Data.Mid(83, 1), Packet_Dump_Data.Mid(80, 1), Packet_Dump_Data.Mid(81, 1));
 		CString ICMPSquenceNumberLEHex = Packet_Dump_Data.Mid(82, 2) + Packet_Dump_Data.Mid(80, 2);
 		CString ICMPData = Packet_Dump_Data.Mid(84, _ttoi(Length));
 		CString ICMPDataLength = CString(std::to_string(ICMPData.GetLength()).c_str());
@@ -1294,8 +1170,8 @@ void CMFCApplication1Dlg::SetDataToHDXEditor(CString Packet_dump_data) {
 			CString PacketAscii2;
 
 			for (int i = 0; i < AsciiAllHex.GetLength(); i += 2) {
-				PacketAscii1 = HexToDec(AsciiAllHex.Mid(i, 1));
-				PacketAscii2 = HexToDec(AsciiAllHex.Mid(i + 1, 1));
+				PacketAscii1 = Data::DataFunction::HexToDec(AsciiAllHex.Mid(i, 1));
+				PacketAscii2 = Data::DataFunction::HexToDec(AsciiAllHex.Mid(i + 1, 1));
 
 				int ten = _ttoi(PacketAscii1) * 16;
 				int one = _ttoi(PacketAscii2);
@@ -1323,49 +1199,23 @@ void CMFCApplication1Dlg::SetDataToHDXEditor(CString Packet_dump_data) {
 	}
 }
 
-CString CMFCApplication1Dlg::GetFlagSetNotSet(CString _Flag) {
-	int Length = _Flag.GetLength();
-
-	if (Length == 3) {
-		return (_Flag.Compare(L"000") == 0) ? L"Not set" : L"Set";
-	}
-	if (Length == 1) {
-		return (_Flag.Compare(L"0") == 0) ? L"Not set" : L"Set";
-	}
-	return L"";
-}
-
-CString CMFCApplication1Dlg::Calculate4HexNumber(CString num1, CString num2, CString num3, CString num4) {
-	return CString(std::to_string((
-		_ttoi(HexToDec(num1)) * 16 * 16 * 16 +
-		_ttoi(HexToDec(num2)) * 16 * 16 +
-		_ttoi(HexToDec(num3)) * 16 +
-		_ttoi(HexToDec(num4)) * 1
-		)).c_str());
-}
-
-CString CMFCApplication1Dlg::Calculate2HexNumber(CString num1, CString num2) {
-	return CString(std::to_string((
-		_ttoi(HexToDec(num1)) * 16 +
-		_ttoi(HexToDec(num2)) * 1
-		)).c_str());
-}
-
-CString CMFCApplication1Dlg::MakeIPAddressV6(CString Aclass, CString Bclass, CString Cclass, CString Dclass, CString Eclass, CString Fclass) {
-	return Aclass + L":" + Bclass + L":" + Cclass + L":" + Dclass + L":" + Eclass + L":" + Fclass;
-}
-
 void CMFCApplication1Dlg::OnBnClickedFilterApplyButton() {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	if (m_PacketCaptrueThread==NULL) {
 		MessageBox(_T("캡쳐된 패킷이 없습니다."), _T("오류"), MB_ICONWARNING);
 		return;
 	}
-
 	UpdateData(TRUE);
-	GetDlgItemText(IDC_EDIT1, Filter);
+	GetDlgItemText(IDC_EDIT1, Filter::FilterFunction::Filter);
 
-	IsFilterApply = TRUE;
+
+	if (!Filter::FilterFunction::FilterValidCheckFunction(Filter::FilterFunction::Filter)) {
+		MessageBox(_T("올바르지 못한 필터 입니다."), _T("오류"), MB_ICONWARNING);
+		return;
+	}
+
+
+	Filter::FilterFunction::IsFilterApply = TRUE;
 
 	if (m_FileReadThread == NULL) {
 		is_FileReadThreadStart = TRUE;
@@ -1380,33 +1230,6 @@ void CMFCApplication1Dlg::OnBnClickedFilterApplyButton() {
 	}
 
 	RemoveMouseMessage();
-}
-
-CString CMFCApplication1Dlg::ArpOpcde(CString OpcodeNumber) {
-	CString OpcodeStr = L"";
-	if (OpcodeNumber.Compare(L"1") == 0) {
-		OpcodeStr = "Request";
-	} else if (OpcodeNumber.Compare(L"2") == 0) {
-		OpcodeStr = "Reply";
-	}
-	return OpcodeStr;
-}
-
-CString CMFCApplication1Dlg::ArpHardwareType(CString HardwareTypeNumber) {
-	CString HardwareTypeStr = L"";
-	if (HardwareTypeNumber.Compare(L"1") == 0) {
-		HardwareTypeStr = "Ethernet";
-	} else if (HardwareTypeNumber.Compare(L"2") == 0) {
-		HardwareTypeStr = "Experimental Ethernet";
-	} else if (HardwareTypeNumber.Compare(L"3") == 0) {
-		HardwareTypeStr = "Amateur Radio";
-	} else if (HardwareTypeNumber.Compare(L"4") == 0) {
-		HardwareTypeStr = "Proteon ProNet Token Ring";
-	} else if (HardwareTypeNumber.Compare(L"5") == 0) {
-		HardwareTypeStr = "IEEE 802.3 networks";
-	}
-
-	return HardwareTypeStr;
 }
 
 // 필터 적용시에 패킷 정보를 파일에서 읽어들이는 쓰레드 함수
@@ -1436,7 +1259,6 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 		pDlg->mutex.unlock();
 
 		std::string str;
-		std::string prev_dump;
 		long long column_cnt = 0;
 
 		if (!pDlg->is_UpdateFilter) {
@@ -1492,7 +1314,6 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 							column_cnt++;
 						} else if (column_cnt > 6) {
 							if (str != "END") {
-								prev_dump = str;
 								CString temp = (CString)str.c_str();
 								temp.Replace(L" ", L"");
 								temp.Replace(L"\n", L"");
@@ -1519,13 +1340,9 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 							CString column_count_str;
 							column_count_str.Format(_T("%d"), column_count + 1);
 
-							if ((TIME != L"" || 
-								  SIP != L"" ||
-								  DIP != L"" ||
-								  LENGTH != L""||
-								  DUMP!=L"")) {
+							if ((TIME != L"" || SIP != L"" || DIP != L"" || LENGTH != L""|| DUMP!=L"")) {
 								if (prev_column_index < _ttoi(NO)) {
-									if ((pDlg->Filter == L"" || pDlg->Filter == pDlg->DefaultFilterValue) && column_count == prev_column_index) {
+									if ((Filter::FilterFunction::Filter == L"" || Filter::FilterFunction::Filter == Filter::FilterFunction::DefaultFilterValue) && column_count == prev_column_index) {
 										prev_column_index = _ttoi(NO);
 										if (column_count == 0 && first_packet_count == 0) {
 											first_packet_count = 1;
@@ -1546,7 +1363,7 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 									} else {
 										prev_column_index = _ttoi(NO);
 										// 필터 적용
-										if (pDlg->CheckFilter(pDlg->Filter, prop_vec)) {
+										if (Filter::FilterFunction::CheckFilter(Filter::FilterFunction::Filter, prop_vec)) {
 											if (column_count == 0 && first_packet_count == 0) {
 												first_packet_count = 1;
 												column_count_str.Format(_T("%d"), column_count + 1);
@@ -1630,7 +1447,7 @@ void CMFCApplication1Dlg::FileSave() {
 UINT CMFCApplication1Dlg::FileOpenThreadFunction(LPVOID _mothod) {
 	CMFCApplication1Dlg* pDlg = (CMFCApplication1Dlg*)AfxGetApp()->m_pMainWnd;
 
-	pDlg->ClearPacketCnt();
+	Data::DataFunction::ClearPacketCnt();
 
 	CString NO, TIME, SIP, DIP, PROTO, LENGTH, INFO, DUMP;
 	char file_name[100];
@@ -1715,13 +1532,13 @@ UINT CMFCApplication1Dlg::FileOpenThreadFunction(LPVOID _mothod) {
 					pDlg->m_PacketCapturedListCtrl.EnsureVisible(nCount - 1, FALSE);
 				}
 
-				PROTO == L"TCP" ? pDlg->tcp_pkt_cnt++ : pDlg->tcp_pkt_cnt;
-				PROTO == L"UDP" ? pDlg->udp_pkt_cnt++ : pDlg->udp_pkt_cnt;
-				PROTO == L"ICMP" ? pDlg->icmp_pkt_cnt++ : pDlg->icmp_pkt_cnt;
-				PROTO == L"ARP" ? pDlg->arp_pkt_cnt++ : pDlg->arp_pkt_cnt;
+				PROTO == L"TCP" ? Data::DataFunction::tcp_pkt_cnt++ : Data::DataFunction::tcp_pkt_cnt;
+				PROTO == L"UDP" ? Data::DataFunction::udp_pkt_cnt++ : Data::DataFunction::udp_pkt_cnt;
+				PROTO == L"ICMP" ? Data::DataFunction::icmp_pkt_cnt++ : Data::DataFunction::icmp_pkt_cnt;
+				PROTO == L"ARP" ? Data::DataFunction::arp_pkt_cnt++ : Data::DataFunction::arp_pkt_cnt;
 
-				pDlg->packet_cnt++;
-				pDlg->ChangeStaticText(pDlg->packet_cnt, pDlg->tcp_pkt_cnt, pDlg->udp_pkt_cnt, pDlg->arp_pkt_cnt, pDlg->icmp_pkt_cnt);
+				Data::DataFunction::packet_cnt++;
+				pDlg->ChangeStaticText(Data::DataFunction::packet_cnt, Data::DataFunction::tcp_pkt_cnt, Data::DataFunction::udp_pkt_cnt, Data::DataFunction::arp_pkt_cnt, Data::DataFunction::icmp_pkt_cnt);
 
 				for (prop_iter = prop_vec.begin(); prop_iter != prop_vec.end(); prop_iter++) {
 					(*prop_iter).Empty();
@@ -1769,402 +1586,6 @@ void CMFCApplication1Dlg::OnClose() {
 	}
 }
 
-
-
-// 필터 체크하는 함수
-BOOL CMFCApplication1Dlg::CheckFilter(CString Filter, std::vector<CString> vec) {
-	// Filter는 입력된 필터 값
-	// vec은 캡쳐된 패킷의 정보
-	BOOL result = FALSE;
-
-	Filter = Filter.TrimLeft();
-	Filter = Filter.TrimRight();
-
-	if (Filter == L"" || Filter == DefaultFilterValue) {
-		result = TRUE;
-		return result;
-	}
-	CString SIP = vec[1];
-	CString DIP = vec[2];
-	CString PROTOCOL = vec[3];
-	CString LENGTH = vec[4];
-	CString PKT_DUMP = vec[6];
-
-	SIP.Replace(L" ", L"");
-	DIP.Replace(L" ", L"");
-	PKT_DUMP.Replace(L" ", L"");
-	PROTOCOL.Replace(L" ", L"");
-
-	CString SPORT = Calculate4HexNumber(PKT_DUMP.Mid(68, 1), PKT_DUMP.Mid(69, 1), PKT_DUMP.Mid(70, 1), PKT_DUMP.Mid(71, 1));
-	CString DPORT = Calculate4HexNumber(PKT_DUMP.Mid(72, 1), PKT_DUMP.Mid(73, 1), PKT_DUMP.Mid(74, 1), PKT_DUMP.Mid(75, 1));
-
-	Filter = Filter.MakeUpper();
-	// Length == 3
-	// Length >= 3
-	// Length <= 3
-	// Length > 3
-	// Length < 3
-	
-	if (Filter.Mid(0, 6)==L"LENGTH") {
-		CString Operate = Filter.Mid(6, 3);
-		Operate.TrimLeft();
-		Operate.TrimRight();
-
-		CString VALUE = Filter.Mid(9, Filter.GetLength()-9);
-		VALUE.TrimLeft();
-		VALUE.TrimRight();
-
-		int value = _ttoi(VALUE);
-		int length = _ttoi(LENGTH);
-
-		if (Operate == L"==") {
-			if (length == value) {
-				result = TRUE;
-			}
-		} else if (Operate == L">=") {
-			if (length >= value) {
-				result = TRUE;
-			}
-		} else if (Operate == L"<=") {
-			if (length <= value) {
-				result = TRUE;
-			}
-		} else if (Operate == L">") {
-			if (length > value) {
-				result = TRUE;
-			}
-		} else if (Operate == "<") {
-			if (length < value) {
-				result = TRUE;
-			}
-		}
-
-		if (result) {
-			return result;
-		}
-	}
-
-
-	int FilterLength = Filter.GetLength();
-
-	if (FilterLength == 3 || FilterLength == 4) {
-		if (Filter == PROTOCOL) {
-			result = TRUE;	
-		} else {
-			result = FALSE;
-		}
-
-		return result;
-	}
-
-	CString SplitOPor = L"OR";
-	CString SplitOPand = L"AND";
-	int op_cnt = GetCountStr(Filter, SplitOPor);
-
-	std::vector<int> index_vec;
-
-	index_vec = GetCountStrIdx(Filter, SplitOPor);
-
-	std::vector<CString> split_vec;
-	split_vec = SplitStr(Filter, SplitOPor);
-
-	std::vector<CString>::iterator split_iter;
-
-	for(split_iter = split_vec.begin(); split_iter != split_vec.end(); split_iter++) {
-		if (*split_iter == PROTOCOL) {
-			result = TRUE;
-			return result;
-		}
-	}
-
-	/*
-	포트번호로 시작
-	port == 1    -   9
-	port == 65536    -  13
-	port ==  1 or ip == 0.0.0.0   - 26
-	port == 65536 and ip == 123.123.123.123  - 39
-
-	아이피로 시작
-	ip == 0.0.0.0    - 13
-	ip == 123.123.123.123  - 21
-	ip == 0.0.0.0 or port == 1   - 26
-	ip == 123.123.123.123 and port == 65536  - 39
-	*/
-
-	std::vector<CString> FilterSingleVec;
-	std::vector<CString> FilterOrVec;
-	std::vector<CString> FilterAndVec;
-	std::vector<CString> FilterOrAndVec;
-	std::vector<CString> FilterAndAndVec;
-
-	CString SplitIP = Filter.Mid(0, 6);
-	CString SplitPort = Filter.Mid(0, 8);
-	CString SplitBracket = Filter.Mid(0, 1);
-	CString SplitProtocol;
-
-	int OrIndex = Filter.Find(L" OR ");
-	int AndIndex = Filter.Find(L" AND ");
-
-	if (SplitIP == L"IP == ") {
-		if (FilterLength >= 13 && FilterLength <=21) {
-			SplitIP = Filter.Mid(6, FilterLength -6);
-			FilterSingleVec.push_back(SplitIP);
-		} else if (FilterLength >= 26 && FilterLength <= 39) {
-			if (OrIndex !=-1&& AndIndex ==-1) {
-				SplitIP = Filter.Mid(0, OrIndex);
-				SplitPort = Filter.Mid(OrIndex + 4, FilterLength - OrIndex - 4);
-
-				SplitIP = SplitIP.Mid(6, SplitIP.GetLength()-6);
-				SplitPort = SplitPort.Mid(8, SplitPort.GetLength() - 8);
-				FilterOrVec.push_back(SplitIP);
-				FilterOrVec.push_back(SplitPort);
-			} else if (OrIndex == -1 && AndIndex != -1) {
-				SplitIP = Filter.Mid(0, AndIndex);
-				SplitPort = Filter.Mid(AndIndex + 5, FilterLength - AndIndex - 5);
-
-				SplitIP = SplitIP.Mid(6, SplitIP.GetLength() - 6);
-				SplitPort = SplitPort.Mid(8, SplitPort.GetLength() - 8);
-				FilterAndVec.push_back(SplitIP);
-				FilterAndVec.push_back(SplitPort);
-			}
-		} else {
-			result = FALSE;
-		}
-	} else if (SplitPort == L"PORT == ") {
-		if (FilterLength >= 9 && FilterLength <= 13) {
-			SplitPort = Filter.Mid(8, FilterLength - 8);
-			FilterSingleVec.push_back(SplitPort);
-		} else if (FilterLength >= 26 && FilterLength <= 39) {
-			if (OrIndex != -1 && AndIndex == -1) {
-				SplitPort = Filter.Mid(0, OrIndex);
-				SplitIP = Filter.Mid(OrIndex + 4, FilterLength - OrIndex - 4);
-
-				SplitPort = SplitPort.Mid(8, SplitPort.GetLength() - 8);
-				SplitIP = SplitIP.Mid(6, SplitIP.GetLength() - 6);
-				FilterOrVec.push_back(SplitIP);
-				FilterOrVec.push_back(SplitPort);
-			} else if (OrIndex == -1 && AndIndex != -1) {
-				SplitPort = Filter.Mid(0, AndIndex);
-				SplitIP = Filter.Mid(AndIndex + 5, FilterLength - AndIndex - 5);
-
-				SplitPort = SplitPort.Mid(8, SplitPort.GetLength() - 8);
-				SplitIP = SplitIP.Mid(6, SplitIP.GetLength() - 6);
-				FilterAndVec.push_back(SplitIP);
-				FilterAndVec.push_back(SplitPort);
-			}
-		} else {
-			result = FALSE;
-		}
-	} else if (SplitBracket==L"(") {
-		/*
-		(ip == 0.0.0.0 or port == 1) and tcp  - 36
-		(ip == 123.123.123.123 and port == 65536) and icmp  - 50
-
-		(port == 1 or ip == 0.0.0.0) and tcp  - 36
-		(port == 65536 and ip == 123.123.123.123) and icmp   - 50
-		*/
-		int EndBracketIndex = Filter.Find(L")");
-
-		if (FilterLength >= 36 && FilterLength <= 50) {
-			if (SplitIP == L"(IP ==") {
-				CString BracketBlock = Filter.Mid(0, EndBracketIndex);
-				CString ProtocolBlock = Filter.Mid(EndBracketIndex + 1, Filter.GetLength());
-	
-				SplitProtocol = ProtocolBlock.Mid(5, ProtocolBlock.GetLength());
-
-				BracketBlock.Replace(L"(", L"");
-				BracketBlock.Replace(L")", L"");
-
-				int BrracketBlockLength = BracketBlock.GetLength();
-				int BracketOrIndex = BracketBlock.Find(L" OR ");
-				int BracketAndIndex = BracketBlock.Find(L" AND ");
-
-				if (BracketOrIndex != -1 && BracketAndIndex == -1) {
-					SplitIP = BracketBlock.Mid(0, BracketOrIndex);
-					SplitPort = BracketBlock.Mid(BracketOrIndex + 4, BrracketBlockLength - BracketOrIndex - 4);
-
-					SplitPort = SplitPort.Mid(8, SplitPort.GetLength() - 8);
-					SplitIP = SplitIP.Mid(6, SplitIP.GetLength() - 6);
-
-					FilterOrAndVec.push_back(SplitIP);
-					FilterOrAndVec.push_back(SplitPort);
-					FilterOrAndVec.push_back(SplitProtocol);
-				} else if (BracketOrIndex == -1 && BracketAndIndex != -1) {
-					SplitIP = BracketBlock.Mid(0, BracketAndIndex);
-					SplitPort = BracketBlock.Mid(BracketAndIndex + 5, FilterLength - BracketAndIndex - 5);
-
-					SplitIP = SplitIP.Mid(6, SplitIP.GetLength() - 6);
-					SplitPort = SplitPort.Mid(8, SplitPort.GetLength() - 8);
-					FilterAndAndVec.push_back(SplitIP);
-					FilterAndAndVec.push_back(SplitPort);
-					FilterAndAndVec.push_back(SplitProtocol);
-				}
-			} else if (SplitPort == L"(PORT ==") {
-				CString BracketBlock = Filter.Mid(0, EndBracketIndex);
-				CString ProtocolBlock = Filter.Mid(EndBracketIndex + 1, Filter.GetLength());
-	
-				SplitProtocol = ProtocolBlock.Mid(5, ProtocolBlock.GetLength());
-
-				BracketBlock.Replace(L"(", L"");
-				BracketBlock.Replace(L")", L"");
-
-				int BrracketBlockLength = BracketBlock.GetLength();
-				int BracketOrIndex = BracketBlock.Find(L" OR ");
-				int BracketAndIndex = BracketBlock.Find(L" AND ");
-
-				if (BracketOrIndex != -1 && BracketAndIndex == -1) {
-					SplitPort = BracketBlock.Mid(0, BracketOrIndex);
-					SplitIP = BracketBlock.Mid(BracketOrIndex + 4, BrracketBlockLength - BracketOrIndex - 4);
-
-					SplitPort = SplitPort.Mid(8, SplitPort.GetLength() - 8);
-					SplitIP = SplitIP.Mid(6, SplitIP.GetLength() - 6);
-
-					FilterOrAndVec.push_back(SplitIP);
-					FilterOrAndVec.push_back(SplitPort);
-					FilterOrAndVec.push_back(SplitProtocol);
-				} else if (BracketOrIndex == -1 && BracketAndIndex != -1) {
-					SplitPort = BracketBlock.Mid(0, BracketAndIndex);
-					SplitIP = BracketBlock.Mid(BracketAndIndex + 5, FilterLength - BracketAndIndex - 5);
-
-					SplitIP = SplitIP.Mid(6, SplitIP.GetLength() - 6);
-					SplitPort = SplitPort.Mid(8, SplitPort.GetLength() - 8);
-					FilterAndAndVec.push_back(SplitIP);
-					FilterAndAndVec.push_back(SplitPort);
-					FilterAndAndVec.push_back(SplitProtocol);
-				}
-			}
-		}
-
-
-	} else {
-		result = FALSE;
-	}
-
-	if (!FilterSingleVec.empty()) {
-		if (SIP == SplitIP || DIP == SplitIP || SPORT == SplitPort || DPORT == SplitPort) {
-			result = TRUE;
-		} else {
-			result = FALSE;
-		}
-	} else if (!FilterOrVec.empty()) {
-		if (SIP == SplitIP || DIP == SplitIP || SPORT == SplitPort || DPORT == SplitPort) {
-			result = TRUE;
-		} else {
-			result = FALSE;
-		}
-	} else if (!FilterAndVec.empty()) {
-		if (SIP == SplitIP && SPORT == SplitPort) {
-			result = TRUE;
-		} else if (SIP == SplitIP && DPORT == SplitPort) {
-			result = TRUE;
-		} else if (DIP == SplitIP && SPORT == SplitPort) {
-			result = TRUE;
-		} else if (DIP == SplitIP && DPORT == SplitPort) {
-			result = TRUE;
-		} else {
-			result = FALSE;
-		}
-	} else if (!FilterOrAndVec.empty()) {
-		if (SIP == SplitIP || DIP == SplitIP || SPORT == SplitPort || DPORT == SplitPort) {
-			if (PROTOCOL == SplitProtocol) {
-				result = TRUE;
-			}
-		} else {
-			result = FALSE;
-		}
-	} else if (!FilterAndAndVec.empty()) {
-		if (SIP == SplitIP && SPORT == SplitPort) {
-			result = TRUE;
-		} else if (SIP == SplitIP && DPORT == SplitPort) {
-			result = TRUE;
-		} else if (DIP == SplitIP && SPORT == SplitPort) {
-			result = TRUE;
-		} else if (DIP == SplitIP && DPORT == SplitPort) {
-			result = TRUE;
-		} else {
-			result = FALSE;
-		}
-
-		if (result) {
-			if (PROTOCOL == SplitProtocol) {
-				result = TRUE;
-			} else {
-				result = FALSE;
-			}
-		}
-	}
-
-	return result;
-}
-
-
-
-int GetCountStr(CString target_str, CString target_find_str) {
-	target_str = target_str.MakeUpper();
-	target_str = target_str.TrimLeft();
-	target_str = target_str.TrimRight();
-
-	int op = 0;
-	int op_cnt = 0;
-
-	op = target_str.Find(target_find_str);
-	while (op != -1) {
-		op_cnt++;
-		op = target_str.Find(target_find_str, op + 1);
-	}
-
-	return op_cnt;
-}
-
-std::vector<int> GetCountStrIdx(CString target_str, CString target_find_str) {
-	std::vector<int> result_vec;
-
-	target_str = target_str.MakeUpper();
-	target_str = target_str.TrimLeft();
-	target_str = target_str.TrimRight();
-
-	int op = 0;
-
-	op = target_str.Find(target_find_str);
-	while (op != -1) {
-		result_vec.push_back(op);
-		op = target_str.Find(target_find_str, op + 1);
-	}
-
-	return result_vec;
-}
-
-
-std::vector<CString> SplitStr(CString target_str, CString target_find_str) {
-	std::vector<CString> result_vec;
-	int op_cnt = GetCountStr(target_str, target_find_str);
-	std::vector<int> index_vec = GetCountStrIdx(target_str, target_find_str);
-
-	int start_pos = 0;
-	int end_pos = 0;
-
-	if (!index_vec.empty()) {
-		end_pos = index_vec[0];
-	}
-
-	for (int i = 0; i < op_cnt; i++) {
-		CString tempStr = target_str.Mid(start_pos, end_pos - start_pos);
-		tempStr = tempStr.TrimLeft();
-		tempStr = tempStr.TrimRight();
-		result_vec.push_back(tempStr);
-		start_pos = end_pos + target_find_str.GetLength();
-		if (i == op_cnt - 1) {
-			end_pos = target_str.GetLength();
-			result_vec.push_back(target_str.Mid(start_pos, end_pos - start_pos).TrimLeft().TrimRight());
-		} else {
-			end_pos = index_vec[i + 1];
-		}
-	}
-
-
-	return result_vec;
-}
-
 BOOL CMFCApplication1Dlg::RemoveMouseMessage(void) {
 	MSG msg;
 	while (PeekMessage(&msg, NULL, WM_LBUTTONDOWN, WM_MBUTTONDBLCLK, PM_REMOVE));
@@ -2186,7 +1607,7 @@ void CMFCApplication1Dlg::OnBnClickedCheck2() {
 			pButton->EnableWindow(checker);
 			GetDlgItem(IDC_EDIT1)->EnableWindow(checker);
 		}
-		m_FilterEditCtrl.SetWindowTextW(DefaultFilterValue);
+		m_FilterEditCtrl.SetWindowTextW(Filter::FilterFunction::DefaultFilterValue);
 	}
 }
 
@@ -2209,29 +1630,5 @@ void CMFCApplication1Dlg::SetCursorPosition() {
 	CString Question = CursorPositionLast ? L"화면을 이동하시지 않겠습니까?" : L"화면을 마지막 패킷으로 이동하시겠습니까?";
 	if (MessageBox(Question, _T("커서 위치"), MB_YESNO | MB_ICONQUESTION) == IDYES) {
 		CursorPositionLast = !CursorPositionLast;
-	}
-}
-
-
-BOOL CMFCApplication1Dlg::FilterValidCheckFunction(CString Filter) {
-	CString filter_copy = Filter;
-	BOOL result = FALSE;
-	
-	// 필터 유효값 확인
-
-	return result;
-}
-
-BOOL CMFCApplication1Dlg::IsNumeric(CString value) {
-	const int length_of_str = value.GetLength();
-	if (length_of_str == 0) {
-		return FALSE;
-	} else {
-		for (int i = 0; i < length_of_str; i++) {
-			if (!isdigit(value.Mid(i, 1).GetAt(0))) {
-				return FALSE;
-			}
-		}
-		return TRUE;
 	}
 }
