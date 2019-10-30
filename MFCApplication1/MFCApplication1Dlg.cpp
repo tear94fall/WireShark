@@ -1358,24 +1358,26 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 							column_count_str.Format(_T("%d"), column_count + 1);
 
 							if ((TIME != L"" || SIP != L"" || DIP != L"" || LENGTH != L""|| DUMP!=L"")) {
-								if (prev_column_index < _ttoi(NO) && column_count_str == NO) {
+								if (prev_column_index < _ttoi(NO)) {
 									if ((Filter::FilterFunction::Filter == L"" || Filter::FilterFunction::Filter == Filter::FilterFunction::DefaultFilterValue) && column_count == prev_column_index) {
-										prev_column_index = _ttoi(NO);
-										if (column_count == 0 && first_packet_count == 0) {
-											first_packet_count = 1;
-											column_count_str.Format(_T("%d"), column_count + 1);
-											pDlg->SetDataToPacketData(column_count_str, TIME, SIP, DIP, PROTO, LENGTH, NULL, DUMP);
-											pDlg->SetDataToHDXEditor(DUMP);
-										}
-										for (int j = 1; j < 8; j++) {
-											if (j == 1) {
-												pDlg->m_PacketCapturedListCtrl.InsertItem(column_count, column_count_str);
+										if (column_count_str == NO) {
+											prev_column_index = _ttoi(NO);
+											if (column_count == 0 && first_packet_count == 0) {
+												first_packet_count = 1;
+												column_count_str.Format(_T("%d"), column_count + 1);
+												pDlg->SetDataToPacketData(column_count_str, TIME, SIP, DIP, PROTO, LENGTH, NULL, DUMP);
+												pDlg->SetDataToHDXEditor(DUMP);
 											}
-											pDlg->m_PacketCapturedListCtrl.SetItem(column_count, j, LVIF_TEXT, prop_vec[j - 1], NULL, NULL, NULL, NULL);
-										}
-										if (pDlg->CursorPositionLast) {
-											int nCount = pDlg->m_PacketCapturedListCtrl.GetItemCount();
-											pDlg->m_PacketCapturedListCtrl.EnsureVisible(nCount - 1, FALSE);
+											for (int j = 1; j < 8; j++) {
+												if (j == 1) {
+													pDlg->m_PacketCapturedListCtrl.InsertItem(column_count, column_count_str);
+												}
+												pDlg->m_PacketCapturedListCtrl.SetItem(column_count, j, LVIF_TEXT, prop_vec[j - 1], NULL, NULL, NULL, NULL);
+											}
+											if (pDlg->CursorPositionLast) {
+												int nCount = pDlg->m_PacketCapturedListCtrl.GetItemCount();
+												pDlg->m_PacketCapturedListCtrl.EnsureVisible(nCount - 1, FALSE);
+											}
 										}
 									} else {
 										prev_column_index = _ttoi(NO);
