@@ -1266,7 +1266,7 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 	int first_packet_count = 0;
 	pDlg->m_FilterThreadEnd = TRUE;
 	while (pDlg->is_FileReadThreadStart) {
-		skip:
+	skip:
 		pDlg->mutex.lock();
 		is.open(pDlg->file_name_write, std::ios::in);
 		is.seekg(0, is.end);
@@ -1283,6 +1283,10 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 			first_packet_count = 0;
 			start_pos = 0;
 			is.close();
+
+			pDlg->m_PacketCapturedListCtrl.DeleteAllItems();
+			pDlg->m_PacketDataTreeCtrl.DeleteAllItems();
+			pDlg->m_PacketDumpListCtrl.DeleteAllItems();
 
 			goto skip;
 		}
@@ -1310,6 +1314,10 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 						first_packet_count = 0;
 						start_pos = 0;
 						is.close();
+
+						pDlg->m_PacketCapturedListCtrl.DeleteAllItems();
+						pDlg->m_PacketDataTreeCtrl.DeleteAllItems();
+						pDlg->m_PacketDumpListCtrl.DeleteAllItems();
 
 						goto skip;
 					}
@@ -1350,7 +1358,7 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 							column_count_str.Format(_T("%d"), column_count + 1);
 
 							if ((TIME != L"" || SIP != L"" || DIP != L"" || LENGTH != L""|| DUMP!=L"")) {
-								if (prev_column_index < _ttoi(NO)) {
+								if (prev_column_index < _ttoi(NO) && column_count_str == NO) {
 									if ((Filter::FilterFunction::Filter == L"" || Filter::FilterFunction::Filter == Filter::FilterFunction::DefaultFilterValue) && column_count == prev_column_index) {
 										prev_column_index = _ttoi(NO);
 										if (column_count == 0 && first_packet_count == 0) {
