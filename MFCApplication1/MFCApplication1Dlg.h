@@ -62,6 +62,7 @@ public:
 	CString destionation_ip;
 	CString Protocol;
 	CString Length;
+	CString Info;
 	std::string packet_dump_data_string;  
 
 	int end_pos = 0, start_pos = 0;

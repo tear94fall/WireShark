@@ -358,6 +358,8 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 				pDlg->Protocol = L"TCP";
 				pDlg->tcp_hdr = (Protocol::TCP::tcp_header*)((u_char*)pDlg->ip_hdr + pDlg->ip_len);
 
+				pDlg->Info = (CString)(std::to_string(htons(pDlg->tcp_hdr->sport)).c_str()) + " -> " + (CString)(std::to_string(ntohs(pDlg->tcp_hdr->dport)).c_str());
+
 				int column_count = pDlg->m_PacketCapturedListCtrl.GetItemCount();
 
 				CString column_count_str;
@@ -369,7 +371,7 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 				pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 3, LVIF_TEXT, pDlg->destionation_ip, NULL, NULL, NULL, NULL);
 				pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 4, LVIF_TEXT, pDlg->Protocol, NULL, NULL, NULL, NULL);
 				pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 5, LVIF_TEXT, pDlg->Length, NULL, NULL, NULL, NULL);
-				pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 6, LVIF_TEXT, (CString)(std::to_string(htons(pDlg->tcp_hdr->sport)).c_str()) + " -> " + (CString)(std::to_string(ntohs(pDlg->tcp_hdr->dport)).c_str()), NULL, NULL, NULL, NULL);
+				pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 6, LVIF_TEXT, pDlg->Info, NULL, NULL, NULL, NULL);
 
 				++Data::DataFunction::tcp_pkt_cnt;
 				++Data::DataFunction::packet_cnt;
@@ -379,6 +381,8 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 				pDlg->Protocol = L"UDP";
 				pDlg->udp_hdr = (Protocol::UDP::udp_header*)((u_char*)pDlg->ip_hdr + pDlg->ip_len);
 
+				pDlg->Info = (CString)(std::to_string(htons(pDlg->udp_hdr->sport)).c_str()) + " -> " + (CString)(std::to_string(ntohs(pDlg->udp_hdr->dport)).c_str());
+
 				int column_count = pDlg->m_PacketCapturedListCtrl.GetItemCount();
 
 				CString column_count_str;
@@ -390,7 +394,7 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 				pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 3, LVIF_TEXT, pDlg->destionation_ip, NULL, NULL, NULL, NULL);
 				pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 4, LVIF_TEXT, pDlg->Protocol, NULL, NULL, NULL, NULL);
 				pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 5, LVIF_TEXT, pDlg->Length, NULL, NULL, NULL, NULL);
-				pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 6, LVIF_TEXT, (CString)(std::to_string(htons(pDlg->udp_hdr->sport)).c_str()) + " -> " + (CString)(std::to_string(ntohs(pDlg->udp_hdr->dport)).c_str()), NULL, NULL, NULL, NULL);
+				pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 6, LVIF_TEXT, pDlg->Info, NULL, NULL, NULL, NULL);
 
 				++Data::DataFunction::udp_pkt_cnt;
 				++Data::DataFunction::packet_cnt;
@@ -398,6 +402,8 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 				pDlg->Protocol = L"ICMP";
 				pDlg->icmp_hdr = (Protocol::ICMP::icmp_header*)(pDlg->ip_hdr + pDlg->ip_len);
 
+				pDlg->Info = (CString)(std::to_string(pDlg->icmp_hdr->code).c_str());
+
 				int column_count = pDlg->m_PacketCapturedListCtrl.GetItemCount();
 
 				CString column_count_str;
@@ -409,7 +415,7 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 				pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 3, LVIF_TEXT, pDlg->destionation_ip, NULL, NULL, NULL, NULL);
 				pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 4, LVIF_TEXT, pDlg->Protocol, NULL, NULL, NULL, NULL);
 				pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 5, LVIF_TEXT, pDlg->Length, NULL, NULL, NULL, NULL);
-				pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 6, LVIF_TEXT, (CString)(std::to_string(pDlg->icmp_hdr->code).c_str()), NULL, NULL, NULL, NULL);
+				pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 6, LVIF_TEXT, pDlg->Info, NULL, NULL, NULL, NULL);
 
 
 				++Data::DataFunction::icmp_pkt_cnt;
@@ -422,7 +428,7 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 		} else if (ntohs(pDlg->eth_hdr->frame_type) == 0x0806) {
 			pDlg->Protocol = L"ARP";
 			pDlg->arp_hdr = (struct Protocol::ARP::arp_header*)(pkt_data + 14);
-			
+
 			int column_count = pDlg->m_PacketCapturedListCtrl.GetItemCount();
 
 			CString column_count_str;
@@ -471,13 +477,14 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 			sprintf(target_hw_addr, "%02x", pDlg->arp_hdr->tha[5]);
 			target_hw_adr += target_hw_addr;
 
+			pDlg->Info = sender_hw_addr + L" -> " + target_hw_adr;
 
 			pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 1, LVIF_TEXT, pDlg->CurrentTimeStr, NULL, NULL, NULL, NULL);
 			pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 2, LVIF_TEXT, pDlg->source_ip, NULL, NULL, NULL, NULL);
 			pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 3, LVIF_TEXT, pDlg->destionation_ip, NULL, NULL, NULL, NULL);
 			pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 4, LVIF_TEXT, pDlg->Protocol, NULL, NULL, NULL, NULL);
 			pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 5, LVIF_TEXT, pDlg->Length, NULL, NULL, NULL, NULL);
-			pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 6, LVIF_TEXT, sender_hw_addr + L" -> " + target_hw_adr, NULL, NULL, NULL, NULL);
+			pDlg->m_PacketCapturedListCtrl.SetItem(column_count, 6, LVIF_TEXT, pDlg->Info, NULL, NULL, NULL, NULL);
 
 			++Data::DataFunction::arp_pkt_cnt;
 			++Data::DataFunction::packet_cnt;
@@ -547,6 +554,12 @@ void CMFCApplication1Dlg::FileWriterFunction(char* file_name) {
 		std::string s2(pszConvertedAnsiString2);
 		std::string dip = s2;
 
+		CT2CA pszConvertedAnsiStringCurrentTimeStr(CurrentTimeStr);
+		std::string strCurrentTimeStr(pszConvertedAnsiStringCurrentTimeStr);
+
+		CT2CA pszConvertedAnsiStringInfo(Info);
+		std::string strInfo(pszConvertedAnsiStringInfo);
+
 		std::string protocol;
 		if (ntohs(eth_hdr->frame_type) == 0x0800) {
 			if (ip_hdr->proto == IPPROTO_TCP) {
@@ -570,12 +583,12 @@ void CMFCApplication1Dlg::FileWriterFunction(char* file_name) {
 		mutex.lock();
 		std::ofstream out(file_name_temp.c_str(), std::ios::app | std::ios::out);
 		out << Data::DataFunction::packet_cnt << "\n";
-		out << Data::DataFunction::GetCurrentTimeStr() << "\n";
+		out << strCurrentTimeStr << "\n";
 		out << sip << " \n";
 		out << dip << " \n";
 		out << protocol << " \n";
 		out << m_header->caplen << " \n";
-		out << "Info" << " \n";
+		out << strInfo << " \n";
 
 
 		for (int i = 0; i < packet_size; i++) {
@@ -1213,19 +1226,18 @@ void CMFCApplication1Dlg::OnBnClickedFilterApplyButton() {
 		MessageBox(_T("캡쳐된 패킷이 없습니다."), _T("오류"), MB_ICONWARNING);
 		return;
 	}
-	//UpdateData(TRUE);
-	GetDlgItemText(IDC_EDIT1, Filter::FilterFunction::Filter);
 
+	CString temp_filter;
+	GetDlgItemText(IDC_EDIT1, temp_filter);
 
-	if (!Filter::FilterFunction::FilterValidCheckFunction(Filter::FilterFunction::Filter)) {
+	if (!Filter::FilterFunction::FilterValidCheckFunction(temp_filter)) {
 		MessageBox(_T("올바르지 못한 필터 입니다."), _T("오류"), MB_ICONWARNING);
 		if (Filter::FilterFunction::SuccessFilter == L"") {
 			Filter::FilterFunction::SuccessFilter = Filter::FilterFunction::DefaultFilterValue;
 		}
-		Filter::FilterFunction::Filter = Filter::FilterFunction::SuccessFilter;
 		m_FilterEditCtrl.SetWindowTextW(Filter::FilterFunction::SuccessFilter);
 	} else {
-
+		Filter::FilterFunction::Filter = temp_filter;
 		Filter::FilterFunction::IsFilterApply = TRUE;
 
 		if (m_FileReadThread == NULL) {
@@ -1349,7 +1361,7 @@ UINT CMFCApplication1Dlg::FileReadThreadFunction(LPVOID _mothod) {
 						column_cnt++;
 
 						if (str == "END") {
-							std::vector<CString> prop_vec{ TIME, SIP, DIP, PROTO, LENGTH, NO, DUMP };
+							std::vector<CString> prop_vec{ TIME, SIP, DIP, PROTO, LENGTH, INFO, DUMP };
 							std::vector<CString>::iterator prop_iter;
 
 							int column_count = pDlg->m_PacketCapturedListCtrl.GetItemCount();
@@ -1520,7 +1532,7 @@ UINT CMFCApplication1Dlg::FileOpenThreadFunction(LPVOID _mothod) {
 				prop_vec.push_back(DIP);
 				prop_vec.push_back(PROTO);
 				prop_vec.push_back(LENGTH);
-				prop_vec.push_back(NO);
+				prop_vec.push_back(INFO);
 				prop_vec.push_back(DUMP);
 
 
