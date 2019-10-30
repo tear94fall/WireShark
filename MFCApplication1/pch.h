@@ -27,6 +27,7 @@
 #include <fstream>
 #include <mutex>
 #include <regex>
+#include <queue>
 
 #include "Filter.hpp"
 #include "Data.hpp"

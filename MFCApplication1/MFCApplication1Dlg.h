@@ -70,6 +70,8 @@ public:
 	CString file_name_read;
 	char* file_name_write = "temp.dat";
 	CString file_name_cstr = L"temp.dat";
+	std::vector<CString> FileList;
+
 	bool is_file_save = false;
 	int packet_count_per_file = 500;
 
@@ -96,7 +98,7 @@ public:
 	BOOL is_PktCapThreadStart = FALSE;
 	BOOL is_FileReadThreadStart = FALSE;
 	BOOL is_FileOpenThreadStart = FALSE;
-
+	BOOL m_FilterThreadEnd = FALSE;
 
 	NetworkInterfaceDlg netInterfaceDlg;
 	CString m_strSelectedNetworkInterface;
