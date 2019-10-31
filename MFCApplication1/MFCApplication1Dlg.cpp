@@ -134,7 +134,8 @@ BOOL CMFCApplication1Dlg::OnInitDialog() {
 
 	const int packet_list_column_count = 9;
 	LPWSTR column_name[packet_list_column_count] = { L"No",L"Time", L"Source", L"Destination", L"Protocol", L"Length", L"Info" ,L"Dump Data" };
-	double column_width[packet_list_column_count] = { 0.1, 0.17, 0.15, 0.15, 0.075, 0.075, 0.25, 0 };
+	//double column_width[packet_list_column_count] = { 0.1, 0.17, 0.15, 0.15, 0.075, 0.075, 0.25, 0 };
+	double column_width[packet_list_column_count] = { 0.125, 0.27, 0.2, 0.2, 0.075, 0.1, 0, 0 };
 
 	for (int i = 0; i < packet_list_column_count - 1; i++) {
 		add_column.pszText = column_name[i];
@@ -580,7 +581,6 @@ void CMFCApplication1Dlg::FileWriterFunction(char* file_name) {
 			dip = s2;
 		}
 		isFileWriteEnd = FALSE;
-		mutex.lock();
 		std::ofstream out(file_name_temp.c_str(), std::ios::app | std::ios::out);
 		out << Data::DataFunction::packet_cnt << "\n";
 		out << strCurrentTimeStr << "\n";
@@ -589,7 +589,6 @@ void CMFCApplication1Dlg::FileWriterFunction(char* file_name) {
 		out << protocol << " \n";
 		out << m_header->caplen << " \n";
 		out << strInfo << " \n";
-
 
 		for (int i = 0; i < packet_size; i++) {
 			c = m_pkt_data[i];
@@ -604,7 +603,6 @@ void CMFCApplication1Dlg::FileWriterFunction(char* file_name) {
 
 		isFileWriteEnd = TRUE;
 		out.close();
-		mutex.unlock();
 	}
 }
 
