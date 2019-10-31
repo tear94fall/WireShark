@@ -515,6 +515,33 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 		}
 	}
 
+	if (ntohs(pDlg->eth_hdr->frame_type) == 0x0806) {
+		pDlg->arp_hdr = (struct Protocol::ARP::arp_header*)(pkt_data + 14);
+
+		char source_ip_addr[4];
+		char target_ip_addr[4];
+
+		pDlg->source_ip = "";
+		pDlg->destionation_ip = "";
+
+		// ip 주소
+		for (int i = 0; i < 3; i++) {
+			std::string temp_sip = std::to_string(pDlg->arp_hdr->spa[i]);
+			temp_sip += ".";
+			pDlg->source_ip += temp_sip.c_str();
+
+			std::string temp_dip = std::to_string(pDlg->arp_hdr->tpa[i]);
+			temp_dip += ".";
+			pDlg->destionation_ip += temp_dip.c_str();
+		}
+
+		std::string temp_sip = std::to_string(pDlg->arp_hdr->spa[3]);
+		pDlg->source_ip += temp_sip.c_str();
+
+		std::string temp_dip = std::to_string(pDlg->arp_hdr->tpa[3]);
+		pDlg->destionation_ip += temp_dip.c_str();
+	}
+
 	pDlg->ChangeStaticText(Data::DataFunction::packet_cnt, Data::DataFunction::tcp_pkt_cnt, Data::DataFunction::udp_pkt_cnt, Data::DataFunction::arp_pkt_cnt, Data::DataFunction::icmp_pkt_cnt);
 	pDlg->FileWriterFunction(pDlg->file_name_write);
 
@@ -674,16 +701,20 @@ void CMFCApplication1Dlg::OnBnClickedCapturePauseButton() {
 		MessageBox(_T("캡처가 시작되지 않았습니다."), _T("오류"), MB_ICONWARNING);
 	} else {
 		if (m_PacketCaptureThreadWorkType == RUNNING) {
-			pause_button.SetWindowText(L"Resume");
-			m_PacketCaptrueThread->SuspendThread();
-			if (m_PacketCaptrueThread == NULL) {
-				m_PacketCaptrueThread;
+			if (MessageBox(_T("캡처를 멈추시겠습니까?"), _T("캡처 중지"), MB_YESNO | MB_ICONQUESTION) == IDYES) {
+				pause_button.SetWindowText(L"Resume");
+				m_PacketCaptrueThread->SuspendThread();
+				if (m_PacketCaptrueThread == NULL) {
+					m_PacketCaptrueThread;
+				}
+				m_PacketCaptureThreadWorkType = PAUSE;
 			}
-			m_PacketCaptureThreadWorkType = PAUSE;
 		} else {
-			pause_button.SetWindowText(L"Pause");
-			m_PacketCaptrueThread->ResumeThread();
-			m_PacketCaptureThreadWorkType = RUNNING;
+			if (MessageBox(_T("캡처를 다시 시작 하시겠습니까?"), _T("캡처 다시 시작"), MB_YESNO | MB_ICONQUESTION) == IDYES) {
+				pause_button.SetWindowText(L"Pause");
+				m_PacketCaptrueThread->ResumeThread();
+				m_PacketCaptureThreadWorkType = RUNNING;
+			}
 		}
 	}
 }
