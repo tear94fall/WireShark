@@ -90,6 +90,7 @@ public:
 	static UINT FileOpenThreadFunction(LPVOID _mothod);
 
 	BOOL isFileWriteEnd = FALSE;
+	BOOL m_FileOpenThreadEnd = FALSE;
 
 	std::mutex mutex;
 	BOOL is_UpdateFilter = FALSE;

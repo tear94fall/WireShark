@@ -189,6 +189,10 @@ void Data::DataFunction::ClearPacketCnt() {
 }
 
 BOOL Data::DataFunction::IsNumeric(CString value) {
+	if (_ttoi(value) < 0 || _ttoi(value) > 65535) {
+		return FALSE;
+	}
+
 	const int length_of_str = value.GetLength();
 	if (length_of_str == 0) {
 		return FALSE;

@@ -1662,6 +1662,8 @@ void CMFCApplication1Dlg::OnBnClickedCheck2() {
 	CButton* pButton;
 
 	m_PacketCapturedListCtrl.DeleteAllItems();
+	m_PacketDataTreeCtrl.DeleteAllItems();
+	m_PacketDumpListCtrl.DeleteAllItems();
 
 	int button_array[4] = { IDC_BUTTON1, IDC_BUTTON2, IDC_BUTTON3, IDC_BUTTON4 };
 
