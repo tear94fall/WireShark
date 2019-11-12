@@ -1,16 +1,2 @@
-﻿  MFCApplication1Dlg.cpp
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(5,10): warning C4652:  DLL 라이브러리(/MD)' 컴파일러 옵션이 미리 컴파일된 헤더와 일치하지 않습니다. 현재 명령줄 옵션이 미리 컴파일된 헤더에 정의된 것을 재정의합니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(5,10): warning C4652:  디버그 DLL 라이브러리(/MDd)' 컴파일러 옵션이 미리 컴파일된 헤더와 일치하지 않습니다. 현재 명령줄 옵션이 미리 컴파일된 헤더에 정의된 것을 재정의합니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(5,1): warning C4651:  미리 컴파일된 헤더에 대해 '/D_DEBUG'을(를) 지정했으나 현재 컴파일에 대해서는 지정하지 않았습니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(142,45): warning C4244:  '=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(155,37): warning C4244:  '=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(344,21): warning C4018:  '<': signed 또는 unsigned가 일치하지 않습니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(439,9): warning C4101:  'source_ip_addr' :참조되지 않은 지역 변수입니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(440,9): warning C4101:  'target_ip_addr' :참조되지 않은 지역 변수입니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(521,8): warning C4101:  'source_ip_addr' :참조되지 않은 지역 변수입니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(522,8): warning C4101:  'target_ip_addr' :참조되지 않은 지역 변수입니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(652,10): warning C4101:  'dwResult' :참조되지 않은 지역 변수입니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(932,83): warning C4552:  '+': 식의 결과가 사용되지 않습니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(1339,13): warning C4244:  '=': '__int64'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(1516,7): warning C4101:  'cstr' :참조되지 않은 지역 변수입니다.
+﻿LINK : warning LNK4098: 'MSVCRT' defaultlib가 다른 라이브러리와 충돌합니다. /NODEFAULTLIB:library를 사용하십시오.
   MFCApplication1.vcxproj -> C:\Users\limjoonsub\source\repos\MFCApplication1\Debug\MFCApplication1.exe
