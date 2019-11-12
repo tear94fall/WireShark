@@ -1,4 +1,6 @@
-# Wire Dolphin (Packet Sniffer)
+# Wire Shark (MFC Packet Sniffer)
+
+**this project need winpcap library! please install winpcap!** 
 
 * ver 1.1.0
 1. 메인 화면 UI 변경
@@ -12,8 +14,8 @@
 **port == 80 or ip == 127.0.0.1**  
 **ip == 127.0.0.1**  
 **ip == 192.168.0.1 and port == 65536**  
-**(ip == 192.168.0.1 and port == 65536) and tcp**  
-**(port == 65536 and ip == 192.168.0.1) and udp**  
+**(ip == 192.168.0.1 and port == 65536) and tcp** (작동 안되도록 함)   
+**(port == 65536 and ip == 192.168.0.1) and udp**  (작동 안되도록 함)   
 **length == 60**  
 **length >= 60**  
 **length <= 60**  
