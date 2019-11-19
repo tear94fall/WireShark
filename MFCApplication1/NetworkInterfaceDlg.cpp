@@ -65,17 +65,16 @@ BOOL NetworkInterfaceDlg::OnInitDialog() {
 	}
 
 	for (d = alldevs; d; d = d->next) {
-		column_count = NetWorkListCtrl.GetItemCount();
+		adhandle = pcap_open_live(d->name, 1000, 1, 300, errbuf);
+		if (pcap_datalink(adhandle) == DLT_EN10MB && d->addresses != NULL) {
+			column_count = NetWorkListCtrl.GetItemCount();
 
-		CString column_count_str;
-		column_count_str.Format(_T("%d"), column_count + 1);
-		NetWorkListCtrl.InsertItem(column_count, column_count_str);
-
-		InterfaceDescription = ((LPSTR)d->description);
-		InterfaceName = ((LPSTR)d->name);
-
-		NetWorkListCtrl.SetItem(column_count, 1, LVIF_TEXT, InterfaceDescription, NULL, NULL, NULL, NULL);
-		NetWorkListCtrl.SetItem(column_count, 2, LVIF_TEXT, InterfaceName, NULL, NULL, NULL, NULL);
+			CString column_count_str;
+			column_count_str.Format(_T("%d"), column_count + 1);
+			NetWorkListCtrl.InsertItem(column_count, column_count_str);
+			NetWorkListCtrl.SetItem(column_count, 1, LVIF_TEXT, (CString)d->description, NULL, NULL, NULL, NULL);
+			NetWorkListCtrl.SetItem(column_count, 2, LVIF_TEXT, (CString)d->name, NULL, NULL, NULL, NULL);
+		}
 	}
 
 	if (column_count == 0) {

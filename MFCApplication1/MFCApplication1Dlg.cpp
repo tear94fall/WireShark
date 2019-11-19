@@ -235,7 +235,7 @@ UINT CMFCApplication1Dlg::PacketCaptureThreadFunction(LPVOID _mothod) {
 	CMFCApplication1Dlg* pDlg = (CMFCApplication1Dlg*)AfxGetApp()->m_pMainWnd;
 	pcap_if_t* all_net_device;
 	pcap_if_t* net_device = NULL;
-	int inum;
+	int selected_interface_number;
 	int i = 0;
 	pcap_t* adhandle;
 	char errbuf[PCAP_ERRBUF_SIZE];
@@ -257,26 +257,25 @@ UINT CMFCApplication1Dlg::PacketCaptureThreadFunction(LPVOID _mothod) {
 		return -1;
 	}
 
+	std::vector<std::pair<char*, char*>> interface_list;
+
 	for (net_device = all_net_device; net_device; net_device = net_device->next) {
-		++i;
+		adhandle = pcap_open_live(net_device->name, 1000, 1, 300, errbuf);
+		if (pcap_datalink(adhandle) == DLT_EN10MB && net_device->addresses != NULL) {
+			std::pair<char*, char*> temp_interface = std::make_pair(net_device->description, net_device->name);
+			interface_list.push_back(temp_interface);
+		}
 	}
 
-	if (i == 0) {
-		ERR_OCUR = TRUE;
-		ERR_MSG = L"No interfaces found! Make sure WinPcap is installed.";
-	}
+	selected_interface_number = pDlg->netInterfaceDlg.m_nSelectedIndex;
 
-	inum = pDlg->netInterfaceDlg.m_nSelectedIndex + 1;
-
-	if (inum < 1 || inum > i) {
+	if (selected_interface_number < 0 || selected_interface_number > interface_list.size()) {
 		pcap_freealldevs(all_net_device);
 		ERR_OCUR = TRUE;
 		ERR_MSG = L"Interface number out of range.";
 	}
 
-	for (net_device = all_net_device, i = 0; i < inum - 1; net_device = net_device->next, i++);
-
-	if ((adhandle = pcap_open_live(net_device->name, 65536, 1, 1000, errbuf)) == NULL) {
+	if ((adhandle = pcap_open_live(interface_list[selected_interface_number].second, 65536, 1, 1000, errbuf)) == NULL) {
 		pcap_freealldevs(all_net_device);
 		ERR_OCUR = TRUE;
 		ERR_MSG = L"Unable to open the adapter. %s is not supported by WinPcap";
