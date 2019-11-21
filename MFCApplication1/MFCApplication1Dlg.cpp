@@ -301,11 +301,24 @@ UINT CMFCApplication1Dlg::PacketCaptureThreadFunction(LPVOID _mothod) {
 
 	pDlg->target_adhandle = adhandle;
 	pcap_freealldevs(all_net_device);
-	pcap_loop(adhandle, 0, packet_handler, NULL);
+	int break_loop_value = pcap_loop(adhandle, 0, packet_handler, NULL);
 
-	pDlg->m_PacketCapturedListCtrl.DeleteAllItems();
-	pDlg->m_PacketDataTreeCtrl.DeleteAllItems();
-	pDlg->m_PacketDumpListCtrl.DeleteAllItems();
+
+	/*
+		0 if cnt is exhausted
+		-1 if an error occurs 
+		-2 if the loop terminated due to a call to pcap_breakloop() before any packets were processed.
+	*/
+
+	CString BREAK_LOOP_ERROR_MESSAGE;
+	if (break_loop_value == 0) {
+		BREAK_LOOP_ERROR_MESSAGE = "입력한 패킷의 갯수를 모두 캡쳐 했습니다";
+	} else if (break_loop_value == -1) {
+		BREAK_LOOP_ERROR_MESSAGE = "The network adapter on which the capture was being done is no longer attached; the capture has stopped.";
+	} else if (break_loop_value == -2) {
+		BREAK_LOOP_ERROR_MESSAGE = "패킷 캡쳐를 종료했습니다";
+	}
+	pDlg->MessageBox(BREAK_LOOP_ERROR_MESSAGE, L"Wire Dolphine");
 
 	return 0;
 }
@@ -1624,6 +1637,21 @@ UINT CMFCApplication1Dlg::FileOpenThreadFunction(LPVOID _mothod) {
 void CMFCApplication1Dlg::OnClose() {
 	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
 	if (MessageBox(_T("프로그램을 종료 하시겠습니까?"), _T("프로그램 종료"), MB_YESNO | MB_ICONQUESTION) == IDYES) {
+		if (m_PacketCaptrueThread == NULL) {
+
+		} else {
+			DWORD dwResult;
+			is_PktCapThreadStart = FALSE;
+			is_FileReadThreadStart = FALSE;
+			is_FileOpenThreadStart = FALSE;
+
+			m_PacketCaptrueThread = NULL;
+			m_FileReadThread = NULL;
+			m_FileOpenThread = NULL;
+
+			m_FilterThreadEnd = FALSE;
+		}
+
 		DWORD dwResult;
 
 		CWinThread* ThreadArray[3] = { m_PacketCaptrueThread, m_FileReadThread, m_FileOpenThread };

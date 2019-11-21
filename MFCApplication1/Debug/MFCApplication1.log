@@ -5,13 +5,14 @@ C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1
 C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(142,45): warning C4244:  '=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
 C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(155,37): warning C4244:  '=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
 C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(272,65): warning C4018:  '>': signed 또는 unsigned가 일치하지 않습니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(343,21): warning C4018:  '<': signed 또는 unsigned가 일치하지 않습니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(438,9): warning C4101:  'source_ip_addr' :참조되지 않은 지역 변수입니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(439,9): warning C4101:  'target_ip_addr' :참조되지 않은 지역 변수입니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(520,8): warning C4101:  'source_ip_addr' :참조되지 않은 지역 변수입니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(521,8): warning C4101:  'target_ip_addr' :참조되지 않은 지역 변수입니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(651,10): warning C4101:  'dwResult' :참조되지 않은 지역 변수입니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(931,83): warning C4552:  '+': 식의 결과가 사용되지 않습니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(1338,13): warning C4244:  '=': '__int64'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(1515,7): warning C4101:  'cstr' :참조되지 않은 지역 변수입니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(356,21): warning C4018:  '<': signed 또는 unsigned가 일치하지 않습니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(451,9): warning C4101:  'source_ip_addr' :참조되지 않은 지역 변수입니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(452,9): warning C4101:  'target_ip_addr' :참조되지 않은 지역 변수입니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(533,8): warning C4101:  'source_ip_addr' :참조되지 않은 지역 변수입니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(534,8): warning C4101:  'target_ip_addr' :참조되지 않은 지역 변수입니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(664,10): warning C4101:  'dwResult' :참조되지 않은 지역 변수입니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(944,83): warning C4552:  '+': 식의 결과가 사용되지 않습니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(1351,13): warning C4244:  '=': '__int64'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(1528,7): warning C4101:  'cstr' :참조되지 않은 지역 변수입니다.
+C:\Users\limjoonsub\source\repos\MFCApplication1\MFCApplication1\MFCApplication1Dlg.cpp(1643,10): warning C4101:  'dwResult' :참조되지 않은 지역 변수입니다.
   MFCApplication1.vcxproj -> C:\Users\limjoonsub\source\repos\MFCApplication1\Debug\MFCApplication1.exe
