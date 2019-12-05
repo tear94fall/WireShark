@@ -513,17 +513,21 @@ void packet_handler(u_char* param, const struct pcap_pkthdr* header, const u_cha
 			pDlg->m_PacketCapturedListCtrl.EnsureVisible(nCount - 1, FALSE);
 		}
 	} else {
-		if (ntohs(pDlg->eth_hdr->frame_type) == 0x0800 || ntohs(pDlg->eth_hdr->frame_type) == 0x0806) {
+		int frame_type = ntohs(pDlg->eth_hdr->frame_type);
+		int protocol_type = pDlg->ip_hdr->proto;
+		
+		if (frame_type == 0x0800) {
 			Data::DataFunction::packet_cnt += 1;
-			if (pDlg->ip_hdr->proto == IPPROTO_TCP) {
+			if (protocol_type == IPPROTO_TCP) {
 				Data::DataFunction::tcp_pkt_cnt += 1;
-			} else if (pDlg->ip_hdr->proto == IPPROTO_UDP && ntohs(pDlg->eth_hdr->frame_type) != 0x0806) {
+			} else if (protocol_type == IPPROTO_UDP) {
 				Data::DataFunction::udp_pkt_cnt += 1;
-			} else if (pDlg->ip_hdr->proto == IPPROTO_ICMP) {
+			} else if (protocol_type == IPPROTO_ICMP) {
 				Data::DataFunction::icmp_pkt_cnt += 1;
-			} else if (ntohs(pDlg->eth_hdr->frame_type) == 0x0806) {
-				Data::DataFunction::arp_pkt_cnt += 1;
 			}
+		} else if (frame_type == 0x0806) {
+			Data::DataFunction::packet_cnt += 1;
+			Data::DataFunction::arp_pkt_cnt += 1;
 		}
 	}
 
