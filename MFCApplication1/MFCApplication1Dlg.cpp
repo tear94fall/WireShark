@@ -862,8 +862,16 @@ int CALLBACK CMFCApplication1Dlg::SortFuncNum(LPARAM lParam1, LPARAM lParam2, LP
 
 BOOL CMFCApplication1Dlg::PreTranslateMessage(MSG* pMsg) {
 	// TODO: 여기에 특수화된 코드를 추가 및/또는 기본 클래스를 호출합니다.
-
 	if (pMsg->message == WM_KEYDOWN) {
+		// 필터값 입력시 엔터키를 누른 경우에도 필터가 작동하도록 하였음
+		if (pMsg->hwnd == GetDlgItem(IDC_EDIT1)->m_hWnd) {
+			if (pMsg->wParam == VK_RETURN)
+			{
+				OnBnClickedFilterApplyButton();
+				return TRUE;
+			}
+		}
+
 		if (pMsg->wParam == VK_ESCAPE)
 			return TRUE;
 		else if (pMsg->wParam == VK_RETURN)
